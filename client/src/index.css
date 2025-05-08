@@ -1,0 +1,170 @@
+/* client/src/index.css */
+
+/* Reset basic styles */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* --- Base Variables (Defined in :root for global scope) --- */
+:root {
+  /* Core Theme Colors (Defaults to Light Theme) */
+  --color-primary-light: #0056d2;          /* Standard blue */
+  --color-primary-dark-light: #003f9e;     /* Deeper blue variant */
+  --color-secondary-creamy-light: #e0e8f5; /* Light accent */
+  --color-background-light: #FFFFFF;       /* White background */
+  --color-surface-light: #FFFFFF;          /* Card/surface background */
+  --color-border-light: #dee2e6;           /* Subtle border */
+  --color-text-primary-light: #212121;     /* Dark grey text */
+  --color-text-secondary-light: #6c757d;   /* Lighter grey text */
+  --color-text-on-primary-light: #FFFFFF;  /* White text on primary blue */
+  --color-shadow-light: rgba(0, 0, 0, 0.1); /* Shadow color for light theme */
+
+  /* Dark Theme Colors (Define defaults here) */
+  --color-primary-dark: #4dabf7;           /* Lighter blue for dark */
+  --color-primary-dark-dark: #1e88e5;      /* Slightly darker light blue */
+  --color-secondary-creamy-dark: #37474f;  /* Dark blue-grey accent */
+  --color-background-dark: #121212;        /* Very dark background */
+  --color-surface-dark: #1e1e1e;           /* Slightly lighter surface */
+  --color-border-dark: #424242;            /* Darker border */
+  --color-text-primary-dark: #e0e0e0;      /* Light grey text */
+  --color-text-secondary-dark: #bdbdbd;    /* Medium grey text */
+  --color-text-on-primary-dark: #000000;   /* Dark text on light blue */
+  --color-shadow-dark: rgba(0, 0, 0, 0.4); /* Shadow color for dark theme */
+
+  /* Skeleton Loader Colors (Light Theme Defaults) */
+  --color-skeleton-base-light: #e0e0e0;    /* Base grey */
+  --color-skeleton-shimmer-light: #f5f5f5; /* Lighter shimmer */
+
+  /* Skeleton Loader Colors (Dark Theme Defaults) */
+  --color-skeleton-base-dark: #3a3a3a;     /* Darker base grey */
+  --color-skeleton-shimmer-dark: #555555;  /* Lighter shimmer for dark */
+
+  /* Utility Colors (Can be themed or kept consistent) */
+  --color-success: #198754;
+  --color-error: #dc3545;
+  --color-warning: #ffc107;
+
+  /* Spacing & Radius (Usually consistent across themes) */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --border-radius: 4px;
+
+  /* --- Define Theme-Agnostic Variables --- */
+  /* These will point to the correct theme variable based on body class */
+  --color-primary: var(--color-primary-light);
+  --color-primary-dark-variant: var(--color-primary-dark-light); /* Renamed for clarity */
+  --color-secondary-creamy: var(--color-secondary-creamy-light);
+  --color-background: var(--color-background-light);
+  --color-surface: var(--color-surface-light);
+  --color-border: var(--color-border-light);
+  --color-text-primary: var(--color-text-primary-light);
+  --color-text-secondary: var(--color-text-secondary-light);
+  --color-text-on-primary: var(--color-text-on-primary-light);
+  --color-text-link: var(--color-primary); /* Link color usually follows primary */
+  --color-shadow: var(--color-shadow-light); /* Shadow variable */
+  /* Skeleton Loader Agnostic Variables */
+  --color-skeleton-base: var(--color-skeleton-base-light);
+  --color-skeleton-shimmer: var(--color-skeleton-shimmer-light);
+
+  /* Box Shadow (Uses the theme-agnostic shadow color) */
+  --box-shadow-sm: 0 1px 2px var(--color-shadow);
+  --box-shadow-md: 0 4px 6px var(--color-shadow);
+}
+
+/* --- Dark Theme Overrides --- */
+body.dark-theme {
+  --color-primary: var(--color-primary-dark);
+  --color-primary-dark-variant: var(--color-primary-dark-dark);
+  --color-secondary-creamy: var(--color-secondary-creamy-dark);
+  --color-background: var(--color-background-dark);
+  --color-surface: var(--color-surface-dark);
+  --color-border: var(--color-border-dark);
+  --color-text-primary: var(--color-text-primary-dark);
+  --color-text-secondary: var(--color-text-secondary-dark);
+  --color-text-on-primary: var(--color-text-on-primary-dark);
+  --color-shadow: var(--color-shadow-dark);
+  /* Skeleton Loader Dark Theme Overrides */
+  --color-skeleton-base: var(--color-skeleton-base-dark);
+  --color-skeleton-shimmer: var(--color-skeleton-shimmer-dark);
+}
+
+/* --- Base Body Style --- */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+               Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.6;
+  /* Uses the theme-agnostic variables */
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  /* Add transitions for smooth theme change */
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* --- Global Styles & Component Base Styles --- */
+
+/* Add transitions to elements that will change colors */
+.card, .navbar, .button-primary, .item /* Add other components */ {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Example component styles (Using theme-agnostic variables) */
+.button-primary {
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  /* Transition defined above */
+}
+
+.button-primary:hover {
+  background-color: var(--color-primary-dark-variant); /* Use the dark variant for hover */
+}
+
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  box-shadow: var(--box-shadow-sm);
+  /* Transition defined above */
+}
+
+/* Responsive Grid Example */
+.item-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm);
+}
+
+.item {
+  background-color: var(--color-surface);
+  padding: var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-sm); /* Added shadow to items */
+  /* Transition defined above */
+}
+
+@media (min-width: 768px) {
+  .item-container {
+    grid-template-columns: 1fr 1fr;
+    padding: var(--spacing-md);
+  }
+}
+
+@media (min-width: 1024px) {
+  .item-container {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-lg);
+  }
+}

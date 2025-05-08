@@ -1,0 +1,57 @@
+/* client/src/components/common/Spinner.css */
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Base spinner style */
+.loading-spinner {
+  /* Use 'inline-block' for spinners within text/buttons */
+  /* Use 'block' and margin auto for standalone centering */
+  display: inline-block;
+  border-style: solid;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  /* Border colors create the spinning effect */
+  /* One transparent/light edge, one solid spinning edge */
+  border-color: rgba(0, 86, 210, 0.2); /* Example: Lighter primary */
+  border-top-color: var(--color-primary); /* Theme primary color */
+}
+
+/* --- Size Variants --- */
+/* Apply ONE of these classes where the spinner is used */
+/* Responsiveness is achieved by choosing the appropriate class */
+/* based on context or via media queries in the PARENT's CSS. */
+
+.spinner-small {
+  width: 1.5rem; /* ~24px */
+  height: 1.5rem;
+  border-width: 2px;
+}
+
+.spinner-medium {
+  width: 2.5rem; /* ~40px */
+  height: 2.5rem;
+  border-width: 3px;
+}
+
+.spinner-large {
+  width: 4rem; /* ~64px */
+  height: 4rem;
+  border-width: 4px;
+}
+
+/* Utility class for visually hidden elements */
+/* (Keep if not defined globally) */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap; /* Prevent line breaks */
+  border: 0;
+}

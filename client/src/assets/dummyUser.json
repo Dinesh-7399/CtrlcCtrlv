@@ -1,0 +1,16 @@
+[
+  {
+    "id": "user-123", 
+    "name": "Test User",
+    "email": "test@example.com",
+    "role": "student",
+    "enrolledCourses": ["course1", "course3"] 
+  },
+  {
+    "id": "user-456",
+    "name": "Another User",
+    "email": "another@example.com",
+    "role": "student",
+    "enrolledCourses": [] 
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "testim1",
+    "quote": "This platform transformed my understanding of React. The Hooks course was fantastic!",
+    "author": "Alex Doe",
+    "title": "Frontend Developer"
+  },
+  {
+    "id": "testim2",
+    "quote": "The Node.js course was exactly what I needed to start my backend journey. Clear and concise.",
+    "author": "Sarah Jones",
+    "title": "Backend Student"
+  },
+  {
+    "id": "testim3",
+    "quote": "Excellent instructors and well-structured content. I learned so much about UI/UX.",
+    "author": "Mike Williams",
+    "title": "Aspiring Designer"
+  },
+   {
+    "id": "testim4",
+    "quote": "Finally understood async JavaScript thanks to the detailed explanations and examples.",
+    "author": "Priya Sharma",
+    "title": "Fullstack Developer"
+  }
+]

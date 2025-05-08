@@ -1,0 +1,198 @@
+/* client/src/pages/CheckoutPage/CheckoutPage.css */
+
+.checkout-container {
+  max-width: 800px; /* Focused width */
+  margin: var(--spacing-lg) auto;
+  padding: var(--spacing-lg);
+}
+
+.checkout-title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xl);
+  text-align: center;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--spacing-md);
+}
+
+.checkout-layout {
+  display: grid;
+  grid-template-columns: 1fr; /* Single column layout by default */
+  gap: var(--spacing-xl);
+}
+
+/* Status message styling (e.g., for loading course details) */
+.checkout-status {
+    min-height: 50vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Back Button */
+.back-to-course-button {
+    margin-bottom: var(--spacing-lg);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 0; /* Reset padding for link-like button */
+    color: var(--color-text-secondary);
+}
+.back-to-course-button:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+.back-to-course-button svg {
+    margin-right: var(--spacing-xs);
+}
+
+/* --- Order Summary Section --- */
+.order-summary {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  background-color: var(--color-surface);
+  box-shadow: var(--box-shadow-sm);
+}
+
+.order-summary h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.summary-thumbnail {
+  width: 80px; /* Fixed size */
+  height: auto;
+  aspect-ratio: 16 / 10; /* Adjust aspect ratio as needed */
+  object-fit: cover;
+  border-radius: calc(var(--border-radius) / 2);
+  flex-shrink: 0; /* Prevent shrinking */
+  background-color: var(--color-secondary-creamy);
+}
+
+.summary-details {
+  flex-grow: 1; /* Take available space */
+}
+
+.summary-title {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.summary-instructor {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+}
+
+.summary-price {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap; /* Prevent wrapping */
+}
+.summary-price svg {
+    font-size: 0.9em;
+    margin-right: 2px;
+}
+
+.summary-total {
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-md);
+    border-top: 1px dashed var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+.summary-total span:last-child svg {
+    font-size: 0.9em;
+    margin-right: 2px;
+}
+
+
+/* --- Payment Section --- */
+.payment-section {
+    /* Styles if needed, currently relies on grid gap */
+}
+
+.payment-section h2 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-lg);
+    color: var(--color-text-primary);
+}
+
+.payment-error {
+    color: var(--color-error);
+    background-color: color-mix(in srgb, var(--color-error) 15%, transparent); /* Subtle error bg */
+    border: 1px solid color-mix(in srgb, var(--color-error) 30%, transparent);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.95rem;
+}
+.payment-error svg {
+    flex-shrink: 0;
+}
+
+.checkout-button {
+  /* Inherit base styles from Button component or global button styles */
+  /* Add specific overrides if needed */
+  padding-top: var(--spacing-md); /* Ensure large button feel */
+  padding-bottom: var(--spacing-md);
+  font-size: 1.1rem;
+  min-height: 50px; /* Ensure good height */
+}
+
+/* Reuse loading dots animation if defined globally or add here */
+.checkout-button .loading-dots span {
+    background-color: var(--color-text-on-primary); /* Ensure contrast */
+    /* Adjust size/margin if needed for button context */
+    width: 6px;
+    height: 6px;
+    margin: 0 3px;
+}
+/* Ensure keyframes are available */
+/* @keyframes dots-bounce { ... } */
+
+
+.security-notice {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin-top: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+}
+.security-notice svg {
+    font-size: 0.9em;
+    opacity: 0.7;
+}
+
+/* --- Responsive Adjustments --- */
+@media (min-width: 768px) {
+    /* Optional: Two column layout on larger screens */
+    /* .checkout-layout {
+        grid-template-columns: 1fr 1fr;
+    } */
+}

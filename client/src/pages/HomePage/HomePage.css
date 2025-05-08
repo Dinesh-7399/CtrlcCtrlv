@@ -1,0 +1,635 @@
+/* client/src/pages/HomePage.css */
+
+/* ================== Global Container ================== */
+.homepage-container {
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* ================== Hero Section ================== */
+.hero-section {
+  display: flex;
+  flex-direction: column; /* Stack on small screens (Mobile First) */
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--spacing-xl) var(--spacing-lg); /* Default padding (Mobile) */
+  background-color: var(--color-secondary-creamy); /* Uses theme variable */
+  min-height: 60vh; /* Default min-height (Mobile) */
+  overflow: hidden;
+  transition: background-color 0.3s ease; /* Add transition */
+}
+
+.hero-content {
+  max-width: 700px;
+  margin-bottom: var(--spacing-lg); /* Default margin */
+  width: 100%;
+}
+
+.hero-headline {
+  font-size: 2.5rem; /* Default font size (Mobile) */
+  font-weight: 700;
+  color: var(--color-text-primary); /* Uses theme variable */
+  line-height: 1.2;
+  margin-bottom: var(--spacing-md);
+  text-wrap: balance;
+}
+
+.hero-subheadline {
+  font-size: 1.1rem; /* Default font size (Mobile) */
+  color: var(--color-text-secondary); /* Uses theme variable */
+  margin-bottom: var(--spacing-lg);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-cta-buttons {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-md); /* Default gap */
+  flex-wrap: wrap;
+}
+.hero-cta-buttons .button-icon-right {
+  margin-left: var(--spacing-xs);
+}
+
+.hero-image-placeholder {
+  width: 100%;
+  margin-top: var(--spacing-lg);
+  overflow: hidden;
+}
+
+.hero-image-placeholder img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-md); /* Uses theme variable */
+  display: block;
+}
+
+/* Hero layout for larger screens (Tablet/Desktop) */
+@media (min-width: 992px) {
+  .hero-section {
+    flex-direction: row;
+    text-align: left;
+    justify-content: space-between;
+    padding: calc(var(--spacing-xl) * 2) var(--spacing-lg);
+    min-height: 70vh;
+  }
+  .hero-content {
+    max-width: 50%;
+    width: auto; /* Reset width */
+    margin-bottom: 0;
+    margin-right: var(--spacing-xl);
+  }
+  .hero-headline {
+      font-size: 3rem; /* Larger headline for desktop */
+  }
+    .hero-subheadline {
+      font-size: 1.2rem; /* Larger subheadline */
+      margin-left: 0;
+      margin-right: 0;
+  }
+  .hero-cta-buttons {
+    justify-content: flex-start;
+  }
+  .hero-image-placeholder {
+    max-width: 45%;
+    width: 45%;
+    margin-top: 0;
+    flex-shrink: 0;
+  }
+}
+
+/* ================== General Section Styling ================== */
+.features-section,
+.how-it-works-section,
+.categories-section,
+.featured-courses-section,
+.free-articles-section,
+.stats-section,
+.testimonials-section,
+.final-cta-section {
+  padding: var(--spacing-xl) var(--spacing-md);
+  text-align: center;
+  /* Add transition for background color changes */
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.testimonials-section {
+  padding: var(--spacing-xl) 0;
+}
+
+.section-heading {
+  font-size: 1.9rem;
+  font-weight: 600;
+  color: var(--color-text-primary); /* Uses theme variable */
+  margin-bottom: var(--spacing-lg);
+  text-wrap: balance;
+}
+
+/* Alternating background colors */
+.features-section,
+.how-it-works-section,
+.free-articles-section,
+.testimonials-section {
+  background-color: var(--color-surface); /* Uses theme variable */
+}
+.categories-section,
+.featured-courses-section {
+  background-color: var(--color-secondary-creamy); /* Uses theme variable */
+}
+.stats-section {
+  background-color: var(--color-primary); /* Uses theme variable */
+  color: var(--color-text-on-primary);  /* Use variable */
+}
+.stats-section .section-heading,
+.stats-section .stat-label,
+.stats-section .stat-number,
+.stats-section .stat-icon {
+  color: var(--color-text-on-primary); /* Use variable */
+}
+
+/* --- Updated Final CTA Section --- */
+.final-cta-section {
+  /* Use the theme-agnostic variable for the darker primary shade */
+  background-color: var(--color-primary-dark-variant);
+  /* Use the variable for text on primary backgrounds */
+  color: var(--color-text-on-primary);
+  /* Transition added in general section styling above */
+}
+
+.final-cta-section .section-heading,
+.final-cta-section p {
+  /* Text color should inherit from .final-cta-section or be explicitly set */
+  color: var(--color-text-on-primary);
+}
+
+.final-cta-section p {
+  margin-bottom: var(--spacing-lg);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+  opacity: 0.9; /* Optional: slightly less emphasis than heading */
+}
+/* --- End Updated Final CTA Section --- */
+
+/* ================== Features Section ================== */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--spacing-lg);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.feature-item {
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.feature-item:hover {
+  background-color: var(--color-secondary-creamy); /* Uses theme variable */
+  transform: translateY(-3px);
+}
+.feature-icon {
+  font-size: 2.8rem;
+  color: var(--color-primary); /* Uses theme variable */
+  margin-bottom: var(--spacing-md);
+}
+.feature-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--color-text-primary); /* Uses theme variable */
+  margin-bottom: var(--spacing-sm);
+}
+.feature-description {
+  color: var(--color-text-secondary); /* Uses theme variable */
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+/* ================== How It Works Section ================== */
+.how-it-works-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--spacing-lg);
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.step-item { }
+.step-icon-wrapper {
+  font-size: 2.5rem;
+  color: var(--color-primary); /* Uses theme variable */
+  background-color: var(--color-secondary-creamy); /* Uses theme variable */
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-md);
+}
+.step-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--color-text-primary); /* Uses theme variable */
+  margin-bottom: var(--spacing-sm);
+}
+.step-description {
+  color: var(--color-text-secondary); /* Uses theme variable */
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+/* ================== Categories Section ================== */
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--spacing-md);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.category-item-link {
+  text-decoration: none;
+  color: inherit; /* Inherits text color */
+}
+.category-item {
+  background-color: var(--color-surface); /* Uses theme variable */
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-sm); /* Uses theme variable */
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease; /* Add background transition */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+}
+.category-item:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--box-shadow-md); /* Uses theme variable */
+}
+.category-icon {
+  font-size: 2.0rem;
+  color: var(--color-primary); /* Uses theme variable */
+  margin-bottom: var(--spacing-sm);
+}
+.category-name {
+  font-weight: 600;
+  color: var(--color-text-primary); /* Uses theme variable */
+  font-size: 0.9rem;
+}
+
+/* ================== Featured Courses / Free Articles Link Styling ================== */
+.course-card-link,
+.article-card-link {
+  text-decoration: none;
+  color: inherit; /* Inherits text color */
+  display: block;
+  height: 100%;
+}
+
+/* ================== Featured Courses Section ================== */
+.featured-courses-section .courses-grid {
+  max-width: 1100px;
+  margin: 0 auto var(--spacing-lg) auto;
+  text-align: left;
+  /* Define grid layout if not using item-container */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-lg);
+}
+.featured-courses-section .course-list-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0; /* Override Card padding if needed */
+  background-color: var(--color-surface); /* Uses theme variable */
+  border: 1px solid var(--color-border); /* Added border for consistency */
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, border-color 0.3s ease; /* Add transitions */
+}
+.featured-courses-section .course-list-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--box-shadow-md);
+}
+.featured-courses-section .course-card-thumbnail {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  display: block;
+  background-color: var(--color-secondary-creamy); /* Uses theme variable */
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+  border-bottom: 1px solid var(--color-border); /* Add border below image */
+  transition: background-color 0.3s ease, border-color 0.3s ease; /* Add transition */
+}
+.featured-courses-section .course-list-card-content {
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+.featured-courses-section .course-list-card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-primary); /* Uses theme variable */
+  margin-bottom: var(--spacing-sm);
+  line-height: 1.3;
+}
+.featured-courses-section .course-instructor {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary); /* Uses theme variable */
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+.featured-courses-section .instructor-icon {
+  color: var(--color-text-secondary); /* Uses theme variable */
+}
+.view-all-courses-link {
+  margin-top: var(--spacing-lg);
+}
+
+/* ================== Free Articles Section ================== */
+.free-articles-section .section-icon {
+  font-size: 2.8rem;
+  color: var(--color-primary); /* Uses theme variable */
+  margin-bottom: var(--spacing-md);
+}
+.free-articles-section .section-subheading {
+  color: var(--color-text-secondary); /* Uses theme variable */
+  max-width: 600px;
+  margin: 0 auto var(--spacing-lg);
+  line-height: 1.6;
+}
+.articles-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--spacing-lg);
+  max-width: 1100px;
+  margin: 0 auto var(--spacing-lg) auto;
+  text-align: left;
+}
+.article-preview-item {
+  background-color: var(--color-surface); /* Uses theme variable */
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease; /* Add transition */
+  border: 1px solid var(--color-border); /* Add border */
+}
+.article-preview-item:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--box-shadow-md);
+}
+.article-preview-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-primary); /* Uses theme variable */
+  margin-bottom: var(--spacing-sm);
+  line-height: 1.3;
+}
+.article-preview-excerpt {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary); /* Uses theme variable */
+  line-height: 1.6;
+  margin-bottom: var(--spacing-md);
+  flex-grow: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: calc(1.6 * 0.9rem * 3);
+}
+.article-preview-link {
+  color: var(--color-primary); /* Uses theme variable */
+  font-weight: 500;
+  text-decoration: none;
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  transition: color 0.2s ease;
+  padding-top: var(--spacing-xs);
+}
+.article-preview-link:hover {
+  color: var(--color-primary-dark-variant); /* Uses theme variable */
+  text-decoration: underline;
+}
+.article-preview-link svg {
+  transition: transform 0.2s ease;
+}
+.article-preview-link:hover svg {
+  transform: translateX(3px);
+}
+.view-all-articles-link {
+  margin-top: var(--spacing-lg);
+}
+
+/* ================== Statistics Section ================== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--spacing-lg);
+  max-width: 1000px;
+  margin: 0 auto;
+  text-align: center;
+}
+.stat-item { }
+.stat-icon {
+  font-size: 2.2rem;
+  margin-bottom: var(--spacing-sm);
+  opacity: 0.8;
+  /* Color set by section */
+}
+.stat-number {
+  display: block;
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  /* Color set by section */
+}
+.stat-label {
+  display: block;
+  font-size: 0.95rem;
+  opacity: 0.9;
+  /* Color set by section */
+}
+
+/* ================== Testimonials Section ================== */
+.testimonials-loop-container {
+  width: 100%;
+  overflow: hidden;
+  margin-top: var(--spacing-lg);
+  -webkit-mask-image: linear-gradient( to right, transparent 0%, black 10%, black 90%, transparent 100% );
+  mask-image: linear-gradient( to right, transparent 0%, black 10%, black 90%, transparent 100% );
+}
+.testimonials-loop-track {
+  display: inline-flex;
+  animation: scrollLeftAnimation 40s linear infinite;
+}
+.testimonials-loop-container:hover .testimonials-loop-track {
+  animation-play-state: paused;
+}
+@keyframes scrollLeftAnimation {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.testimonial-card-loop-item {
+  background-color: var(--color-surface); /* Uses theme variable */
+  border: 1px solid var(--color-border); /* Uses theme variable */
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-sm); /* Uses theme variable */
+  padding: var(--spacing-lg);
+  text-align: left;
+  position: relative;
+  width: 280px;
+  flex-shrink: 0;
+  margin: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.3s ease, border-color 0.3s ease; /* Add transition */
+}
+.testimonial-quote-icon {
+  font-size: 2.2rem;
+  color: var(--color-primary); /* Uses theme variable */
+  opacity: 0.15;
+  position: absolute;
+  top: var(--spacing-md);
+  left: var(--spacing-md);
+}
+.testimonial-quote {
+  font-size: 1rem;
+  font-style: italic;
+  line-height: 1.7;
+  color: var(--color-text-secondary); /* Uses theme variable */
+  margin-bottom: var(--spacing-md);
+  padding-left: calc(var(--spacing-md) + 1rem);
+  flex-grow: 1;
+}
+.testimonial-author {
+  font-weight: 600;
+  color: var(--color-text-primary); /* Uses theme variable */
+  text-align: right;
+  margin-top: auto;
+  padding-top: var(--spacing-sm);
+}
+.testimonial-author span {
+  display: block;
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary); /* Uses theme variable */
+}
+
+/* ================== Final CTA Section Already Updated ================== */
+
+
+/* --- Responsive Adjustments --- */
+
+/* Medium screens (Tablets) */
+@media (max-width: 991px) {
+  .features-section,
+  .how-it-works-section,
+  .categories-section,
+  .featured-courses-section,
+  .free-articles-section,
+  .stats-section,
+  .testimonials-section,
+  .final-cta-section {
+    padding: calc(var(--spacing-xl) * 1.2) var(--spacing-md);
+  }
+  .testimonials-section {
+      padding: calc(var(--spacing-xl) * 1.2) 0;
+  }
+
+  .hero-headline {
+    font-size: 2.2rem;
+  }
+  .section-heading {
+    font-size: 1.7rem;
+    margin-bottom: var(--spacing-lg);
+  }
+  .stats-grid, .how-it-works-steps, .features-grid {
+      gap: var(--spacing-lg);
+  }
+  .articles-preview-grid {
+      gap: var(--spacing-lg);
+  }
+}
+
+
+/* Small screens (Mobile) */
+@media (max-width: 480px) {
+  .features-section,
+  .how-it-works-section,
+  .categories-section,
+  .featured-courses-section,
+  .free-articles-section,
+  .stats-section,
+  .testimonials-section,
+  .final-cta-section {
+      padding: var(--spacing-lg) var(--spacing-sm);
+  }
+    .testimonials-section {
+      padding: var(--spacing-lg) 0;
+    }
+
+  .hero-section {
+      padding: var(--spacing-lg) var(--spacing-sm);
+      min-height: 50vh;
+  }
+  .hero-headline {
+      font-size: 1.8rem;
+  }
+  .hero-subheadline {
+      font-size: 1rem;
+  }
+  .hero-cta-buttons {
+       gap: var(--spacing-sm);
+   }
+
+  .section-heading {
+      font-size: 1.5rem;
+      margin-bottom: var(--spacing-md);
+  }
+
+  .features-grid,
+  .how-it-works-steps,
+  .articles-preview-grid,
+  .stats-grid {
+      gap: var(--spacing-md);
+  }
+    .categories-grid {
+      gap: var(--spacing-sm);
+  }
+
+  .feature-icon { font-size: 2.5rem; }
+  .step-icon-wrapper { width: 60px; height: 60px; font-size: 2.2rem; }
+  .category-icon { font-size: 1.8rem; }
+  .stat-icon { font-size: 2rem; }
+  .stat-number { font-size: 1.9rem; }
+
+  .testimonial-card-loop-item {
+      width: 250px;
+      padding: var(--spacing-md);
+  }
+  .testimonial-quote {
+      font-size: 0.95rem;
+   }
+  .testimonial-quote-icon {
+      font-size: 2rem;
+   }
+
+    .featured-courses-section .course-card-thumbnail {
+        height: 150px;
+    }
+}

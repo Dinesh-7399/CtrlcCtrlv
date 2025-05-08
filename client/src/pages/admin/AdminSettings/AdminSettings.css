@@ -1,0 +1,96 @@
+/* src/pages/admin/AdminSettings.css */
+
+.admin-settings-page .admin-page-title {
+  text-align: center; /* Center title on this page */
+}
+
+.settings-form {
+  max-width: 700px; /* Constrain form width */
+  margin: 0 auto; /* Center form */
+  background-color: var(--color-surface);
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--box-shadow-sm);
+}
+
+.settings-section {
+  border: none; /* Remove default fieldset border */
+  padding: 0;
+  margin: 0 0 var(--spacing-xl) 0; /* Margin below section */
+  padding-bottom: var(--spacing-xl); /* Padding below section content */
+  border-bottom: 1px dashed var(--color-border); /* Separator */
+}
+.settings-section:last-of-type {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.settings-section legend {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 0; /* Reset browser default padding */
+  width: 100%; /* Ensure legend takes full width */
+}
+.settings-section legend svg {
+  color: var(--color-primary);
+  font-size: 1.1em;
+}
+
+/* Hint text below inputs */
+.input-hint, .settings-note {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin-top: calc(-1 * var(--spacing-sm)); /* Pull closer to input above */
+  margin-bottom: var(--spacing-lg);
+}
+.settings-note a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+/* Basic styling for color input */
+.color-input input[type="color"] {
+  padding: 0; /* Remove padding */
+  height: 40px; /* Match other input heights */
+  width: 60px; /* Specific width */
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+}
+
+/* Form Actions specific to settings */
+.settings-actions {
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+  justify-content: center; /* Center save button */
+}
+.settings-actions .button {
+  min-width: 150px; /* Wider save button */
+}
+
+/* Inline save messages */
+.settings-save-message {
+  text-align: center;
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  font-weight: 500;
+}
+
+/* --- Responsive --- */
+@media (max-width: 576px) {
+  .settings-form {
+      padding: var(--spacing-lg);
+  }
+  .settings-section legend {
+      font-size: 1.1rem;
+  }
+}

@@ -1,0 +1,70 @@
+/* client/src/components/common/Input.css */
+
+.input-group {
+  margin-bottom: var(--spacing-md); /* Default space below */
+  /* position: relative; */ /* Add if needed for icons inside input */
+}
+
+.input-label {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  font-weight: 500;
+  color: var(--color-text-primary);
+  font-size: 0.9rem; /* Default size */
+}
+
+.input-field {
+  display: block;
+  width: 100%; /* Inherently responsive */
+  padding: var(--spacing-sm) var(--spacing-md); /* Default padding */
+  font-size: 1rem; /* Default font size */
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  background-clip: padding-box;
+  border: 1px solid var(--color-border);
+  appearance: none;
+  border-radius: var(--border-radius);
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  box-sizing: border-box; /* Include padding/border in width */
+}
+
+.input-field:focus {
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  border-color: var(--color-primary);
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 86, 210, 0.25);
+}
+
+.input-field::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.8;
+}
+
+.input-field:disabled,
+.input-field[readonly] { /* Added readonly state */
+  background-color: var(--color-secondary-creamy);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.input-field[readonly] {
+    cursor: default; /* Readonly should not show not-allowed */
+}
+
+/* --- Responsive Adjustments --- */
+
+@media (max-width: 480px) {
+  .input-group {
+    margin-bottom: var(--spacing-sm); /* Slightly reduce margin below */
+  }
+  .input-label {
+      /* Label size is likely okay, but could reduce if needed */
+      /* font-size: 0.85rem; */
+  }
+  .input-field {
+    font-size: 0.95rem; /* Slightly reduce font size inside input */
+    padding: var(--spacing-xs) var(--spacing-sm); /* Slightly reduce padding */
+  }
+}

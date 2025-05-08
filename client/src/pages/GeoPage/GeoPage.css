@@ -1,0 +1,124 @@
+/* client/src/pages/GeoPage.css */
+@import url('leaflet/dist/leaflet.css'); /* Import leaflet CSS */
+
+.geo-page {
+    padding: var(--spacing-lg);
+    max-width: 1400px; /* Allow wider container for map */
+    margin: 0 auto;
+}
+
+.geo-page h1 {
+    text-align: center;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text-primary);
+}
+.geo-page > p { /* Target the intro paragraph */
+    text-align: center;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-lg);
+}
+
+.map-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background-color: var(--color-surface);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--color-border);
+}
+
+.theme-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+}
+/* Style theme buttons */
+.theme-buttons .button {
+    font-size: 0.9rem; /* Smaller buttons */
+    padding: var(--spacing-xs) var(--spacing-sm);
+    gap: var(--spacing-xs);
+}
+
+.map-search {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: stretch;
+}
+.map-search .search-input {
+    min-width: 200px;
+    /* Ensure vertical alignment if needed */
+}
+.map-search .search-input .input-field { /* Target actual input if needed */
+    height: 100%;
+    margin-bottom: 0;
+}
+.map-search .button {
+    flex-shrink: 0;
+     padding: var(--spacing-xs) var(--spacing-sm); /* Match input height */
+}
+
+.map-container {
+    height: 65vh; /* Adjust height as needed */
+    min-height: 450px;
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-md);
+    margin-bottom: var(--spacing-lg);
+    position: relative; /* For positioning info box */
+    background-color: #eef; /* Simple background while tiles load */
+}
+
+/* Ensure Leaflet map takes full container height */
+.map-container .leaflet-container {
+    height: 100%;
+    width: 100%;
+    border-radius: inherit; /* Match parent border radius */
+}
+
+/* --- Info Box --- */
+.info-box {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1000; /* Ensure it's above map layers */
+    background: var(--color-surface);
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.9rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-sm);
+    border: 1px solid var(--color-border);
+    max-width: 200px;
+    color: var(--color-text-secondary);
+}
+.info-box h4 {
+    margin: 0 0 var(--spacing-xs);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+
+/* Responsive */
+@media (max-width: 768px) {
+    .map-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .theme-buttons {
+        justify-content: center;
+    }
+    .map-search {
+        width: 100%;
+    }
+    .map-container {
+        height: 60vh;
+        min-height: 400px;
+    }
+}

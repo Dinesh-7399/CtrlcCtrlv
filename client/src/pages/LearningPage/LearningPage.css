@@ -1,0 +1,321 @@
+/* client/src/pages/LearningPage/LearningPage.css */
+
+/* --- Main Container --- */
+.learning-page-container {
+  display: flex;
+  /* Mobile First: Stack sidebar and content */
+  flex-direction: column;
+  min-height: calc(100vh - var(--header-height, 60px)); /* Full height minus header */
+  background-color: var(--color-background);
+  transition: background-color 0.3s ease;
+}
+
+/* --- Sidebar --- */
+.learning-sidebar {
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border); /* Separator on mobile */
+  padding: var(--spacing-md);
+  width: 100%; /* Full width on mobile */
+  flex-shrink: 0;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  max-height: 40vh; /* Limit height on mobile */
+  overflow-y: auto; /* Allow sidebar scroll on mobile if needed */
+}
+
+.sidebar-course-title-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.sidebar-course-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+.sidebar-course-title-link:hover .sidebar-course-title {
+    color: var(--color-primary);
+}
+
+.sidebar-title-icon {
+  color: var(--color-primary);
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.sidebar-nav {
+  /* Nav container */
+}
+
+.sidebar-module {
+  margin-bottom: var(--spacing-lg);
+}
+
+.sidebar-module-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 var(--spacing-sm) 0;
+  padding: var(--spacing-xs);
+}
+
+.sidebar-lesson-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-lesson-list li {
+  margin-bottom: var(--spacing-xs);
+}
+
+.sidebar-lesson-link {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border-radius: var(--border-radius);
+  transition: background-color 0.2s ease, color 0.2s ease;
+  border-left: 3px solid transparent; /* Space for active indicator */
+  margin-left: -3px; /* Compensate for border */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-lesson-link:hover {
+  background-color: var(--color-secondary-creamy);
+  color: var(--color-text-primary);
+}
+
+.sidebar-lesson-link.active {
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: var(--color-primary);
+  font-weight: 500;
+  border-left-color: var(--color-primary);
+}
+
+.lesson-status-icon {
+  flex-shrink: 0;
+  opacity: 0.6;
+  /* Add styles for completed status later */
+}
+.sidebar-lesson-link.active .lesson-status-icon {
+    opacity: 1;
+    color: var(--color-primary);
+}
+
+.sidebar-no-lessons {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    font-style: italic;
+    padding-left: var(--spacing-md);
+}
+
+/* --- Main Content --- */
+.learning-main-content {
+  flex-grow: 1;
+  padding: var(--spacing-lg);
+  overflow-y: auto; /* Allow main content to scroll independently */
+  min-width: 0; /* Prevent flexbox overflow */
+}
+
+.main-back-button {
+    margin-bottom: var(--spacing-lg);
+    display: inline-flex; /* Keep inline-flex */
+    align-self: flex-start; /* Align button left */
+}
+
+.lesson-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+  line-height: 1.3;
+}
+
+/* Video Player */
+.video-player-wrapper {
+  position: relative;
+  padding-top: 56.25%; /* 16:9 aspect ratio */
+  background-color: #000; /* Black background */
+  margin-bottom: var(--spacing-xl);
+  border-radius: var(--border-radius);
+  overflow: hidden; /* Ensures player fits radius */
+  box-shadow: var(--box-shadow-md);
+}
+
+.react-player { /* Targets wrapper div of ReactPlayer */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important; /* Override potential inline styles */
+  height: 100% !important;
+}
+
+.video-unavailable {
+  aspect-ratio: 16 / 9; /* Match video aspect ratio */
+  background-color: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  text-align: center;
+}
+
+/* Lesson Content & Notes Sections */
+.course-section { /* Reusing class from CourseDetail for consistency */
+  margin-bottom: var(--spacing-xl);
+}
+
+.course-section h2, /* Targeting h2 directly */
+.section-title { /* Or use a specific class */
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+.course-section h2 .section-title-icon,
+.section-title .section-title-icon {
+    color: var(--color-primary);
+    font-size: 1.1em;
+    margin-top: -2px;
+    flex-shrink: 0;
+}
+
+.lesson-content p {
+  color: var(--color-text-primary);
+  line-height: 1.7;
+  margin-bottom: var(--spacing-md);
+}
+.lesson-notes-section {
+    /* Container for NotesSection component */
+}
+
+/* --- Lesson Navigation --- */
+.lesson-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+  flex-wrap: wrap; /* Allow buttons to wrap on small screens */
+  gap: var(--spacing-md);
+}
+
+.lesson-navigation .button { /* Target Button component */
+   display: inline-flex;
+   align-items: center;
+   gap: var(--spacing-sm);
+}
+.lesson-navigation .button-icon { margin: 0; } /* Reset margin if needed */
+.lesson-navigation .button-icon-right { margin-left: var(--spacing-sm); }
+
+/* --- Status/Error States --- */
+.learning-status {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--spacing-xl);
+}
+.learning-error h1 { color: var(--color-error); margin-bottom: var(--spacing-sm); }
+.learning-error p { color: var(--color-text-secondary); margin-bottom: var(--spacing-lg); }
+.learning-error .button svg { margin-right: var(--spacing-xs); }
+
+
+/* --- Responsive Desktop Layout --- */
+/* Adjust breakpoint as needed (e.g., 992px or 1024px) */
+@media (min-width: 992px) {
+  .learning-page-container {
+    flex-direction: row; /* Side-by-side layout */
+  }
+
+  .learning-sidebar {
+    width: 300px; /* Fixed sidebar width */
+    height: calc(100vh - var(--header-height, 60px)); /* Full height minus header */
+    position: sticky; /* Make sidebar sticky */
+    top: var(--header-height, 60px); /* Position below header */
+    border-bottom: none; /* Remove bottom border */
+    border-right: 1px solid var(--color-border); /* Add right border */
+    padding: var(--spacing-lg); /* Adjust padding */
+    max-height: none; /* Remove max-height */
+    overflow-y: auto; /* Ensure scrolling */
+  }
+
+  .learning-main-content {
+    /* flex-grow: 1 is already set */
+    height: calc(100vh - var(--header-height, 60px)); /* Full height minus header */
+    overflow-y: auto; /* Scroll main content independently */
+    padding: var(--spacing-xl); /* More padding on desktop */
+  }
+
+  .main-back-button {
+    display: none; /* Hide back button in main content if sidebar is visible */
+  }
+
+   .lesson-title {
+     font-size: 2rem; /* Larger title */
+   }
+}
+
+/* Smaller screen adjustments if needed beyond mobile-first */
+@media (max-width: 480px) {
+    .learning-page-container {
+        min-height: calc(100vh - var(--header-height, 50px)); /* Adjust for potentially smaller mobile header */
+    }
+    .learning-sidebar {
+        padding: var(--spacing-md);
+        max-height: 35vh; /* Slightly less height */
+    }
+     .sidebar-course-title {
+        font-size: 1rem;
+     }
+     .sidebar-module-title {
+        font-size: 0.8rem;
+     }
+     .sidebar-lesson-link {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 0.85rem;
+     }
+
+    .learning-main-content {
+        padding: var(--spacing-md);
+    }
+    .lesson-title {
+        font-size: 1.5rem;
+    }
+    .course-section h2, .section-title {
+        font-size: 1.2rem;
+    }
+     .lesson-navigation {
+        flex-direction: column; /* Stack buttons */
+        align-items: stretch; /* Make buttons full width */
+     }
+     .lesson-navigation .button {
+        justify-content: center; /* Center button text/icon */
+     }
+}

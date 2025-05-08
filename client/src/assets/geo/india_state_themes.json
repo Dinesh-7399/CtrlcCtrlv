@@ -1,0 +1,22 @@
+{
+  "vegStatus": {
+    "Odisha": "High Non-Veg",
+    "Gujarat": "High Veg",
+    "Tamil Nadu": "High Non-Veg",
+    "Rajasthan": "High Veg",
+    "West Bengal": "High Non-Veg",
+    "Punjab": "High Veg",
+    "Maharashtra": "Mid",
+    "Uttar Pradesh": "Mid",
+    "Bihar": "High Non-Veg"
+  },
+  "economyLevel": {
+     "Maharashtra": "High",
+     "Tamil Nadu": "High",
+     "Gujarat": "High",
+     "Odisha": "Mid",
+     "Bihar": "Low",
+     "Uttar Pradesh": "Mid",
+     "Rajasthan": "Mid"
+  }
+}

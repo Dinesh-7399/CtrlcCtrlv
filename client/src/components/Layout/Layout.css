@@ -1,0 +1,26 @@
+/* Styling for the main content area where page components render */
+.page-content {
+  flex-grow: 1; /* Make content take available space (in Flex layout) */
+                 /* In Grid layout, it takes the '1fr' column space */
+  padding: var(--spacing-lg); /* Default padding */
+  width: 100%; /* Takes full width of its container */
+  overflow-x: hidden; /* Prevent horizontal scroll within content area */
+  box-sizing: border-box; /* Include padding in width */
+  min-width: 0; /* Prevent grid blowout if using grid */
+}
+
+/* --- Responsive Adjustments --- */
+/* Tablet/Mobile breakpoint where sidebar stacks/hides */
+@media (max-width: 992px) {
+  /* Reduce padding for page content (Applies to BOTH scenarios) */
+  .page-content {
+    padding: var(--spacing-md);
+  }
+}
+/* Small Mobile breakpoint */
+@media (max-width: 480px) {
+   /* Further reduce padding for page content (Applies to BOTH scenarios) */
+  .page-content {
+    padding: var(--spacing-sm);
+  }
+}

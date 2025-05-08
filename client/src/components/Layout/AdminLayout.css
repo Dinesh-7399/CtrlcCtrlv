@@ -1,0 +1,212 @@
+/* client/src/components/Layout/AdminLayout.css */
+
+/* --- Base Layout --- */
+.admin-layout {
+  min-height: 100vh;
+  background-color: var(--color-background);
+  transition: background-color 0.3s ease;
+  position: relative;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+/* --- Admin Sidebar (Base Styles - Desktop First Approach) --- */
+.admin-sidebar {
+  width: 250px;
+  background-color: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  box-shadow: var(--box-shadow-sm);
+  height: 100vh; /* Default height for fixed */
+  position: fixed; /* Default position for desktop */
+  top: 0;
+  left: 0;
+  z-index: 1000; /* Default z-index (Desktop) */
+}
+
+.admin-sidebar-header {
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+  text-align: center;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin-logo {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.admin-sidebar-nav {
+  flex-grow: 1;
+  overflow-y: auto; /* Scroll within nav */
+  padding: var(--spacing-md) 0;
+}
+
+.admin-sidebar-nav ul { list-style: none; padding: 0; margin: 0; }
+
+.admin-nav-link {
+  display: flex; align-items: center; gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg); color: var(--color-text-secondary);
+  text-decoration: none; font-size: 0.95rem;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  border-left: 3px solid transparent; white-space: nowrap;
+}
+.admin-nav-link svg { font-size: 1.1em; flex-shrink: 0; width: 20px; text-align: center; }
+.admin-nav-link:hover { background-color: var(--color-secondary-creamy); color: var(--color-text-primary); }
+.admin-nav-link.active {
+  background-color: var(--color-secondary-creamy); color: var(--color-primary);
+  font-weight: 500; border-left-color: var(--color-primary);
+}
+
+/* --- Sidebar Footer (Base Styles - Desktop) --- */
+.admin-sidebar-footer {
+  padding: var(--spacing-md) var(--spacing-lg); border-top: 1px solid var(--color-border);
+  display: flex; flex-direction: column; gap: var(--spacing-md); flex-shrink: 0;
+}
+.admin-sidebar-footer .site-link { padding: var(--spacing-sm) 0; display: inline-flex; align-items: center; gap: var(--spacing-sm); }
+.admin-sidebar-footer .site-link svg { font-size: 1.1em; width: 20px; text-align: center; }
+
+/* Button styles inside DESKTOP footer */
+.admin-sidebar-footer.desktop-only .button,
+.admin-sidebar-footer.desktop-only .theme-toggle-button,
+.admin-sidebar-footer.desktop-only .admin-logout-button {
+  width: 100%; display: flex; justify-content: center; align-items: center;
+  gap: var(--spacing-sm); padding: var(--spacing-sm);
+}
+.admin-sidebar-footer.desktop-only .theme-toggle-button {
+  background-color: var(--color-secondary-creamy); color: var(--color-text-secondary);
+  border: 1px solid var(--color-border); font-size: 1rem; border-radius: var(--border-radius);
+  cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.admin-sidebar-footer.desktop-only .theme-toggle-button:hover {
+  color: var(--color-primary); border-color: var(--color-primary);
+  background-color: color-mix(in srgb, var(--color-secondary-creamy) 80%, var(--color-primary) 10%);
+}
+.admin-sidebar-footer.desktop-only .theme-toggle-button svg { display: block; }
+
+/* --- Main Content Area (Base Styles - Desktop Offset) --- */
+.admin-content-area {
+  flex-grow: 1; overflow-y: auto; height: 100vh;
+  margin-left: 250px; /* Desktop offset */
+  width: calc(100% - 250px); /* Desktop width */
+  position: relative;
+}
+.admin-page-content { padding: var(--spacing-lg); }
+
+/* --- Default Visibility --- */
+/* Assume Desktop First: Show desktop, hide mobile toggle */
+/* Let specific media queries handle overrides */
+.desktop-only { display: block; }
+.admin-sidebar-footer.desktop-only { display: flex; }
+.mobile-only { display: none; } /* Hide mobile content by default */
+.admin-mobile-toggle { display: none; } /* Hide mobile toggle by default */
+/* NO display rules for mobile-menu-content or mobile-nav-overlay here */
+/* Their presence in DOM is controlled by React/Framer Motion state */
+
+
+/* === Desktop View (min-width: 769px) === */
+@media (min-width: 769px) {
+  /* Reaffirm Desktop Styles */
+  .admin-sidebar {
+    position: fixed; top: 0; left: 0; height: 100vh; z-index: 1000;
+    width: 250px; display: flex; flex-direction: column;
+    border-right: 1px solid var(--color-border);
+  }
+  .admin-content-area {
+    margin-left: 250px; width: calc(100% - 250px); height: 100vh;
+  }
+
+  /* Explicitly HIDE mobile elements */
+  .admin-mobile-toggle { display: none !important; }
+  .mobile-menu-content { display: none !important; }
+  .mobile-nav-overlay { display: none !important; }
+  .mobile-only { display: none !important; }
+
+  /* Explicitly SHOW desktop elements */
+  .desktop-only { display: block; }
+  .admin-sidebar-footer.desktop-only { display: flex; flex-direction: column; } /* Stack footer */
+  .admin-sidebar-footer.desktop-only .theme-toggle-button,
+  .admin-sidebar-footer.desktop-only .admin-logout-button { width: 100%; }
+}
+
+
+/* === Mobile View (max-width: 768px) === */
+@media (max-width: 768px) {
+  /* --- Hide desktop elements --- */
+  .desktop-only { display: none !important; }
+
+  /* Style Sidebar as Sticky Header */
+  .admin-sidebar {
+    position: sticky; /* Override fixed */
+    top: 0; width: 100%; height: 60px; /* Header height */
+    flex-direction: row; /* Horizontal */
+    border-right: none; border-bottom: 1px solid var(--color-border);
+    box-shadow: var(--box-shadow-sm); z-index: 1030; /* Above menu */
+  }
+  .admin-sidebar-header { width: 100%; padding: 0 var(--spacing-md); border-bottom: none; }
+  .admin-logo { font-size: 1.2rem; }
+
+  /* Show Mobile Toggle Button */
+  .admin-mobile-toggle {
+      display: block;
+      background: none; border: none; color: var(--color-text-primary);
+      font-size: 1.6rem; cursor: pointer; padding: var(--spacing-sm);
+      z-index: 1040; /* Above menu */
+   }
+
+  /* Mobile Menu Content Wrapper (Positioning/Styling ONLY) */
+  /* Styles applied WHEN Framer Motion renders it based on isMobileNavOpen */
+  .mobile-menu-content {
+    position: absolute; top: 60px; left: 0; width: 100%;
+    background-color: var(--color-surface); box-shadow: var(--box-shadow-md);
+    z-index: 1020; /* Below header */
+    border-top: 1px solid var(--color-border);
+    max-height: calc(100vh - 60px); overflow-y: auto; /* Allow scroll */
+    padding-bottom: var(--spacing-lg);
+    /* NO 'display' rule here - controlled by mounting */
+  }
+
+  /* Style Nav/Footer INSIDE the mobile wrapper */
+  /* Target elements with .mobile-only class WHEN they are inside the rendered wrapper */
+  .mobile-menu-content .mobile-only.admin-sidebar-nav,
+  .mobile-menu-content .mobile-only.admin-sidebar-footer {
+    display: block; /* Make sure they are visible when parent is rendered */
+    position: static; width: auto; box-shadow: none;
+    border-top: none; max-height: none; overflow-y: visible;
+  }
+  .mobile-menu-content .mobile-only.admin-sidebar-nav { padding: var(--spacing-md) 0; }
+
+  /* Style Mobile Footer (Side-by-side buttons) */
+  .mobile-menu-content .mobile-only.admin-sidebar-footer {
+    display: flex; /* Override block */
+    flex-direction: row; flex-wrap: wrap; justify-content: space-evenly;
+    align-items: center; padding: var(--spacing-md) var(--spacing-lg);
+    border-top: 1px solid var(--color-border); /* Separator */
+  }
+  .mobile-menu-content .mobile-only.admin-sidebar-footer .button,
+  .mobile-menu-content .mobile-only.admin-sidebar-footer .theme-toggle-button,
+  .mobile-menu-content .mobile-only.admin-sidebar-footer .admin-logout-button {
+      width: auto; flex-basis: 120px; flex-grow: 1; justify-content: center;
+      padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  .mobile-menu-content .mobile-only.admin-sidebar-footer .site-link { display: none; }
+
+  /* Mobile Overlay (Positioning ONLY) */
+  /* Presence controlled by Framer Motion */
+   .mobile-nav-overlay {
+       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+       background-color: rgba(0, 0, 0, 0.5); z-index: 1010; /* Below menu */
+       /* NO 'display' rule */
+    }
+
+  /* Mobile Content Area */
+  .admin-content-area { width: 100%; height: auto; margin-left: 0; } /* Reset margin */
+  .admin-page-content { padding: var(--spacing-md); }
+}

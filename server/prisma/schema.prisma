@@ -1,0 +1,421 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../src/generated/prisma" // Using default path node_modules/.prisma/client is often easier
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========= ENUMS =========
+
+enum Role {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+}
+
+enum LessonType {
+  VIDEO
+  TEXT
+  QUIZ
+  DPP
+  ASSIGNMENT
+  EXTERNAL_LINK
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  ALL_LEVELS
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum DoubtStatus {
+  OPEN
+  RESOLVED
+  CLOSED
+}
+
+// ADDED UserStatus based on previous step
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+// ========= MODELS =========
+
+// --- User and Profile ---
+model User {
+  id                 Int            @id @default(autoincrement())
+  email              String         @unique
+  name               String?
+  password           String         // Hashed password
+  role               Role           @default(STUDENT)
+  status             UserStatus     @default(ACTIVE) // ADDED
+  emailVerified      DateTime?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  // --- RELATIONS ---
+  profile            UserProfile?
+  coursesTeaching    Course[]       @relation("InstructorCourses")
+  enrollments        Enrollment[]
+  articlesAuthored   Article[]      @relation("AuthorArticles")
+  reviews            Review[]
+  quizSubmissions    QuizSubmission[]
+  dppSubmissions     DPPSubmission[]
+  doubtsPosted       Doubt[]        @relation("StudentDoubts")
+  doubtsAssigned     Doubt[]        @relation("InstructorAssignments")
+  doubtMessagesSent  DoubtMessage[] @relation("SenderMessages")
+  orders             Order[]
+  notifications      Notification[]
+  progress           UserProgress[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio         String?  @db.Text
+  avatarUrl   String?
+  headline    String?
+  websiteUrl  String?
+  socialLinks Json?    // { "linkedin": "url", "github": "url", "twitter": "url" }
+  experience  Json?    // Array of objects: [{ "role": "...", "company": "...", "duration": "..." }]
+  education   Json?    // Array of objects: [{ "degree": "...", "institution": "...", "year": "..." }]
+  projects    Json?    // Array of objects: [{ "name": "...", "description": "...", "link": "..." }]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("user_profiles")
+}
+
+
+// --- Courses, Modules, Lessons ---
+model Course {
+  id             Int            @id @default(autoincrement())
+  title          String
+  slug           String         @unique
+  description    String         @db.Text
+  thumbnailUrl   String?
+  price          Float          @default(0.0)
+  instructorId   Int
+  instructor     User           @relation("InstructorCourses", fields: [instructorId], references: [id])
+  categoryId     Int?
+  category       Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  published      Boolean        @default(false)
+  difficulty     Difficulty     @default(ALL_LEVELS)
+  language       String         @default("English")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  modules        Module[]
+  enrollments    Enrollment[]
+  reviews        Review[]
+  orders         Order[]
+  doubts         Doubt[]        @relation("CourseDoubts")
+
+  @@index([instructorId])
+  @@index([categoryId])
+  @@map("courses")
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  slug        String    @unique
+  description String?   @db.Text
+  courses     Course[]
+  articles    Article[]
+
+  @@map("categories")
+}
+
+model Module {
+  id          Int      @id @default(autoincrement())
+  title       String
+  order       Int
+  courseId    Int
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons     Lesson[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([courseId, order])
+  @@index([courseId])
+  @@map("modules")
+}
+
+model Lesson {
+  id               Int            @id @default(autoincrement())
+  title            String
+  slug             String?        @unique
+  content          String?        @db.Text
+  videoUrl         String?
+  videoDuration    Int?
+  type             LessonType     @default(TEXT)
+  order            Int
+  moduleId         Int
+  module           Module         @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  isFreePreview    Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  quiz             Quiz?
+  dpp              DPP?
+  attachments      Attachment[]
+  userProgress     UserProgress[]
+  doubts           Doubt[]        @relation("LessonDoubts")
+
+  @@unique([moduleId, order])
+  @@index([moduleId])
+  @@map("lessons")
+}
+
+
+// --- Learning Content Details ---
+model Quiz {
+  id              Int            @id @default(autoincrement())
+  title           String
+  lessonId        Int            @unique
+  lesson          Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  passingScore    Float?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  questions       Question[]
+  submissions     QuizSubmission[]
+
+  @@map("quizzes")
+}
+
+model Question {
+  id            Int            @id @default(autoincrement())
+  text          String         @db.Text
+  type          String
+  options       Json?
+  correctAnswer Json
+  explanation   String?        @db.Text
+  quizId        Int
+  quiz          Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([quizId])
+  @@map("questions")
+}
+
+model QuizSubmission {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId      Int
+  quiz        Quiz      @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  answers     Json
+  score       Float?
+  passed      Boolean?
+  submittedAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([quizId])
+  @@map("quiz_submissions")
+}
+
+model DPP {
+  id          Int            @id @default(autoincrement())
+  title       String
+  description String?        @db.Text
+  content     String?        @db.Text
+  lessonId    Int            @unique
+  lesson      Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  submissions DPPSubmission[]
+
+  @@map("dpps")
+}
+
+model DPPSubmission {
+  id               Int       @id @default(autoincrement())
+  userId           Int
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dppId            Int
+  dpp              DPP       @relation(fields: [dppId], references: [id], onDelete: Cascade)
+  submittedContent String?   @db.Text
+  submittedAt      DateTime  @default(now())
+  feedback         String?   @db.Text
+  grade            Float?
+
+  @@index([userId])
+  @@index([dppId])
+  @@map("dpp_submissions")
+}
+
+model Attachment {
+  id        Int      @id @default(autoincrement())
+  name      String
+  fileUrl   String
+  fileType  String?
+  lessonId  Int
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([lessonId])
+  @@map("attachments")
+}
+
+// --- User Activity & Engagement ---
+model Enrollment {
+  id              Int            @id @default(autoincrement())
+  userId          Int
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId        Int
+  course          Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrolledAt      DateTime       @default(now())
+  completedAt     DateTime?
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+  @@map("enrollments")
+}
+
+model UserProgress {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId    Int
+  lesson      Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+  @@index([lessonId])
+  @@map("user_progress")
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  rating    Int
+  comment   String?  @db.Text
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId  Int
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+  @@map("reviews")
+}
+
+
+// --- Articles ---
+model Article {
+  id          Int       @id @default(autoincrement())
+  title       String
+  slug        String    @unique
+  content     String    @db.Text
+  excerpt     String?   @db.Text
+  thumbnailUrl String?
+  authorId    Int
+  author      User      @relation("AuthorArticles", fields: [authorId], references: [id])
+  categoryId  Int?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([authorId])
+  @@index([categoryId])
+  @@map("articles")
+}
+
+// --- Doubts & Communication ---
+model Doubt {
+  id                   Int            @id @default(autoincrement())
+  title                String
+  description          String         @db.Text
+  userId               Int
+  user                 User           @relation("StudentDoubts", fields: [userId], references: [id], onDelete: Cascade)
+  courseId             Int?
+  course               Course?        @relation("CourseDoubts", fields: [courseId], references: [id], onDelete: SetNull)
+  lessonId             Int?
+  lesson               Lesson?        @relation("LessonDoubts", fields: [lessonId], references: [id], onDelete: SetNull)
+  status               DoubtStatus    @default(OPEN)
+  assignedInstructorId Int?
+  assignedInstructor   User?          @relation("InstructorAssignments", fields: [assignedInstructorId], references: [id], onDelete: SetNull)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  messages             DoubtMessage[]
+
+  @@index([userId])
+  @@index([courseId])
+  @@index([lessonId])
+  @@index([assignedInstructorId])
+  @@map("doubts")
+}
+
+model DoubtMessage {
+  id        Int      @id @default(autoincrement())
+  doubtId   Int
+  doubt     Doubt    @relation(fields: [doubtId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User     @relation("SenderMessages", fields: [userId], references: [id])
+  content   String   @db.Text
+  sentAt    DateTime @default(now())
+
+  @@index([doubtId])
+  @@index([userId])
+  @@map("doubt_messages")
+}
+
+
+// --- Payments & Orders ---
+model Order {
+  id                Int         @id @default(autoincrement())
+  userId            Int
+  user              User        @relation(fields: [userId], references: [id])
+  courseId          Int
+  course            Course      @relation(fields: [courseId], references: [id])
+  amount            Float
+  status            OrderStatus @default(PENDING)
+  paymentGateway    String?
+  paymentIntentId   String?     @unique
+  paymentMethod     String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([courseId])
+  @@map("orders")
+}
+
+
+// --- Site Features ---
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("notifications")
+}

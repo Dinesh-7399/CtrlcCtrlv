@@ -1,0 +1,282 @@
+[
+  {
+    "_id": "article1",
+    "slug": "understanding-react-hooks",
+    "title": "Understanding React Hooks: useState, useEffect, and Beyond",
+    "excerpt": "This article discusses understanding react hooks in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-16",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 7
+  },
+  {
+    "_id": "article2",
+    "slug": "javascript-closure-deep-dive",
+    "title": "JavaScript Closures: A Deep Dive",
+    "excerpt": "This article discusses javascript closures in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-07",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 5
+  },
+  {
+    "_id": "article3",
+    "slug": "responsive-design-principles",
+    "title": "Responsive Design Principles for Modern Web Apps",
+    "excerpt": "This article discusses responsive design principles for modern web apps in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-25",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 7
+  },
+  {
+    "_id": "article4",
+    "slug": "building-restful-apis",
+    "title": "Building RESTful APIs with Express.js",
+    "excerpt": "This article discusses building restful apis with express.js in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-17",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 6
+  },
+  {
+    "_id": "article5",
+    "slug": "nextjs-vs-gatsby",
+    "title": "Next.js vs Gatsby: Choosing the Right React Framework",
+    "excerpt": "This article discusses next.js vs gatsby in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-21",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 7
+  },
+  {
+    "_id": "article6",
+    "slug": "mastering-typescript",
+    "title": "Mastering TypeScript for Large Scale Applications",
+    "excerpt": "This article discusses mastering typescript for large scale applications in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-02",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 5
+  },
+  {
+    "_id": "article7",
+    "slug": "authentication-strategies",
+    "title": "Authentication Strategies in Web Development",
+    "excerpt": "This article discusses authentication strategies in web development in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-20",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 7
+  },
+  {
+    "_id": "article8",
+    "slug": "deploying-with-vercel",
+    "title": "Deploying Your Web App Easily with Vercel",
+    "excerpt": "This article discusses deploying your web app easily with vercel in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-19",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 7
+  },
+  {
+    "_id": "article9",
+    "slug": "css-in-js",
+    "title": "CSS-in-JS: Styled Components and Emotion",
+    "excerpt": "This article discusses css-in-js in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-04",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 7
+  },
+  {
+    "_id": "article10",
+    "slug": "state-management",
+    "title": "State Management in React: Redux, Context API, and Recoil",
+    "excerpt": "This article discusses state management in react in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-07",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 9
+  },
+  {
+    "_id": "article11",
+    "slug": "unit-testing",
+    "title": "Unit Testing Your Applications: Jest and React Testing Library",
+    "excerpt": "This article discusses unit testing your applications in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-16",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 10
+  },
+  {
+    "_id": "article12",
+    "slug": "graphql-basics",
+    "title": "GraphQL Basics: Queries, Mutations, and Subscriptions",
+    "excerpt": "This article discusses graphql basics in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-20",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 10
+  },
+  {
+    "_id": "article13",
+    "slug": "html5-new-features",
+    "title": "HTML5 New Features Every Developer Should Know",
+    "excerpt": "This article discusses html5 new features every developer should know in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-21",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 9
+  },
+  {
+    "_id": "article14",
+    "slug": "tailwind-css",
+    "title": "Why Tailwind CSS is a Game-Changer for Frontend Developers",
+    "excerpt": "This article discusses why tailwind css is a game-changer for frontend developers in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-03",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 6
+  },
+  {
+    "_id": "article15",
+    "slug": "optimizing-performance",
+    "title": "Optimizing React App Performance: Tips and Tricks",
+    "excerpt": "This article discusses optimizing react app performance in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-08",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 9
+  },
+  {
+    "_id": "article16",
+    "slug": "web-sockets",
+    "title": "Getting Started with WebSockets for Real-time Apps",
+    "excerpt": "This article discusses getting started with websockets for real-time apps in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-19",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 5
+  },
+  {
+    "_id": "article17",
+    "slug": "database-design",
+    "title": "Database Design Best Practices",
+    "excerpt": "This article discusses database design best practices in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-18",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 7
+  },
+  {
+    "_id": "article18",
+    "slug": "security-best-practices",
+    "title": "Web Application Security Best Practices",
+    "excerpt": "This article discusses web application security best practices in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-30",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 6
+  },
+  {
+    "_id": "article19",
+    "slug": "animation-libraries",
+    "title": "Top Animation Libraries for Stunning Web Interfaces",
+    "excerpt": "This article discusses top animation libraries for stunning web interfaces in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-10",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 7
+  },
+  {
+    "_id": "article20",
+    "slug": "seo-best-practices",
+    "title": "SEO Best Practices for Modern Websites",
+    "excerpt": "This article discusses seo best practices for modern websites in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-12",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 10
+  },
+  {
+    "_id": "article21",
+    "slug": "building-pwas",
+    "title": "Building Progressive Web Apps (PWAs) Step-by-Step",
+    "excerpt": "This article discusses building progressive web apps (pwas) step-by-step in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-23",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 7
+  },
+  {
+    "_id": "article22",
+    "slug": "git-workflows",
+    "title": "Effective Git Workflows for Teams",
+    "excerpt": "This article discusses effective git workflows for teams in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-12",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 10
+  },
+  {
+    "_id": "article23",
+    "slug": "introduction-to-docker",
+    "title": "Introduction to Docker for Beginners",
+    "excerpt": "This article discusses introduction to docker for beginners in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-24",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 5
+  },
+  {
+    "_id": "article24",
+    "slug": "clean-code",
+    "title": "Writing Clean Code: Principles and Best Practices",
+    "excerpt": "This article discusses writing clean code in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-17",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 9
+  },
+  {
+    "_id": "article25",
+    "slug": "design-patterns",
+    "title": "Top 5 Design Patterns Every Developer Should Know",
+    "excerpt": "This article discusses top 5 design patterns every developer should know in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-23",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 5
+  },
+  {
+    "_id": "article26",
+    "slug": "headless-cms",
+    "title": "Using a Headless CMS for Flexibility and Scalability",
+    "excerpt": "This article discusses using a headless cms for flexibility and scalability in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-25",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 10
+  },
+  {
+    "_id": "article27",
+    "slug": "mobile-first-design",
+    "title": "Why Mobile-First Design Matters More Than Ever",
+    "excerpt": "This article discusses why mobile-first design matters more than ever in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-25",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 7
+  },
+  {
+    "_id": "article28",
+    "slug": "introduction-to-ai",
+    "title": "Introduction to AI and Machine Learning for Developers",
+    "excerpt": "This article discusses introduction to ai and machine learning for developers in depth and provides useful examples.",
+    "author": "Admin",
+    "publishDate": "2024-04-16",
+    "imageUrl": "https://github.com/HuXn-WebDev/React-Native-With-Projects/raw/main/thumb.png",
+    "readTime": 9
+  }
+]

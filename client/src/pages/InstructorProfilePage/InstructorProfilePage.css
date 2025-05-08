@@ -1,0 +1,337 @@
+/* client/src/pages/InstructorProfilePage/InstructorProfilePage.css */
+
+/* --- Page Container & Base --- */
+.instructor-profile-page {
+  max-width: 900px;
+  margin: var(--spacing-lg) auto;
+  padding: var(--spacing-md);
+}
+
+.page-container { /* Ensure consistent padding if used globally */
+  padding: var(--spacing-lg);
+}
+
+.back-button {
+  margin-bottom: var(--spacing-lg);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+/* --- Status Messages --- */
+.profile-status {
+    text-align: center;
+    padding: var(--spacing-xl) var(--spacing-md);
+    color: var(--color-text-secondary);
+    font-size: 1.1rem;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column; /* Stack text and button */
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-lg);
+}
+.profile-status.error-message h2 {
+    color: var(--color-error);
+}
+.profile-status .button-icon {
+    margin-right: var(--spacing-xs);
+}
+
+
+/* --- Card Style for Sections & Header --- */
+.card-style {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg); /* Default padding */
+  box-shadow: var(--box-shadow-sm);
+  margin-bottom: var(--spacing-xl);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+@media (min-width: 768px) {
+  .card-style {
+    padding: var(--spacing-xl); /* More padding on larger screens */
+  }
+}
+
+
+/* --- Profile Header --- */
+.profile-header {
+  display: flex;
+  flex-direction: column; /* Stack on mobile */
+  align-items: center; /* Center items on mobile */
+  text-align: center; /* Center text on mobile */
+  gap: var(--spacing-md);
+}
+
+.profile-avatar {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--color-primary); /* Highlight with primary color */
+  flex-shrink: 0;
+  background-color: var(--color-secondary-creamy); /* Placeholder */
+}
+
+.profile-header-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center text block */
+}
+
+.profile-name {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.profile-title {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.profile-contact {
+  display: flex;
+  flex-wrap: wrap; /* Allow wrapping */
+  justify-content: center; /* Center links */
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.contact-link {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius);
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.contact-link:hover {
+  color: var(--color-primary);
+  background-color: var(--color-secondary-creamy);
+}
+
+.contact-link svg {
+  font-size: 1.1em; /* Adjust icon size */
+}
+
+.contact-link.social-link span {
+    display: none; /* Hide text for social icons by default */
+}
+.contact-link.social-link {
+    font-size: 1.3rem; /* Make social icons larger */
+    padding: var(--spacing-xs);
+}
+
+
+/* --- Main Content Area --- */
+.profile-main-content {
+  margin-top: var(--spacing-xl);
+}
+
+.profile-section {
+  /* Uses .card-style now */
+}
+
+.section-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.section-title .section-title-icon {
+  color: var(--color-primary);
+  font-size: 1.1em;
+  margin-top: -2px;
+  flex-shrink: 0;
+}
+
+/* About Section */
+.bio-text {
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+    white-space: pre-wrap; /* Respect line breaks in bio */
+}
+
+/* Experience & Education Lists */
+.item-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.list-item {
+    display: flex;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) 0;
+    border-bottom: 1px dashed var(--color-border);
+}
+.list-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0; /* Remove padding from last item */
+}
+.list-item:first-child {
+    padding-top: 0; /* Remove padding from first item */
+}
+
+
+.list-item-icon {
+    color: var(--color-primary);
+    font-size: 1.5rem; /* Larger icon */
+    margin-top: 4px; /* Align icon better */
+    flex-shrink: 0;
+    opacity: 0.8;
+}
+
+.list-item .item-title {
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin: 0 0 2px 0; /* Small margin below title */
+}
+
+.list-item .item-subtitle {
+    font-size: 0.95rem;
+    color: var(--color-text-secondary);
+    margin: 0 0 4px 0; /* Small margin below subtitle */
+}
+
+.list-item .item-duration {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    opacity: 0.8;
+    margin: 0;
+}
+
+/* Projects & Courses Grids */
+.item-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Mobile default */
+    gap: var(--spacing-md);
+}
+
+@media (min-width: 600px) {
+    .item-grid {
+        grid-template-columns: repeat(2, 1fr); /* Two columns */
+    }
+}
+@media (min-width: 900px) {
+    .projects-grid { /* Example: keep projects 2-col */
+        /* grid-template-columns: repeat(2, 1fr); */
+    }
+    .courses-grid { /* Example: allow 3 columns for courses */
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+
+.item-card {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-background); /* Slightly different bg */
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    min-height: 120px; /* Ensure minimum card height */
+}
+
+.item-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--box-shadow-md);
+    border-color: var(--color-primary);
+}
+
+.item-card .item-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-primary); /* Use primary color for title */
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.item-card .item-description {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    margin-bottom: var(--spacing-md);
+    flex-grow: 1; /* Push link indicator down */
+}
+
+.card-link-indicator {
+    font-size: 0.85rem;
+    color: var(--color-primary);
+    font-weight: 500;
+    margin-top: auto; /* Pushes to bottom */
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+.card-link-indicator svg {
+    opacity: 0.8;
+}
+
+
+/* --- Responsive Adjustments --- */
+
+@media (min-width: 768px) {
+  .profile-header {
+    flex-direction: row; /* Side-by-side on desktop */
+    text-align: left; /* Align text left */
+    align-items: flex-start; /* Align items to top */
+  }
+  .profile-header-info {
+    align-items: flex-start; /* Align text left */
+  }
+   .profile-contact {
+     justify-content: flex-start; /* Align links left */
+   }
+}
+
+@media (max-width: 480px) {
+  .instructor-profile-page {
+    padding: var(--spacing-sm);
+  }
+  .card-style {
+      padding: var(--spacing-md); /* Less padding in cards */
+  }
+  .profile-header {
+      padding: var(--spacing-md);
+      gap: var(--spacing-sm);
+  }
+  .profile-avatar {
+      width: 100px;
+      height: 100px;
+  }
+  .profile-name {
+      font-size: 1.5rem;
+  }
+   .section-title {
+       font-size: 1.2rem;
+   }
+   .list-item {
+       gap: var(--spacing-sm);
+   }
+   .list-item-icon {
+       font-size: 1.3rem;
+       margin-top: 2px;
+   }
+   .item-grid {
+       gap: var(--spacing-sm);
+   }
+}

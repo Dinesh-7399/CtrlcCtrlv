@@ -1,0 +1,32 @@
+/* client/src/components/common/Card.css */
+
+.card {
+  background-color: var(--color-surface); /* Typically white */
+  border: 1px solid var(--color-border); /* Subtle border */
+  border-radius: var(--border-radius); /* Use theme's border radius */
+  box-shadow: var(--box-shadow-sm); /* Subtle shadow */
+  transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out; /* Add transition for hover effect */
+  /*
+     Note: No default padding is added here. This makes the card flexible.
+     Padding should be handled by the content *inside* the card
+     (e.g., .course-card-content) or by adding a specific padding class
+     via props if needed in the component implementation.
+     Responsiveness comes from the parent layout (e.g., CSS Grid)
+     and styling applied to the specific card content.
+  */
+}
+
+/* Optional: Add a subtle hover effect */
+.card:hover {
+   box-shadow: var(--box-shadow-md); /* Slightly larger shadow on hover */
+   /* Be mindful of scale transforms if cards are tightly packed in a grid */
+   /* transform: scale(1.02); */ /* Example: subtle scale */
+}
+
+/* Add a focus-within state for keyboard navigation if card contains links/buttons */
+.card:focus-within {
+    box-shadow: var(--box-shadow-md); /* Similar highlight as hover */
+    /* Optional: Add focus ring if needed, though often applied to focusable element inside */
+    /* outline: 2px solid var(--color-primary); */
+    /* outline-offset: 2px; */
+}

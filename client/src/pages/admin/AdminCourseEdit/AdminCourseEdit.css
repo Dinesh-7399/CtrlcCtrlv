@@ -1,0 +1,330 @@
+/* src/pages/admin/AdminCourseEdit/AdminCourseEdit.css */
+
+/* Container for the edit form page */
+.admin-edit-form-container {
+  /* Using .admin-page-container for base padding (defined elsewhere) */
+  max-width: 1100px; /* Allow more width for two columns + content */
+  margin: 0 auto; /* Center the container */
+}
+
+/* Card holding the main form */
+.admin-form-card {
+  padding: var(--spacing-lg);
+  margin-top: var(--spacing-md); /* Space below header */
+  /* Inherits background, border etc. from Card component or global .card styles */
+}
+
+/* --- Two-Column Form Grid --- */
+.form-grid-container {
+  display: grid;
+  /* Creates two columns; they stack below ~650px */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-xl); /* Gap between columns */
+  margin-bottom: var(--spacing-lg); /* Space before form actions */
+}
+
+.form-grid-column {
+  /* Add vertical space between direct children within a column */
+  & > * + * {
+    margin-top: var(--spacing-lg);
+  }
+}
+
+
+/* --- Basic Form Element Styling --- */
+/* Style for labels */
+.admin-form-card label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+}
+
+/* Style for text inputs, textareas, selects */
+.admin-form-card input[type="text"],
+.admin-form-card input[type="number"],
+.admin-form-card input[type="url"],
+.admin-form-card textarea,
+.admin-form-card select {
+  display: block;
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  line-height: 1.5;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-form-card input:focus,
+.admin-form-card textarea:focus,
+.admin-form-card select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent); /* Focus ring */
+}
+
+/* Specific styling for textarea */
+.admin-form-card textarea {
+  resize: vertical;
+  min-height: 150px; /* Default height */
+  /* Takes up available height in flex/grid if needed */
+  flex-grow: 1;
+}
+/* In the second column, make textarea potentially taller */
+.form-grid-column:nth-child(2) textarea {
+    min-height: 300px; /* Example: make description taller */
+}
+
+/* --- Thumbnail Preview --- */
+.thumbnail-preview {
+  margin-top: var(--spacing-sm); /* Reduced margin */
+  border: 1px dashed var(--color-border);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius);
+  background-color: color-mix(in srgb, var(--color-border) 10%, transparent);
+}
+
+.thumbnail-preview p {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xs);
+  font-weight: 500;
+}
+
+.thumbnail-preview img {
+  max-width: 100%; /* Allow image to scale down */
+  width: 200px; /* Max width */
+  height: auto; /* Maintain aspect ratio */
+  max-height: 120px;
+  display: block;
+  border-radius: calc(var(--border-radius) / 2);
+  border: 1px solid var(--color-border);
+  object-fit: contain; /* Show whole image */
+}
+
+/* --- Form Actions (Save/Cancel Buttons) --- */
+.form-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+  flex-wrap: wrap;
+}
+
+.form-actions .button .button-icon {
+    margin-right: var(--spacing-xs);
+}
+
+/* --- Status Messages (Success/Error after Save) --- */
+.status-message {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.status-message.success {
+  background-color: color-mix(in srgb, var(--color-success, #198754) 15%, transparent);
+  color: color-mix(in srgb, var(--color-success, #198754) 100%, black 10%);
+  border: 1px solid color-mix(in srgb, var(--color-success, #198754) 30%, transparent);
+}
+body.dark-theme .status-message.success {
+    color: color-mix(in srgb, var(--color-success, #198754) 100%, white 20%);
+}
+
+.status-message.error {
+  background-color: color-mix(in srgb, var(--color-error, #dc3545) 15%, transparent);
+  color: color-mix(in srgb, var(--color-error, #dc3545) 100%, black 10%);
+  border: 1px solid color-mix(in srgb, var(--color-error, #dc3545) 30%, transparent);
+}
+body.dark-theme .status-message.error {
+    color: color-mix(in srgb, var(--color-error, #dc3545) 100%, white 20%);
+}
+
+
+/* --- Course Content Section --- */
+.admin-content-card {
+  margin-top: var(--spacing-xl); /* Space between cards */
+  padding: var(--spacing-lg);
+  /* Inherits background/border from Card component */
+}
+
+.content-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+  flex-wrap: wrap; /* Allow button to wrap */
+  gap: var(--spacing-md);
+}
+
+.content-card-header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.content-card-header .button .button-icon { /* If using Button component */
+    margin-right: var(--spacing-xs);
+}
+
+.module-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg); /* Space between modules */
+}
+
+.module-item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background-color: var(--color-surface); /* Use surface color */
+  box-shadow: var(--box-shadow-sm);
+  overflow: hidden; /* Contain background */
+}
+
+.module-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md); /* Slightly less padding */
+  background-color: color-mix(in srgb, var(--color-secondary-creamy) 60%, transparent); /* Module header bg */
+  border-bottom: 1px solid var(--color-border);
+  flex-wrap: wrap; /* Allow actions to wrap */
+  gap: var(--spacing-sm);
+}
+body.dark-theme .module-header {
+     background-color: color-mix(in srgb, var(--color-secondary-creamy) 40%, transparent);
+}
+
+.module-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  flex-grow: 1; /* Allow title to take space */
+  padding-right: var(--spacing-md); /* Space before actions */
+}
+
+.module-actions,
+.lesson-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  flex-shrink: 0; /* Prevent action buttons shrinking */
+}
+
+/* Use icon button styles from AdminCourseList.css or define here */
+.module-actions .button,
+.lesson-actions .button {
+    padding: var(--spacing-xs);
+    line-height: 1;
+    background-color: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    box-shadow: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%; /* Make icon buttons circular */
+    width: 30px;
+    height: 30px;
+}
+.module-actions .button:hover,
+.lesson-actions .button:hover {
+    background-color: var(--color-secondary-creamy);
+    color: var(--color-primary);
+}
+.module-actions .button svg,
+.lesson-actions .button svg {
+    font-size: 0.9rem; /* Adjust icon size */
+}
+.module-actions .button[color="danger"],
+.lesson-actions .button[color="danger"] {
+    color: var(--color-error);
+}
+.module-actions .button[color="danger"]:hover,
+.lesson-actions .button[color="danger"]:hover {
+    background-color: color-mix(in srgb, var(--color-error) 15%, transparent);
+    color: var(--color-error);
+}
+
+
+.lesson-list {
+  list-style: none;
+  padding: var(--spacing-md); /* Add padding around lessons */
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm); /* Space between lessons */
+}
+
+.lesson-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px dashed var(--color-border);
+}
+.lesson-item:last-child {
+    border-bottom: none;
+}
+
+.lesson-title {
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+  padding-right: var(--spacing-md); /* Space before actions */
+  flex-grow: 1;
+}
+
+.no-lessons,
+.admin-empty-message /* Reusing style from AdminCourseList */ {
+  font-style: italic;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  padding: var(--spacing-sm) 0;
+  text-align: center;
+}
+
+
+/* --- Responsiveness --- */
+@media (max-width: 768px) {
+  .form-grid-container {
+    grid-template-columns: 1fr; /* Stack columns */
+    gap: 0; /* Remove gap, rely on element margins */
+  }
+
+  /* Add margin back between stacked columns elements */
+  .form-grid-column > * + * {
+     margin-top: var(--spacing-lg);
+  }
+  /* Ensure textarea doesn't get excessively tall */
+   .form-grid-column:nth-child(2) textarea {
+     min-height: 200px;
+   }
+
+  .form-actions {
+      justify-content: center; /* Center buttons on small screens */
+  }
+
+  .module-header, .lesson-item {
+      flex-wrap: wrap; /* Allow wrapping */
+  }
+   .module-title, .lesson-title {
+      padding-right: 0; /* Remove padding */
+      margin-bottom: var(--spacing-sm); /* Add space below when actions wrap */
+      width: 100%; /* Take full width */
+   }
+    .module-actions, .lesson-actions {
+       width: 100%;
+       justify-content: flex-end; /* Align actions right */
+    }
+}

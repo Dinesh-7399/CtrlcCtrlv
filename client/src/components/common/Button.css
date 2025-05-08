@@ -1,0 +1,93 @@
+/* client/src/components/common/Button.css */
+
+.btn {
+  display: inline-block; /* Allows button to sit inline but take padding/margin */
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+  text-decoration: none;
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none; /* Prevent text selection */
+  border: 1px solid transparent;
+  padding: var(--spacing-sm) var(--spacing-md); /* Default medium size padding */
+  font-size: 1rem; /* Default medium size font */
+  border-radius: var(--border-radius);
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+              border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+/* Disabled state */
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* --- Variants --- */
+/* Primary button style */
+.btn-primary {
+  color: var(--color-text-on-primary);
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.btn-primary:hover:not(:disabled) {
+  /* --- MODIFIED: Use the correct dark VARIANT variable --- */
+  background-color: var(--color-primary-dark-variant); /* This changes based on theme */
+  border-color: var(--color-primary-dark-variant);     /* This changes based on theme */
+}
+
+/* Secondary button style */
+.btn-secondary {
+  color: var(--color-text-primary);
+  background-color: var(--color-secondary-creamy);
+  border-color: var(--color-secondary-creamy);
+}
+.btn-secondary:hover:not(:disabled) {
+  /* --- MODIFIED: Use theme variables for hover --- */
+  color: var(--color-text-primary); /* Keep original text color */
+  background-color: var(--color-border); /* Use border color for subtle hover background */
+  border-color: var(--color-border);     /* Use border color for subtle hover border */
+  /* --- End Modification --- */
+}
+
+/* Outline button style */
+.btn-outline {
+  color: var(--color-primary);
+  background-color: transparent;
+  border-color: var(--color-primary);
+}
+.btn-outline:hover:not(:disabled) {
+  color: var(--color-text-on-primary);
+  background-color: var(--color-primary);
+  /* Keep border color same as background on hover for outline */
+  border-color: var(--color-primary);
+}
+
+/* --- Sizes --- */
+/* Small button size */
+.btn-small {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: 0.875rem;
+}
+
+/* Large button size */
+.btn-large {
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: 1.125rem;
+}
+
+/* --- Layout --- */
+/* Full width button */
+.btn-fullwidth {
+  display: block; /* Change display to block */
+  width: 100%;   /* Take full width of container */
+}
+
+/* --- Focus state (Important for accessibility) --- */
+.btn:focus-visible {
+    outline: 2px solid var(--color-primary); /* Use theme primary color */
+    outline-offset: 2px;
+    /* Removed potentially problematic box-shadow focus */
+}
+/* Adjust focus for specific variants if needed */
+/* .btn-primary:focus-visible { ... } */

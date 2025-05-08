@@ -1,0 +1,275 @@
+/* client/src/pages/DashboardPage.css */
+
+/* Main container for the dashboard content */
+.dashboard-container {
+  padding: var(--spacing-lg); /* Default padding */
+}
+
+/* Styling for the main welcome heading */
+.dashboard-welcome {
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+  font-size: 1.8rem; /* Default size */
+  font-weight: 600;
+}
+
+/* Styling for the subtitle text below the welcome message */
+.dashboard-subtitle {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xl); /* Default margin */
+  font-size: 1.1rem; /* Default size */
+  line-height: 1.5; /* Added line-height */
+}
+
+/* Styling for distinct sections within the dashboard */
+.dashboard-section {
+  margin-bottom: var(--spacing-xl); /* Default margin */
+}
+
+/* Styling for section titles (e.g., "My Courses") */
+.section-title {
+  font-size: 1.5rem; /* Default size */
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-md);
+  font-weight: 500;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* Optional: Style for the icon within the section title */
+.section-title-icon {
+  /* color: var(--color-primary); */
+  font-size: 1.3rem; /* Adjust size if needed */
+  flex-shrink: 0; /* Prevent icon shrinking */
+}
+
+/* Responsive grid layout for displaying course cards */
+.courses-grid {
+  display: grid;
+  /* This is already responsive! */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-lg); /* Default gap */
+}
+
+/* Specific styles applied to Card components when used on the dashboard */
+/* Link wrapper for the card */
+.course-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  height: 100%;
+  border-radius: var(--border-radius); /* Apply radius to link for focus */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.course-card-link:hover,
+.course-card-link:focus {
+   transform: translateY(-3px);
+   box-shadow: var(--box-shadow-md);
+}
+/* Ensure focus outline is visible */
+.course-card-link:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+
+/* The card itself */
+.course-card {
+  overflow: hidden;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-surface); /* Ensure card has background */
+  border: 1px solid var(--color-border);  /* Add border */
+  border-radius: var(--border-radius);   /* Apply radius to card itself */
+  height: 100%; /* Ensure card fills link height */
+}
+
+/* Styling for the course thumbnail image */
+.course-card-thumbnail {
+  width: 100%;
+  height: 170px; /* Default height */
+  object-fit: cover;
+  display: block;
+  background-color: var(--color-secondary-creamy);
+  border-bottom: 1px solid var(--color-border); /* Separate img from content */
+  /* Inherit top radius from card */
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+}
+
+/* Container for the text content below the thumbnail */
+.course-card-content {
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; /* Allows content to push button down */
+}
+
+/* Styling for the course title within the card */
+.course-card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-sm);
+  line-height: 1.4; /* Added line-height */
+  /* Removed flex-grow here, parent handles pushing button down */
+}
+
+/* Container for the progress bar */
+.progress-bar-container {
+  background-color: var(--color-secondary-creamy);
+  border-radius: 10px;
+  height: 8px;
+  width: 100%;
+  margin-top: var(--spacing-sm); /* Space above progress bar */
+  margin-bottom: var(--spacing-xs);
+  overflow: hidden;
+}
+
+/* The actual filled part of the progress bar */
+.progress-bar-fill {
+  background-color: var(--color-primary);
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.3s ease-in-out;
+}
+
+/* Text displaying the progress percentage */
+.progress-percentage {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-md);
+  display: block;
+}
+
+/* Styling for the button at the bottom of the course card */
+.course-card-button {
+  margin-top: auto; /* Pushes button to bottom */
+  /* width: 100%; Removed, let button size naturally */
+  align-self: flex-start; /* Align button to left */
+  margin-left: var(--spacing-md); /* Add margin to align with content padding */
+  margin-right: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  display: inline-flex; /* Use inline-flex for button content */
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  /* Apply shared button styles (padding, background, etc.) */
+  /* e.g., padding: var(--spacing-sm) var(--spacing-md); */
+}
+
+/* Optional: Style for icons inside buttons */
+.button-icon {
+  /* font-size: 1.1em; */
+}
+
+/* Styling for the message shown when no courses are enrolled */
+.no-courses-message {
+  padding: var(--spacing-lg); /* Default padding */
+  text-align: center;
+  background-color: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--border-radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md); /* Default gap */
+}
+.no-courses-message p {
+  margin-bottom: 0;
+  color: var(--color-text-secondary);
+  max-width: 400px; /* Limit text width */
+}
+.no-courses-icon {
+  font-size: 2rem; /* Default size */
+  color: var(--color-primary);
+}
+.no-courses-message .button-icon {
+  margin-right: var(--spacing-xs); /* Keep specific icon margin */
+}
+
+/* Container for Quick Action buttons */
+.quick-actions-container {
+  display: flex;
+  flex-wrap: wrap; /* Already responsive */
+  gap: var(--spacing-md); /* Default gap */
+}
+
+/* Ensure icons in quick action buttons are aligned */
+.quick-actions-container .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  /* Apply shared button styles */
+}
+
+
+/* --- Responsive Adjustments --- */
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: var(--spacing-md); /* Reduced padding */
+  }
+
+  .dashboard-welcome {
+      font-size: 1.6rem; /* Slightly smaller */
+  }
+  .dashboard-subtitle {
+      font-size: 1rem; /* Slightly smaller */
+      margin-bottom: var(--spacing-lg); /* Reduced margin */
+  }
+  .dashboard-section {
+      margin-bottom: var(--spacing-lg); /* Reduced margin */
+  }
+  .section-title {
+      font-size: 1.3rem; /* Slightly smaller */
+  }
+  .courses-grid {
+      gap: var(--spacing-md); /* Reduced gap */
+  }
+  .quick-actions-container {
+      gap: var(--spacing-sm); /* Reduced gap */
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-container {
+    padding: var(--spacing-sm); /* Further reduced padding */
+  }
+  .dashboard-welcome {
+      font-size: 1.4rem; /* Smaller */
+  }
+  .dashboard-subtitle {
+      margin-bottom: var(--spacing-md); /* Further reduced margin */
+  }
+  .dashboard-section {
+      margin-bottom: var(--spacing-md); /* Further reduced margin */
+  }
+  .section-title {
+      font-size: 1.2rem; /* Smaller */
+  }
+
+  /* Adjust minmax slightly if cards feel too wide on smallest screens */
+  /* .courses-grid {
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  } */
+
+  .course-card-thumbnail {
+      height: 150px; /* Slightly reduced thumbnail height */
+  }
+  .course-card-title {
+      font-size: 1rem; /* Slightly smaller card title */
+  }
+
+  .no-courses-message {
+      padding: var(--spacing-md); /* Reduced padding */
+      gap: var(--spacing-sm); /* Reduced gap */
+  }
+   .no-courses-icon {
+       font-size: 1.8rem; /* Slightly smaller icon */
+   }
+}

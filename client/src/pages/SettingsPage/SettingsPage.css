@@ -1,0 +1,387 @@
+/* client/src/pages/SettingsPage/SettingsPage.css */
+
+/* Add missing color variable if needed */
+:root {
+  --color-error-dark: #a71d2a; /* Example darker red for hover */
+  /* Ensure all other variables like --color-surface, --color-border, etc. exist */
+  /* Define spacing variables if they don't exist globally */
+  /* --spacing-xs: 4px; */
+  /* --spacing-sm: 8px; */
+  /* --spacing-md: 12px; */
+  /* --spacing-lg: 16px; */
+  /* --spacing-xl: 24px; */
+}
+
+/* --- Page Container --- */
+.settings-page-container {
+  max-width: 900px; /* Adjust as needed */
+  margin: var(--spacing-lg) auto;
+  /* Consistent padding on the container */
+  padding: var(--spacing-lg);
+}
+
+.settings-page-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--spacing-md);
+  text-align: center;
+}
+
+/* Loading/Error placeholder */
+.settings-status {
+    text-align: center;
+    padding: var(--spacing-xl) var(--spacing-md);
+    color: var(--color-text-secondary);
+    font-size: 1.1rem;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* --- General Section Styling (Card Style) --- */
+.settings-section { /* Alias for card-style */
+  background-color: var(--color-surface);
+  /* ** CORRECTED PADDING ** Use a larger value for internal spacing */
+  padding: var(--spacing-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-sm);
+  margin-bottom: var(--spacing-xl); /* Space between sections */
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.settings-section-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+.settings-section-title .section-title-icon {
+  color: var(--color-primary);
+  font-size: 1.2em;
+  flex-shrink: 0;
+  margin-top: -2px;
+}
+
+/* Spinner next to notification title */
+.title-spinner {
+    font-size: 0.8em !important;
+    opacity: 0.8;
+    margin-left: var(--spacing-sm);
+    animation: spin 1s linear infinite;
+}
+
+/* --- General Form Styling --- */
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.settings-form h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: var(--spacing-sm) 0 var(--spacing-xs) 0;
+}
+
+/* Style assumption for the custom Input component's wrapper */
+.settings-form .input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+.settings-form label {
+    font-weight: 500;
+    color: var(--color-text-primary);
+    font-size: 0.95rem;
+}
+/* Reminder: Ensure Input component itself has internal padding */
+
+/* --- Profile Section --- */
+.profile-layout {
+  display: grid;
+  grid-template-columns: 1fr; /* Mobile default: stack */
+  gap: var(--spacing-xl);
+  align-items: start;
+}
+
+.profile-info-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center content vertically on mobile */
+  gap: var(--spacing-lg);
+}
+
+.profile-picture-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  width: 100%;
+  margin-bottom: var(--spacing-md);
+}
+
+.profile-picture {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--color-border);
+  background-color: var(--color-secondary-creamy);
+  transition: border-color 0.3s ease;
+}
+
+.upload-button {
+   font-size: 0.8rem;
+}
+
+.info-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  font-size: 0.95rem;
+  width: 100%;
+  text-align: center;
+  color: var(--color-text-secondary);
+  padding: var(--spacing-xs) 0;
+}
+
+.info-label {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+.info-label svg {
+   font-size: 1.1em;
+   opacity: 0.7;
+   color: var(--color-primary);
+}
+
+.info-value {
+  word-break: break-all;
+}
+.info-value.email-value {
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.profile-form-col {
+  /* Takes remaining space in grid */
+}
+
+/* --- Security Section --- */
+.password-form {
+   margin-bottom: var(--spacing-xl);
+}
+
+.delete-account-area {
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+  transition: border-color 0.3s ease;
+}
+.delete-account-area h3 {
+  color: var(--color-error);
+  font-size: 1.1rem;
+  margin-bottom: var(--spacing-xs);
+}
+.delete-account-area p {
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: var(--spacing-md);
+  line-height: 1.6;
+}
+.delete-account-area .button-icon {
+   margin-right: var(--spacing-xs);
+}
+
+
+/* --- Notifications Section --- */
+.notification-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+.notification-options > p:first-child {
+    color: var(--color-text-secondary);
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius);
+  transition: background-color 0.2s ease;
+}
+.checkbox-group:hover {
+    background-color: var(--color-secondary-creamy);
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--color-primary);
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.checkbox-group label {
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  user-select: none;
+  line-height: 1.4;
+  transition: color 0.3s ease;
+}
+
+.prefs-saved-note {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    margin-top: var(--spacing-sm);
+    font-style: italic;
+    text-align: right;
+}
+
+/* --- Form Messages (Success/Error) --- */
+.form-message {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  margin: 0; /* Rely on form gap */
+  text-align: center;
+}
+.form-message.success {
+  background-color: color-mix(in srgb, var(--color-success) 15%, transparent);
+  color: var(--color-success);
+  border: 1px solid color-mix(in srgb, var(--color-success) 40%, transparent);
+}
+.form-message.error {
+  background-color: color-mix(in srgb, var(--color-error) 15%, transparent);
+  color: var(--color-error);
+  border: 1px solid color-mix(in srgb, var(--color-error) 40%, transparent);
+}
+
+/* --- Buttons within Forms --- */
+.settings-form > .btn,
+.settings-form > button:not([class*="upload-button"]):not([class*="danger"]) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    align-self: flex-start;
+    width: auto;
+}
+.settings-form .button-icon {
+    margin-right: 0;
+}
+
+/* --- Loading Spinner Animation --- */
+.spinner {
+  animation: spin 1s linear infinite;
+  font-size: 1em;
+}
+.settings-form .spinner {
+    margin-right: var(--spacing-xs);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* --- Responsive Adjustments --- */
+
+@media (min-width: 768px) {
+  .settings-page-title {
+      font-size: 2rem;
+      text-align: left;
+  }
+  .profile-layout {
+    grid-template-columns: auto 1fr; /* Info takes auto width */
+    align-items: start;
+  }
+  .profile-info-col {
+     align-items: flex-start;
+     padding-right: var(--spacing-xl);
+     border-right: 1px solid var(--color-border);
+  }
+   .profile-picture-area {
+     align-items: flex-start;
+   }
+   .info-group {
+     flex-direction: row;
+     text-align: left;
+     gap: var(--spacing-sm);
+   }
+   .info-label {
+       min-width: 80px;
+       justify-content: space-between;
+   }
+   .prefs-saved-note {
+       text-align: left;
+   }
+}
+
+
+@media (max-width: 480px) {
+  .settings-page-container {
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+  }
+  .settings-page-title {
+    font-size: 1.6rem;
+    margin-bottom: var(--spacing-lg);
+  }
+  .settings-section {
+    /* Keep lg padding for cards even on small screens */
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+  }
+  .settings-section-title {
+    font-size: 1.25rem;
+  }
+  .settings-form h3 {
+    font-size: 1.1rem;
+  }
+  .profile-picture {
+    width: 80px;
+    height: 80px;
+  }
+   .profile-info-col {
+     /* Ensure centered text on mobile for info */
+     text-align: center;
+   }
+   .info-group {
+     font-size: 0.9rem;
+     justify-content: center; /* Center label/value block */
+   }
+   .checkbox-group label {
+     font-size: 0.9rem;
+   }
+   /* Make buttons full width on small mobile */
+   .settings-form > .btn,
+   .settings-form > button,
+   .delete-account-area .btn {
+      width: 100%;
+      align-self: stretch;
+   }
+}

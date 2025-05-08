@@ -1,0 +1,283 @@
+/* client/src/pages/ContactPage.css */
+
+.contact-page-container {
+  max-width: 1100px;
+  margin: var(--spacing-xl) auto; /* Default margin */
+  padding: var(--spacing-lg); /* Default padding */
+}
+
+.contact-page-title {
+  text-align: center;
+  font-size: 2.2rem; /* Default size */
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-sm);
+  text-wrap: balance; /* Improve wrapping */
+}
+
+.contact-page-subtitle {
+  text-align: center;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xl); /* Default margin */
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 1.1rem; /* Added default size */
+  line-height: 1.6; /* Added line height */
+}
+
+/* Layout for Info + Form */
+.contact-content-layout {
+  display: grid;
+  grid-template-columns: 1fr; /* Stack by default (Mobile First) */
+  gap: var(--spacing-xl); /* Default gap */
+}
+
+/* Side-by-side layout on larger screens */
+@media (min-width: 768px) {
+  .contact-content-layout {
+      /* Adjust column ratio as needed */
+      /* Info takes less space than form */
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); /* Added minmax for safety */
+      gap: var(--spacing-lg); /* Slightly reduce gap for this layout */
+  }
+}
+
+.contact-info-section,
+.contact-form-section {
+  background-color: var(--color-surface);
+  padding: var(--spacing-xl); /* Default padding */
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-sm);
+  min-width: 0; /* Prevent grid blowout */
+}
+
+.contact-section-title {
+  font-size: 1.5rem; /* Default size */
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-lg); /* Default margin */
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Contact Info Specific Styles */
+.info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md); /* Default gap */
+  margin-bottom: var(--spacing-lg); /* Default margin */
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.info-icon {
+  font-size: 1.5rem; /* Default size */
+  color: var(--color-primary);
+  margin-top: 4px; /* Adjust as needed based on icon set & line height */
+  flex-shrink: 0;
+  width: 1.5rem; /* Give icon fixed width */
+  text-align: center;
+}
+
+.info-item strong {
+  display: block;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.info-item p {
+  margin: 0;
+  font-size: 0.95rem; /* Default size */
+  word-break: break-word; /* Break long unwrappable text like emails */
+}
+.info-item a { /* Style links within info */
+    color: var(--color-primary);
+    text-decoration: none;
+}
+.info-item a:hover {
+    text-decoration: underline;
+}
+
+
+/* Contact Form Specific Styles */
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md); /* Default gap */
+}
+
+/* Style textarea using Input component's classes */
+.contact-form textarea.input-field {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.6;
+  /* Ensure basic input styles are applied if not inherited */
+  /* padding: var(--spacing-sm) var(--spacing-md); */
+  /* border: 1px solid var(--color-border); */
+  /* border-radius: var(--border-radius); */
+  /* font-size: 1rem; */
+}
+/* Wrapper for form elements (assuming structure like <div class="input-group"><label/><input/></div>) */
+.contact-form .input-group {
+  margin-bottom: 0; /* Reset margin if Input adds it */
+  display: flex;
+  flex-direction: column; /* Stack label and input */
+  gap: var(--spacing-xs); /* Space between label and input */
+}
+.contact-form .input-group .input-label {
+  /* display: block; - Already block from flex parent */
+  /* margin-bottom: var(--spacing-xs); - Replaced by gap */
+  font-weight: 500;
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+}
+
+
+/* Form Messages (Success/Error) */
+.contact-form .form-message {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  margin-top: 0;
+  margin-bottom: 0;
+  text-align: center;
+}
+.contact-form .form-message.success {
+  background-color: rgba(25, 135, 84, 0.1);
+  color: var(--color-success);
+  border: 1px solid rgba(25, 135, 84, 0.3);
+}
+.contact-form .form-message.error {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: var(--color-error);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.contact-form .submit-button {
+  margin-top: var(--spacing-sm); /* Space above button */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  align-self: flex-start;
+  /* Apply shared button styles */
+}
+
+/* --- Map Styles --- */
+.map-container {
+  margin-top: var(--spacing-xl); /* Default margin */
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.map-title {
+  font-size: 1rem; /* Default size */
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-secondary-creamy);
+  border-bottom: 1px solid var(--color-border);
+  margin: 0;
+}
+
+.map-container iframe {
+  display: block;
+  width: 100%;
+  height: 300px; /* Default height */
+  border: none;
+}
+
+
+/* --- Responsive Adjustments --- */
+
+/* Tablet - where grid might switch */
+@media (max-width: 767px) {
+  .contact-page-container {
+      padding: var(--spacing-md); /* Reduced padding */
+      margin: var(--spacing-lg) auto; /* Reduced margin */
+  }
+  .contact-page-title {
+      font-size: 1.8rem; /* Reduced size */
+  }
+  .contact-page-subtitle {
+       margin-bottom: var(--spacing-lg); /* Reduced margin */
+       font-size: 1rem; /* Reduced size */
+   }
+  .contact-content-layout {
+      gap: var(--spacing-lg); /* Reduced gap */
+  }
+  .contact-info-section,
+  .contact-form-section {
+       padding: var(--spacing-lg); /* Reduced padding */
+   }
+  .contact-section-title {
+       font-size: 1.3rem; /* Reduced size */
+       margin-bottom: var(--spacing-md);
+   }
+   .map-container {
+        margin-top: var(--spacing-lg); /* Reduced margin */
+   }
+}
+
+
+/* Mobile */
+@media (max-width: 480px) {
+  .contact-page-container {
+      padding: var(--spacing-sm); /* Further reduced padding */
+      margin: var(--spacing-md) auto; /* Further reduced margin */
+  }
+   .contact-page-title {
+       font-size: 1.6rem; /* Further reduced size */
+   }
+   .contact-page-subtitle {
+       margin-bottom: var(--spacing-md); /* Further reduced margin */
+   }
+
+  .contact-content-layout {
+      gap: var(--spacing-md); /* Further reduced gap */
+  }
+
+  .contact-info-section,
+  .contact-form-section {
+       padding: var(--spacing-md); /* Further reduced padding */
+   }
+   .contact-section-title {
+       font-size: 1.2rem; /* Further reduced size */
+   }
+
+   /* Adjust info items */
+   .info-item {
+       gap: var(--spacing-sm); /* Reduced gap */
+       margin-bottom: var(--spacing-md); /* Reduced margin */
+   }
+   .info-icon {
+       font-size: 1.3rem; /* Slightly smaller icon */
+   }
+   .info-item p {
+       font-size: 0.9rem; /* Slightly smaller text */
+   }
+
+   /* Adjust form */
+   .contact-form {
+       gap: var(--spacing-sm); /* Reduced gap */
+   }
+    .contact-form .input-group .input-label {
+       font-size: 0.85rem; /* Smaller label */
+   }
+    .contact-form textarea.input-field {
+       min-height: 100px; /* Smaller default height */
+   }
+
+   /* Reduce map height */
+   .map-container iframe {
+       height: 250px;
+   }
+   .map-title {
+       font-size: 0.9rem; /* Smaller map title */
+       padding: var(--spacing-xs) var(--spacing-sm);
+   }
+}

@@ -1,0 +1,147 @@
+/* client/src/components/common/SkeletonLoader.css */
+
+/* --- Base Skeleton Styles & Animation --- */
+.skeleton {
+  /* Use theme variables for colors */
+  background-color: var(--color-skeleton-base);
+  border-radius: var(--border-radius); /* Use theme variable */
+  display: block;
+  line-height: 1;
+  height: 1em;
+
+  /* Shimmer Animation using theme variables */
+  background-image: linear-gradient(
+    90deg,
+    var(--color-skeleton-base) 0px,
+    var(--color-skeleton-shimmer) 40px,
+    var(--color-skeleton-base) 80px
+  );
+  background-size: 600px 100%;
+  background-position: -400px 0;
+  background-repeat: no-repeat;
+  animation: shimmer 1.2s infinite linear;
+  margin-bottom: var(--spacing-sm); /* Use theme variable (adjust if needed) */
+}
+
+.skeleton:last-child {
+  margin-bottom: 0;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+/* --- Container for grouped skeletons --- */
+.skeleton-container {
+  /* Use theme variable for padding (adjust if 10px is specifically needed) */
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius); /* Match theme radius */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* --- Specific Skeleton Element Styles --- */
+
+/* Text & Titles */
+.skeleton-text {
+  height: 1em;
+}
+.skeleton-text.short { width: 40% !important; }
+.skeleton-text.link { width: 30% !important; height: 0.9em; }
+
+.skeleton-title {
+  height: 1.5em;
+  width: 60%;
+  margin-bottom: var(--spacing-md); /* Use theme variable */
+}
+.skeleton-title.short { width: 40% !important; }
+.skeleton-title.medium { width: 75% !important; }
+
+/* Images / Thumbnails */
+.skeleton-thumbnail {
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%; /* Aspect ratio 16:9 - usually fixed */
+  margin-bottom: var(--spacing-md); /* Use theme variable */
+  border-radius: var(--border-radius); /* Add radius to match image */
+  /* Ensure background color applies */
+  background-color: var(--color-skeleton-base);
+}
+
+/* Avatars / Circles */
+.skeleton-avatar {
+  width: 40px; /* Keep fixed size or use variable if defined */
+  height: 40px;
+  border-radius: 50%;
+  margin-bottom: 0;
+  flex-shrink: 0; /* Added from previous version, good practice */
+   /* Ensure background color applies */
+  background-color: var(--color-skeleton-base);
+}
+
+
+/* --- Layout Specific Containers --- */
+
+/* Course Card Skeleton Layout */
+.skeleton-course-card {
+  /* Inherits container padding/border-radius */
+}
+.skeleton-course-card .skeleton-thumbnail {
+    margin-bottom: var(--spacing-sm);
+}
+.skeleton-course-card .skeleton-title {
+    height: 1.2em;
+    width: 70%;
+    margin-bottom: var(--spacing-sm);
+}
+.skeleton-course-card .skeleton-text.short {
+    height: 0.9em;
+    width: 50%;
+    margin-bottom: 0; /* No margin on last element in this group */
+}
+
+
+/* Article Preview Skeleton Layout */
+.skeleton-article-preview {
+    margin-bottom: var(--spacing-lg); /* Use theme variable */
+}
+.skeleton-article-preview .skeleton-title.medium {
+    margin-bottom: var(--spacing-md);
+}
+.skeleton-article-preview .skeleton-text {
+    height: 0.9em;
+    margin-bottom: var(--spacing-sm);
+}
+.skeleton-article-preview .skeleton-text.link {
+    margin-top: var(--spacing-sm);
+    margin-bottom: 0; /* No margin on last element */
+}
+
+
+/* List Item Skeleton Layout */
+.skeleton-list-item {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-sm) 0; /* Use theme variable */
+}
+.skeleton-list-item .skeleton-avatar {
+    margin-right: var(--spacing-md); /* Use theme variable */
+}
+.skeleton-list-item .skeleton-list-item-content {
+    flex-grow: 1;
+}
+.skeleton-list-item .skeleton-title.short {
+    width: 50%;
+    height: 1.1em;
+    margin-bottom: var(--spacing-xs); /* Use smaller spacing */
+}
+.skeleton-list-item .skeleton-text {
+    width: 80%;
+    height: 0.9em;
+    margin-bottom: 0;
+}

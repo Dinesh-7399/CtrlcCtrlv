@@ -1,0 +1,334 @@
+/* ============================
+   General Layout & Title
+   ============================ */
+   .article-list-container {
+    max-width: 1200px; /* Adjust as needed */
+    margin: var(--spacing-xl) auto; /* Use variable */
+    padding: 0 var(--spacing-lg);  /* Use variable */
+    min-height: 70vh;
+  }
+  
+  .article-list-title {
+    font-size: 2.5rem; /* Or use a variable like --font-size-h1 */
+    font-weight: 700; /* Or use --font-weight-bold */
+    color: var(--color-text-primary); /* Use variable */
+    text-align: center;
+    margin-bottom: var(--spacing-xl); /* Use variable */
+    position: relative;
+  }
+  
+  .article-list-title::after {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 4px;
+    background-color: var(--color-primary); /* Use variable */
+    margin: var(--spacing-sm) auto 0;      /* Use variable */
+    border-radius: 2px;                    /* Or use --border-radius-sm */
+  }
+  
+  /* ============================
+     Spinner & Status Messages
+     ============================ */
+  .article-list-status {
+    text-align: center;
+    padding: var(--spacing-xl) var(--spacing-md); /* Use variables */
+    font-size: 1.2rem;
+    color: var(--color-text-secondary); /* Use variable */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .article-list-status.loading-state {
+    gap: var(--spacing-md); /* Use variable */
+  }
+  
+  .article-list-status.error {
+    color: var(--color-error); /* Use variable */
+    font-weight: 500;
+  }
+  
+  /* Assuming .spinner defined globally in index.css using variables */
+  /* If not, update this spinner definition too: */
+   .spinner {
+     width: 40px;
+     height: 40px;
+     border: 4px solid var(--color-border); /* Use variable */
+     border-left-color: var(--color-primary); /* Use variable */
+     border-radius: 50%;
+     animation: spin 1s linear infinite;
+   }
+  
+   @keyframes spin {
+     0% { transform: rotate(0deg); }
+     100% { transform: rotate(360deg); }
+   }
+  
+  /* ============================
+     Articles Grid
+     ============================ */
+  .articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-lg); /* Use variable */
+  }
+  
+  /* ============================
+     Article Card Styles
+     ============================ */
+  .article-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: var(--border-radius); /* Use variable */
+    overflow: hidden;
+    box-shadow: var(--box-shadow-sm); /* Use variable */
+    background-color: var(--color-surface); /* Ensure background for link area */
+  }
+  
+  .article-card-link:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--box-shadow-md); /* Use variable */
+  }
+  
+  .article-card {
+    background-color: var(--color-surface); /* Use variable */
+    border-radius: var(--border-radius); /* Use variable */
+    border: 1px solid var(--color-border); /* Use variable */
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Added to ensure consistency */
+  }
+  
+  .article-card-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+    /* Optional: border-bottom: 1px solid var(--color-border); */
+  }
+  
+  .article-card-content {
+    padding: var(--spacing-md); /* Use variable */
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .article-card-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--color-text-primary); /* Use variable */
+    margin-bottom: var(--spacing-sm); /* Use variable */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .article-card-meta {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary); /* Use variable */
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm) var(--spacing-md); /* Use variables */
+    margin-bottom: var(--spacing-md); /* Use variable */
+    align-items: center;
+  }
+  
+  .article-card-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs); /* Use variable */
+  }
+  
+  .article-card-meta svg {
+    font-size: 0.9em;
+  }
+  
+  .article-card-excerpt {
+    font-size: 0.95rem;
+    color: var(--color-text-primary); /* Use variable */
+    line-height: 1.6;
+    margin-bottom: var(--spacing-md); /* Use variable */
+    flex-grow: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .read-more-link {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-primary); /* Use variable */
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs); /* Use variable */
+    transition: color 0.3s ease, gap 0.3s ease;
+    margin-top: auto;
+  }
+  
+  .read-more-link:hover {
+    color: var(--color-primary-dark-variant); /* Use variable */
+    gap: var(--spacing-sm); /* Use variable */
+    text-decoration: underline;
+  }
+  
+  /* =========================================
+     Load More Button & Status (MODIFIED)
+     ========================================= */
+  .load-more-container {
+    text-align: center;
+    margin-top: var(--spacing-xl); /* Use variable */
+    padding-bottom: var(--spacing-lg); /* Use variable */
+  }
+  
+  /* --- Modern Load More Button --- */
+  .load-more-button {
+    /* Base styles using variables */
+    background-color: var(--color-primary);
+    color: var(--color-text-on-primary);
+    border: 1px solid transparent;
+    padding: var(--spacing-sm) var(--spacing-lg); /* Use variables */
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 50px; /* Pill shape */
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, opacity 0.3s ease, box-shadow 0.3s ease;
+    display: inline-flex; /* Use flexbox for alignment */
+    align-items: center;
+    justify-content: center; /* Center content */
+    gap: var(--spacing-sm); /* Space between text and icon */
+    min-width: 150px; /* Ensure minimum width */
+    min-height: 42px; /* Ensure minimum height */
+    text-decoration: none;
+    white-space: nowrap;
+    position: relative; /* Needed for positioning pseudo-elements if used later */
+    overflow: hidden; /* Hide overflow if needed */
+  }
+  
+  .load-more-button:hover:not(:disabled) {
+    background-color: var(--color-primary-dark-variant); /* Use dark variant from variables */
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow-sm); /* Add subtle shadow on hover */
+  }
+  
+  .load-more-button:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+  
+  /* --- Loading State for Button --- */
+  .load-more-button:disabled {
+    opacity: 0.7; /* Slightly dim when disabled */
+    cursor: wait; /* Indicate waiting */
+    /* Optional: Keep background consistent or change slightly */
+    background-color: var(--color-primary-dark-variant);
+    transform: none; /* Reset transforms */
+    box-shadow: none; /* Reset shadow */
+  }
+  
+  /* Hide icon and original text span when loading */
+  .load-more-button.loading > span:not(.loading-dots), /* Target direct span children */
+  .load-more-button.loading > svg {                 /* Target direct svg children */
+    display: none;
+  }
+  
+  /* --- Loading Dots Animation --- */
+  .loading-dots {
+    display: flex; /* Align dots horizontally */
+    align-items: center;
+    justify-content: center;
+    /* Ensure it takes up space */
+    min-height: 1.2em; /* Match approx line height */
+  }
+  
+  /* Individual dots */
+  .loading-dots span {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--color-text-on-primary); /* Use text color on primary */
+    margin: 0 var(--spacing-xs); /* Space between dots */
+    animation: dots-bounce 1.4s infinite ease-in-out both; /* Apply animation */
+  }
+  
+  /* Stagger the animation delay for each dot */
+  .loading-dots span:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+  .loading-dots span:nth-child(2) {
+    animation-delay: -0.16s;
+  }
+  /* nth-child(3) has no delay (implicitly 0s) */
+  
+  /* Keyframes for the dots animation */
+  @keyframes dots-bounce {
+    0%, 80%, 100% {
+      transform: scale(0);
+    }
+    40% {
+      transform: scale(1.0);
+    }
+  }
+  
+  /* --- Article Count Status --- */
+  .article-count-status {
+    margin-top: var(--spacing-md); /* Use variable */
+    font-size: 0.9rem;
+    color: var(--color-text-secondary); /* Use variable */
+  }
+  
+  .article-count-status.all-loaded {
+    font-style: italic;
+  }
+  
+  
+  /* ============================
+     Responsiveness (Kept existing rules)
+     ============================ */
+  @media (max-width: 768px) {
+    .article-list-title {
+      font-size: 2rem;
+    }
+    .articles-grid {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--spacing-md); /* Use variable */
+    }
+    .article-card-content {
+      padding: var(--spacing-md); /* Use variable */
+    }
+    .article-card-title {
+       font-size: 1.15rem;
+    }
+     .article-card-excerpt {
+       font-size: 0.9rem;
+     }
+  }
+  
+  @media (max-width: 480px) {
+    .article-list-container {
+      padding: 0 var(--spacing-md); /* Use variable */
+    }
+    .articles-grid {
+      grid-template-columns: 1fr;
+      gap: var(--spacing-md); /* Use variable */
+    }
+     .article-list-title {
+      font-size: 1.8rem;
+     }
+     .load-more-button {
+       padding: var(--spacing-sm) var(--spacing-md); /* Use variables */
+       font-size: 0.95rem;
+       min-width: 120px; /* Adjust min-width for smaller screens */
+     }
+  }

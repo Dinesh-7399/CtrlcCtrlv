@@ -1,0 +1,113 @@
+/* client/src/pages/PrivacyPolicyPage/PrivacyPolicyPage.css */
+
+.privacy-policy-container {
+  padding-top: var(--spacing-lg);
+  padding-bottom: var(--spacing-xl);
+  max-width: 900px; /* Adjust for readability */
+  margin: var(--spacing-lg) auto;
+  background-color: var(--color-surface); /* Use surface color */
+  color: var(--color-text-primary); /* Use primary text color */
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-sm);
+  /* Add transition for theme changes */
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Apply padding inside the container if not using page-container */
+.privacy-policy-container > * {
+    padding-left: var(--spacing-lg);
+    padding-right: var(--spacing-lg);
+}
+.privacy-policy-container > section:first-of-type {
+    padding-top: var(--spacing-lg);
+}
+.privacy-policy-container > section:last-of-type {
+    padding-bottom: var(--spacing-lg);
+}
+
+.privacy-policy-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+  text-align: center;
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.last-updated {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xl);
+}
+
+.privacy-section {
+  margin-bottom: var(--spacing-xl);
+  text-align: left; /* Ensure text aligns left */
+}
+
+.privacy-section h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--color-secondary-creamy); /* Subtle heading underline */
+}
+
+.privacy-section p,
+.privacy-section li {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--color-text-secondary); /* Use secondary for body text */
+  margin-bottom: var(--spacing-md);
+}
+
+.privacy-section ul {
+  list-style: disc; /* Use standard bullet points */
+  margin-left: var(--spacing-lg); /* Indent list */
+  padding-left: var(--spacing-sm);
+}
+
+.privacy-section li {
+   margin-bottom: var(--spacing-sm); /* Space between list items */
+}
+
+.privacy-section a {
+  color: var(--color-text-link); /* Use link color variable */
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.privacy-section a:hover {
+  text-decoration: underline;
+}
+
+.privacy-section strong {
+    font-weight: 600;
+    color: var(--color-text-primary); /* Make important text stand out */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .privacy-policy-container {
+        margin: var(--spacing-md) auto;
+        padding: var(--spacing-md);
+    }
+     .privacy-policy-container > * {
+        padding-left: var(--spacing-md);
+        padding-right: var(--spacing-md);
+    }
+     .privacy-policy-title {
+        font-size: 1.6rem;
+     }
+     .privacy-section h2 {
+        font-size: 1.3rem;
+     }
+     .privacy-section p,
+     .privacy-section li {
+        font-size: 0.95rem;
+     }
+}

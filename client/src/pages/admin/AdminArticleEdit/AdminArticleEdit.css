@@ -1,0 +1,211 @@
+/* src/pages/admin/AdminArticleEdit.css */
+
+.admin-edit-form {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.admin-edit-form .admin-page-title {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+/* --- Form Styling --- */
+.admin-edit-form form {
+  background-color: var(--color-surface);
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--box-shadow-sm);
+}
+
+.admin-edit-form .form-group {
+  margin-bottom: var(--spacing-lg);
+}
+
+.admin-edit-form label {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.admin-edit-form .input-field,
+.admin-edit-form .textarea-field,
+.admin-edit-form .select-field {
+  width: 100%;
+  /* Rely on base component styles */
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+
+/* --- Tiptap Toolbar Styles --- */
+.tiptap-toolbar {
+  border: 1px solid var(--color-border);
+  border-bottom: none; /* Attach to editor */
+  padding: var(--spacing-sm);
+  background-color: var(--color-secondary-creamy); /* Use theme variable */
+  border-top-left-radius: var(--border-radius);
+  border-top-right-radius: var(--border-radius);
+  display: flex;
+  flex-wrap: wrap; /* Allow buttons to wrap */
+  gap: var(--spacing-xs);
+  margin-bottom: -1px; /* Overlap slightly with editor border */
+  position: relative; /* Ensure toolbar is above content visually */
+  z-index: 1;
+}
+
+.tiptap-toolbar button {
+  background: none;
+  border: 1px solid transparent; /* Add border for focus state */
+  padding: var(--spacing-xs);
+  border-radius: calc(var(--border-radius)/2);
+  cursor: pointer;
+  line-height: 1;
+  color: var(--color-text-secondary);
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.tiptap-toolbar button:hover {
+  background-color: rgba(0,0,0,0.05);
+  color: var(--color-text-primary);
+}
+body.dark-theme .tiptap-toolbar button:hover {
+   background-color: rgba(255,255,255,0.1);
+}
+
+.tiptap-toolbar button.is-active {
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+  border-color: var(--color-primary-dark-variant);
+}
+.tiptap-toolbar button svg {
+  display: block;
+  font-size: 1rem;
+}
+.tiptap-toolbar button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* Style for dividers */
+.toolbar-divider {
+  width: 1px;
+  background-color: var(--color-border);
+  margin: var(--spacing-xs) var(--spacing-sm);
+  align-self: stretch; /* Make divider full height of toolbar */
+}
+
+
+/* --- Tiptap Editor Content Area Styles --- */
+.tiptap-editor-content .ProseMirror { /* Target Tiptap's editable area */
+  border: 1px solid var(--color-border);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+   border-top-left-radius: 0; /* Join with toolbar */
+  border-top-right-radius: 0;
+  min-height: 400px; /* Minimum editing height */
+  background-color: var(--color-background); /* Use page background */
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  outline: none; /* Remove browser focus outline */
+  transition: border-color 0.3s ease, opacity 0.3s ease; /* Added opacity transition */
+}
+/* Focus state for the editor */
+.tiptap-editor-content .ProseMirror-focused {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.1rem color-mix(in srgb, var(--color-primary) 25%, transparent); /* Subtle focus ring */
+}
+
+/* --- ADDED: Style when uploading image --- */
+.tiptap-editor-content.is-uploading .ProseMirror {
+    opacity: 0.6; /* Dim the editor */
+    cursor: progress; /* Show progress cursor */
+}
+
+/* Placeholder Styles */
+.tiptap-editor-content .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+  pointer-events: none;
+  height: 0;
+}
+
+/* --- Tiptap Content Element Styles --- */
+/* (Styles for p, h1, h2, h3, ul, ol, li, pre, code, blockquote, img remain the same) */
+.tiptap-editor-content .ProseMirror p { margin-bottom: 0.75em; }
+.tiptap-editor-content .ProseMirror h1,
+.tiptap-editor-content .ProseMirror h2,
+.tiptap-editor-content .ProseMirror h3 { margin: 1.5em 0 0.75em; line-height: 1.2; font-weight: 600; }
+.tiptap-editor-content .ProseMirror h2 { font-size: 1.4em; }
+.tiptap-editor-content .ProseMirror h3 { font-size: 1.2em; }
+.tiptap-editor-content .ProseMirror ul,
+.tiptap-editor-content .ProseMirror ol { padding-left: 1.5em; margin-bottom: 1em; }
+.tiptap-editor-content .ProseMirror li > p { margin-bottom: 0.25em; }
+.tiptap-editor-content .ProseMirror pre { background: #2d2d2d; color: #f0f0f0; padding: var(--spacing-md); border-radius: var(--border-radius); margin: 1em 0; font-family: monospace; overflow-x: auto; }
+.tiptap-editor-content .ProseMirror code { background: var(--color-secondary-creamy); padding: 1px 4px; border-radius: 3px; font-family: monospace; font-size: 0.9em; }
+.tiptap-editor-content .ProseMirror pre code { background: none; padding: 0; color: inherit; }
+.tiptap-editor-content .ProseMirror blockquote { border-left: 3px solid var(--color-border); margin: 1em 0; padding-left: 1em; color: var(--color-text-secondary); font-style: italic; }
+.tiptap-editor-content .ProseMirror img { max-width: 100%; height: auto; border-radius: var(--border-radius); margin: var(--spacing-md) 0; display: block; }
+.tiptap-editor-content .ProseMirror img.ProseMirror-selectednode { outline: 3px solid var(--color-primary); outline-offset: 2px; }
+
+/* Basic Alignment classes for Images */
+.tiptap-editor-content .ProseMirror img.image-float-left { float: left; margin-right: var(--spacing-md); margin-bottom: var(--spacing-xs); max-width: 50%; }
+.tiptap-editor-content .ProseMirror img.image-float-right { float: right; margin-left: var(--spacing-md); margin-bottom: var(--spacing-xs); max-width: 50%; }
+.tiptap-editor-content .ProseMirror img.image-center { display: block; margin-left: auto; margin-right: auto; max-width: 80%; float: none; }
+.tiptap-editor-content .ProseMirror p::after { content: ""; display: table; clear: both; } /* Basic clearfix */
+
+
+/* --- Form Actions --- */
+.form-actions { display: flex; justify-content: flex-end; gap: var(--spacing-md); margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid var(--color-border); }
+.form-actions .button { min-width: 100px; }
+.form-actions .button .spinner { width: 16px; height: 16px; border-width: 2px; margin-right: var(--spacing-xs); border-color: rgba(255,255,255,0.3); border-top-color: white; }
+.form-actions .button svg { margin-right: var(--spacing-xs); }
+
+/* --- Message Styles --- */
+.admin-error-message,
+.admin-success-message {
+  border: 1px solid transparent; /* Base border */
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 0.95rem;
+}
+.admin-error-message svg,
+.admin-success-message svg {
+    flex-shrink: 0;
+}
+
+/* Error Message */
+.admin-error-message {
+  color: var(--color-error);
+  background-color: color-mix(in srgb, var(--color-error) 15%, transparent);
+  border-color: color-mix(in srgb, var(--color-error) 30%, transparent);
+}
+
+/* --- ADDED: Success Message Style --- */
+.admin-success-message {
+    color: var(--color-success); /* Use success color variable */
+    background-color: color-mix(in srgb, var(--color-success) 15%, transparent); /* Light success background */
+    border-color: color-mix(in srgb, var(--color-success) 30%, transparent); /* Success border */
+    font-weight: 500;
+}
+
+
+/* --- Responsive --- */
+@media (max-width: 576px) {
+    .form-row { grid-template-columns: 1fr; gap: 0; margin-bottom: 0; }
+    .form-row .form-group { margin-bottom: var(--spacing-lg); } /* Add margin back */
+    .form-actions { flex-direction: column; }
+    .form-actions .button { width: 100%; }
+     .tiptap-toolbar { justify-content: flex-start; }
+}

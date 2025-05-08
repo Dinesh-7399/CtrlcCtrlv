@@ -1,0 +1,114 @@
+/* In e.g., src/index.css OR src/components/common/common.css */
+
+/* --- Base Form Group & Label --- */
+.form-group {
+  margin-bottom: var(--spacing-lg); /* Spacing below each form element */
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  font-weight: 500; /* Or use --font-weight-medium */
+  font-size: 0.9rem; /* Slightly smaller label */
+  color: var(--color-text-primary);
+}
+
+/* Optional: Style for required asterisk */
+.form-group label .required-asterisk {
+    color: var(--color-error);
+    margin-left: var(--spacing-xs);
+}
+
+
+/* --- Textarea Styles --- */
+.textarea-field {
+  display: block;
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-family: inherit; /* Use base body font */
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  background-color: var(--color-background); /* Use background, might differ from surface */
+  background-clip: padding-box;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out, background-color 0.3s ease, color 0.3s ease;
+  resize: vertical; /* Allow vertical resize only */
+  min-height: 80px; /* Sensible minimum height */
+}
+
+.textarea-field:focus {
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  border-color: var(--color-primary); /* Highlight border on focus */
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--color-primary) 25%, transparent); /* Focus ring */
+}
+
+.textarea-field::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+}
+
+/* --- Select Styles --- */
+.select-wrapper {
+    position: relative; /* Needed for custom arrow positioning */
+}
+
+.select-field {
+  display: block;
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-xl) var(--spacing-sm) var(--spacing-md); /* Add extra padding-right for arrow */
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  background-clip: padding-box;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out, background-color 0.3s ease, color 0.3s ease;
+
+  /* Remove default browser arrow */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  /* Add custom arrow */
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e"); /* Default arrow color */
+  background-repeat: no-repeat;
+  background-position: right var(--spacing-md) center;
+  background-size: 16px 12px;
+}
+
+/* Adjust arrow color for dark theme */
+body.dark-theme .select-field {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23adb5bd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e"); /* Lighter arrow color */
+}
+
+
+.select-field:focus {
+  border-color: var(--color-primary);
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+/* Style for disabled state */
+.select-field:disabled {
+  background-color: var(--color-secondary-creamy); /* Example disabled bg */
+  opacity: 0.7;
+}
+
+/* Fix for placeholder option styling if needed */
+select:required:invalid {
+  color: var(--color-text-secondary); /* Style placeholder-like state */
+}
+option[value=""][disabled] {
+  display: none; /* Hide placeholder from dropdown list */
+}
+option {
+  color: var(--color-text-primary); /* Ensure options use theme color */
+   background-color: var(--color-background); /* Ensure options bg matches */
+}

@@ -1,0 +1,150 @@
+/* client/src/pages/AuthForm.css */
+
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: var(--color-secondary-creamy);
+  padding: var(--spacing-md); /* Add padding to prevent card touching edges on mobile */
+  box-sizing: border-box; /* Include padding in height calculation */
+}
+
+.auth-form {
+  background-color: var(--color-surface);
+  padding: var(--spacing-xl); /* Default padding */
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-md);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  box-sizing: border-box; /* Include padding in width calculation */
+}
+
+.auth-form h2 {
+  margin-bottom: var(--spacing-lg); /* Default margin */
+  color: var(--color-text-primary);
+  font-size: 1.6rem; /* Example: Set explicit base size */
+  font-weight: 600; /* Added font-weight */
+}
+
+/* Styles for Input component wrappers */
+.auth-form .input-group {
+  margin-bottom: var(--spacing-md); /* Default margin */
+  text-align: left;
+  /* Ensure label/input styles are applied if not inherited */
+}
+/* Example styling if Input component generates label/input */
+.auth-form .input-group label {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+/* client/src/index.css */
+
+/* ... (previous styles remain the same) ... */
+
+.auth-form .input-group input { /* Target actual input */
+  width: 100%;
+  /* --- Styling using theme-agnostic variables --- */
+  padding: var(--spacing-sm) var(--spacing-md); /* Use spacing variables */
+  border: 1px solid var(--color-border);       /* Use theme border color */
+  border-radius: var(--border-radius);         /* Use global border radius */
+  background-color: var(--color-surface);      /* Use theme surface color (often same as background or slightly different) */
+  color: var(--color-text-primary);            /* Use theme primary text color */
+  font-size: inherit; /* Inherit font size from parent or body */
+  line-height: inherit; /* Inherit line height */
+
+  /* --- Add transitions for smooth theme/focus changes --- */
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* --- Style the placeholder text --- */
+.auth-form .input-group input::placeholder {
+  color: var(--color-text-secondary); /* Use secondary text color for placeholder */
+  opacity: 1; /* Override default browser opacity if needed */
+}
+
+/* --- Style the input when it receives focus --- */
+.auth-form .input-group input:focus {
+  outline: none; /* Remove default browser focus outline */
+  border-color: var(--color-primary); /* Highlight border with primary theme color */
+  /* Optional: Add a subtle box-shadow on focus for extra emphasis */
+  /* box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 20%, transparent); */ /* Example using color-mix, adjust as needed */
+}
+
+/* --- Optional: Style for disabled state --- */
+.auth-form .input-group input:disabled {
+    background-color: var(--color-secondary-creamy); /* Use a muted background */
+    color: var(--color-text-secondary);           /* Use muted text color */
+    cursor: not-allowed;                           /* Indicate non-interactive state */
+    border-color: var(--color-border);             /* Keep standard border or slightly muted */
+}
+
+
+/* ... (rest of your CSS) ... *
+/* Error Message Styling */
+.auth-error {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: var(--color-error);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  padding: var(--spacing-sm); /* Default padding */
+  margin-bottom: var(--spacing-md); /* Default margin */
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  text-align: center;
+  word-break: break-word; /* Break long error messages */
+}
+
+/* Button Styling */
+.auth-form button {
+  margin-top: var(--spacing-md); /* Default margin */
+  width: 100%; /* Make button full width */
+  /* Apply shared button styles (padding, background, etc.) */
+  /* display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-xs); */
+}
+
+/* Link to switch between Login/Signup */
+.auth-switch {
+  margin-top: var(--spacing-lg); /* Default margin */
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+.auth-switch a {
+  color: var(--color-text-link);
+  text-decoration: none;
+  font-weight: 500;
+}
+.auth-switch a:hover {
+  text-decoration: underline;
+}
+
+
+/* --- Responsive Adjustments --- */
+
+@media (max-width: 480px) {
+  .auth-form {
+    /* Reduce padding significantly on very small screens */
+    padding: var(--spacing-lg);
+  }
+
+  .auth-form h2 {
+    font-size: 1.4rem; /* Slightly smaller title */
+    margin-bottom: var(--spacing-md);
+  }
+
+  .auth-form .input-group {
+      margin-bottom: var(--spacing-sm); /* Slightly reduce gap between inputs */
+  }
+
+  .auth-error {
+      padding: var(--spacing-xs) var(--spacing-sm); /* Slightly smaller error padding */
+      font-size: 0.85rem;
+  }
+
+  .auth-switch {
+       margin-top: var(--spacing-md); /* Reduce space above switch link */
+   }
+}

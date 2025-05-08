@@ -1,0 +1,136 @@
+/* src/components/common/NotesSection.css */ /* Adjusted path assumption */
+
+.notes-section-container {
+    background-color: var(--color-surface);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-sm);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    /* Add margin if needed when used standalone */
+    /* margin-bottom: var(--spacing-xl); */
+}
+
+/* Assuming H2 title comes from parent LearningPage section */
+/* .notes-title { ... } */
+
+.notes-loading {
+     color: var(--color-text-secondary);
+     padding: var(--spacing-md) 0;
+     font-style: italic;
+     text-align: center;
+ }
+
+/* Styles for the list added in a previous step */
+.notes-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden; /* Contain borders */
+}
+
+.note-item {
+   border-bottom: 1px dashed var(--color-border);
+  background-color: var(--color-surface); /* Use surface for items */
+  transition: background-color 0.2s ease;
+}
+.note-item:last-child {
+  border-bottom: none;
+}
+.note-item:hover {
+    background-color: var(--color-secondary-creamy);
+}
+
+.note-download-link {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  text-decoration: none;
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.note-download-link:hover {
+    color: var(--color-primary);
+}
+
+.note-icon {
+  font-size: 1.2em;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+.note-download-link:hover .note-icon {
+    color: var(--color-primary);
+}
+
+.note-filename {
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.note-download-icon {
+  margin-left: auto;
+  color: var(--color-primary);
+  font-size: 1.1em;
+  opacity: 0.7;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  flex-shrink: 0;
+}
+.note-download-link:hover .note-download-icon {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.no-notes-message { /* Style for the message inside NotesSection */
+    padding: var(--spacing-md);
+    font-style: italic;
+    color: var(--color-text-secondary);
+    text-align: center;
+    /* Optional: Add border/background if needed */
+    /* border: 1px dashed var(--color-border); */
+    /* border-radius: var(--border-radius); */
+    /* background-color: var(--color-surface); */
+}
+
+
+/* Styles if using Textarea - KEEPING THEM for reference, */
+/* but NotesSection now shows a list */
+.notes-textarea {
+  display: block;
+  width: 100%;
+  min-height: 150px;
+  padding: var(--spacing-md);
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  background-color: var(--color-background); /* Correctly uses variable */
+  background-clip: padding-box;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out, background-color 0.3s ease, color 0.3s ease;
+  resize: vertical;
+  margin-bottom: var(--spacing-sm);
+  box-sizing: border-box;
+}
+
+.notes-textarea:focus {
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  border-color: var(--color-primary);
+  outline: 0;
+  /* CORRECTED: Use variable for focus shadow */
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+/* Status text below textarea (if used) */
+.notes-status {
+     font-size: 0.85rem;
+     color: var(--color-text-secondary

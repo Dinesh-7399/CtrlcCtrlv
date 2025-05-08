@@ -1,0 +1,222 @@
+/* client/src/pages/admin/AdminDashboard.css */
+
+.admin-dashboard-container {
+  padding: var(--spacing-lg);
+}
+
+.dashboard-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.dashboard-welcome {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xl);
+}
+
+.dashboard-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.dashboard-section-title {
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--color-border);
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+/* --- Stats Cards --- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.stat-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    border-radius: var(--border-radius);
+}
+.stat-card-link.disabled-link {
+    pointer-events: none;
+    cursor: default;
+}
+.stat-card-link:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.stat-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  box-shadow: var(--box-shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.3s ease;
+}
+
+.stat-card-link:hover .stat-card {
+    transform: translateY(-4px);
+    box-shadow: var(--box-shadow-md);
+    border-color: var(--color-primary);
+}
+
+.stat-icon-wrapper {
+  font-size: 2rem;
+  padding: var(--spacing-sm);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+}
+
+/* Card Color Variations */
+.stat-card.color-blue .stat-icon-wrapper { background-color: color-mix(in srgb, var(--color-primary) 15%, transparent); color: var(--color-primary); }
+.stat-card.color-green .stat-icon-wrapper { background-color: color-mix(in srgb, var(--color-success) 15%, transparent); color: var(--color-success); }
+.stat-card.color-purple .stat-icon-wrapper { background-color: color-mix(in srgb, #6f42c1 15%, transparent); color: #6f42c1; }
+.stat-card.color-orange .stat-icon-wrapper { background-color: color-mix(in srgb, #fd7e14 15%, transparent); color: #fd7e14; }
+/* Dark theme icon adjustments */
+body.dark-theme .stat-card.color-purple .stat-icon-wrapper { color: #ab82ff; background-color: color-mix(in srgb, #ab82ff 15%, transparent);}
+body.dark-theme .stat-card.color-orange .stat-icon-wrapper { color: #ffac5c; background-color: color-mix(in srgb, #ffac5c 15%, transparent);}
+body.dark-theme .stat-card.color-green .stat-icon-wrapper { color: var(--color-success); /* Already light enough */ }
+body.dark-theme .stat-card.color-blue .stat-icon-wrapper { color: var(--color-primary); /* Already light enough */ }
+
+
+.stat-info { min-width: 0; } /* Prevent text overflow */
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 2px 0;
+  line-height: 1.1;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Quick Actions --- */
+.quick-actions-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+}
+
+.quick-action-button {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    font-size: 0.95rem;
+    box-shadow: var(--box-shadow-sm);
+}
+.quick-action-button:hover {
+    background-color: var(--color-secondary-creamy);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    box-shadow: var(--box-shadow-md);
+    transform: translateY(-2px);
+}
+.quick-action-button svg {
+    font-size: 1.1em;
+    opacity: 0.8;
+}
+
+/* --- Placeholder Sections --- */
+/* Inherited Card Style (can be defined globally or copied here if needed) */
+.card-style {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-xl);
+  box-shadow: var(--box-shadow-sm);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.activity-placeholder,
+.charts-placeholder {
+  /* Use card style for consistency */
+  min-height: 150px; /* Give placeholders some height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+    .dashboard-title {
+        font-size: 1.6rem;
+    }
+    .dashboard-section-title {
+        font-size: 1.2rem;
+    }
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: var(--spacing-md);
+    }
+    .stat-card {
+        padding: var(--spacing-md);
+        gap: var(--spacing-md);
+    }
+    .stat-icon-wrapper {
+        width: 50px;
+        height: 50px;
+        font-size: 1.6rem;
+    }
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    .quick-actions-list {
+        gap: var(--spacing-sm);
+    }
+    .quick-action-button {
+        font-size: 0.9rem;
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+}
+
+@media (max-width: 480px) {
+     .admin-dashboard-container {
+        padding: var(--spacing-md);
+     }
+    .stats-grid {
+        grid-template-columns: 1fr; /* Stack cards fully */
+    }
+    .stat-card {
+        flex-direction: row; /* Keep horizontal */
+        padding: var(--spacing-sm) var(--spacing-md); /* Adjust padding */
+    }
+    .quick-actions-list {
+        /* Maybe stack buttons */
+        flex-direction: column;
+        align-items: stretch; /* Make buttons full width */
+    }
+}

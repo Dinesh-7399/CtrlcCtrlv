@@ -1,0 +1,340 @@
+/* client/src/pages/QuizPage/QuizPage.css */
+
+/* --- Base Container --- */
+.quiz-page-container {
+  max-width: 800px; /* Constrain quiz width */
+  margin: var(--spacing-lg) auto;
+  padding: var(--spacing-lg);
+}
+
+/* --- Loading / Error States --- */
+.quiz-status {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--color-text-secondary);
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  min-height: 40vh; /* Ensure it takes some space */
+  background-color: var(--color-surface); /* Use surface */
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-sm);
+}
+
+.loading-icon {
+  width: 2em;
+  height: 2em;
+  animation: spin 1s linear infinite;
+  color: var(--color-primary);
+}
+
+.quiz-error h1 {
+    color: var(--color-error);
+    margin-bottom: var(--spacing-sm);
+    font-size: 1.5rem;
+}
+.quiz-error p {
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-lg);
+    max-width: 500px;
+    line-height: 1.6;
+}
+.quiz-error .button-icon {
+    margin-right: var(--spacing-xs);
+}
+
+
+/* --- Back Button --- */
+.back-button {
+  margin-bottom: var(--spacing-lg);
+  display: inline-flex;
+  align-items: center;
+}
+
+/* --- Page Title --- */
+.quiz-page-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--spacing-md);
+}
+.quiz-page-title .title-icon {
+  color: var(--color-primary);
+  font-size: 1.2em;
+  flex-shrink: 0;
+  margin-bottom: -3px; /* Slight adjustment for alignment */
+}
+
+/* --- Quiz Interface Styling --- */
+.quiz-interface {
+  /* Optional: Add background/border if not using card base */
+}
+
+.quiz-progress {
+  text-align: right;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-lg);
+  font-weight: 500;
+}
+
+/* Card styling applied via className="card" */
+.quiz-question-container.card {
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  text-align: left;
+  background-color: var(--color-surface); /* Ensure background */
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-sm);
+}
+
+.quiz-question-text {
+   font-size: 1.25rem;
+   font-weight: 500;
+   color: var(--color-text-primary);
+   line-height: 1.6;
+   margin-bottom: var(--spacing-xl); /* Space before options */
+}
+
+.quiz-options-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm); /* Space between options */
+}
+
+.quiz-option-item {
+  /* Container for the label */
+}
+
+.quiz-option-label {
+  display: flex; /* Use flex for alignment */
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  text-align: left;
+  width: 100%;
+  font-weight: 400;
+}
+.quiz-option-label:hover {
+  background-color: var(--color-secondary-creamy);
+  border-color: var(--color-primary);
+}
+
+.quiz-option-label.selected {
+   background-color: var(--color-primary);
+   color: var(--color-text-on-primary);
+   border-color: var(--color-primary-dark-variant);
+   font-weight: 500;
+}
+.quiz-option-label.selected .quiz-option-radio {
+    border-color: var(--color-text-on-primary); /* Make radio border visible */
+}
+
+
+/* Hide default radio button, style the label */
+.quiz-option-radio {
+  /* Use accent-color for quick styling */
+  accent-color: var(--color-primary);
+  width: 1.1em;
+  height: 1.1em;
+  flex-shrink: 0; /* Prevent shrinking */
+
+  /* Or use appearance: none and custom styles for more control */
+   /* appearance: none;
+   width: 1.1em;
+   height: 1.1em;
+   border: 2px solid var(--color-border);
+   border-radius: 50%;
+   margin: 0;
+   cursor: pointer;
+   position: relative; */
+}
+/* .quiz-option-radio:checked::before {
+    content: '';
+    display: block;
+    width: 0.6em;
+    height: 0.6em;
+    border-radius: 50%;
+    background-color: var(--color-primary);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.quiz-option-label.selected .quiz-option-radio:checked::before {
+     background-color: var(--color-text-on-primary);
+} */
+
+
+/* --- Quiz Navigation --- */
+.quiz-navigation {
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+.quiz-navigation > button {
+    min-width: 120px; /* Give buttons minimum width */
+}
+
+
+/* --- Quiz Results --- */
+.quiz-results.card {
+  padding: var(--spacing-xl);
+  text-align: center;
+  background-color: var(--color-surface); /* Ensure background */
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-sm);
+}
+
+.results-title {
+  font-size: 1.8rem;
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.results-score {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-xl);
+}
+
+.results-summary {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.summary-heading {
+    font-size: 1.2rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-lg);
+}
+
+.results-question {
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border); /* Border around each review item */
+}
+.results-question.correct {
+  border-left: 5px solid var(--color-success); /* Green indicator */
+  background-color: rgba(25, 135, 84, 0.05); /* Subtle bg tint */
+}
+.results-question.incorrect {
+  border-left: 5px solid var(--color-error); /* Red indicator */
+  background-color: rgba(220, 53, 69, 0.05); /* Subtle bg tint */
+}
+
+.results-question p {
+  margin-bottom: var(--spacing-xs);
+  line-height: 1.5;
+}
+.results-question strong {
+    color: var(--color-text-primary);
+}
+
+.result-icon {
+  margin-left: var(--spacing-sm);
+  vertical-align: -2px; /* Align icon better with text */
+  font-size: 1.1em;
+}
+.result-icon.correct {
+  color: var(--color-success);
+}
+.result-icon.incorrect {
+  color: var(--color-error);
+}
+.correct-answer {
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  font-size: 0.9em;
+  margin-top: var(--spacing-xs);
+}
+
+.results-actions {
+  margin-top: var(--spacing-xl);
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+/* --- Spin Animation --- */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+    .quiz-page-container {
+        margin-top: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+        padding: var(--spacing-md);
+    }
+     .quiz-page-title {
+        font-size: 1.5rem;
+        margin-bottom: var(--spacing-lg);
+    }
+     .quiz-interface, .quiz-results.card {
+        padding: var(--spacing-lg);
+    }
+    .quiz-question-text {
+        font-size: 1.15rem;
+    }
+}
+
+@media (max-width: 480px) {
+     .quiz-page-container {
+        padding: var(--spacing-sm);
+     }
+      .quiz-page-title {
+        font-size: 1.3rem;
+        gap: var(--spacing-xs);
+    }
+     .quiz-interface, .quiz-results.card {
+        padding: var(--spacing-md);
+    }
+      .quiz-question-text {
+        font-size: 1.1rem;
+    }
+    .quiz-option-label {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 0.95rem;
+    }
+     .quiz-navigation, .results-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+     .quiz-navigation > *, .results-actions > * {
+         width: 100%;
+     }
+     .results-title { font-size: 1.5rem;}
+     .results-score { font-size: 1.1rem;}
+     .results-question { padding: var(--spacing-sm);}
+}

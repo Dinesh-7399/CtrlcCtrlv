@@ -1,0 +1,125 @@
+/* client/src/App.css (or similar component CSS) */
+
+#root {
+  /* Limits overall width and centers content - this is already responsive behavior */
+  max-width: 1280px;
+  margin: 0 auto;
+
+  /* Default padding for larger screens - Use rem or variables */
+  /* padding: 2rem; */ /* Original */
+  padding: var(--spacing-xl); /* Using variable from index.css (assuming 32px) */
+
+  /* Text align center might be okay for a simple app, */
+  /* but for complex layouts, apply text-align more specifically */
+  text-align: center;
+}
+
+.logo {
+  /* Default size for larger screens */
+  /* height: 6em; */ /* Original - can be large on small screens */
+  height: 5em; /* Slightly reduced default */
+
+  /* Default padding for larger screens */
+  /* padding: 1.5em; */ /* Original */
+  padding: 1.25em; /* Slightly reduced default */
+
+  will-change: filter;
+  transition: filter 300ms ease; /* Added ease timing function */
+  display: inline-block; /* Ensure padding works as expected if used in anchor */
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 1.5em #646cffaa); /* Slightly reduced shadow */
+}
+
+.logo.react:hover {
+  filter: drop-shadow(0 0 1.5em #61dafbaa); /* Slightly reduced shadow */
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Target the logo specifically if it's inside the second anchor */
+  /* Ensure your HTML structure matches this selector if needed */
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  /* Default padding for larger screens - Use rem or variables */
+  /* padding: 2em; */ /* Original */
+  padding: var(--spacing-lg); /* Using variable from index.css (assuming 24px) */
+  background-color: var(--color-surface, white); /* Use variable, fallback if needed */
+  border-radius: var(--border-radius, 4px); /* Use variable */
+  box-shadow: var(--box-shadow-sm, 0 1px 2px rgba(0,0,0,0.05)); /* Use variable */
+  margin-bottom: var(--spacing-md); /* Add some margin between cards if stacked */
+  text-align: left; /* Override #root center align for card content often */
+}
+
+.read-the-docs {
+  color: var(--color-text-secondary, #888); /* Use variable from index.css */
+  font-size: 0.9rem; /* Example: slightly smaller secondary text */
+  margin-top: var(--spacing-md);
+}
+
+
+/* --- Responsive Adjustments --- */
+
+/* Apply overrides for smaller screens (e.g., smaller tablets and phones) */
+@media (max-width: 768px) {
+  #root {
+    /* Reduce overall padding on smaller screens */
+    /* padding: 1.5rem; */
+    padding: var(--spacing-lg); /* e.g., 24px */
+  }
+
+  .logo {
+    /* Make logo smaller on small screens */
+    height: 4em;
+    padding: 1em;
+  }
+
+   .logo:hover,
+   .logo.react:hover {
+     filter: drop-shadow(0 0 1em #646cffaa); /* Adjust shadow if needed */
+   }
+
+  .card {
+    /* Reduce card padding on smaller screens */
+    /* padding: 1.5em; */
+    padding: var(--spacing-md); /* e.g., 16px */
+  }
+}
+
+/* Optional: Further adjustments for very small screens */
+@media (max-width: 480px) {
+  #root {
+     /* Further reduce padding if necessary */
+     /* padding: 1rem; */
+     padding: var(--spacing-md); /* e.g., 16px */
+  }
+
+   .logo {
+    /* Even smaller logo */
+    height: 3.5em;
+    padding: 0.8em;
+  }
+
+  .card {
+     /* Further reduce padding */
+     padding: var(--spacing-sm); /* e.g., 8px */
+  }
+
+  /* Example: Maybe adjust font size globally or for specific elements */
+  body {
+     /* font-size: 14px; */ /* Uncomment if using rems heavily and want base change */
+  }
+}

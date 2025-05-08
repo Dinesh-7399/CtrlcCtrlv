@@ -1,0 +1,8 @@
+[
+  { "id": "cat1", "name": "Frontend", "slug": "frontend", "icon": "FaLaptopCode" },
+  { "id": "cat2", "name": "Backend", "slug": "backend", "icon": "FaServer" }, 
+  { "id": "cat3", "name": "Design", "slug": "design", "icon": "FaPalette" }, 
+  { "id": "cat4", "name": "Programming", "slug": "programming", "icon": "FaCode" },
+  { "id": "cat5", "name": "Databases", "slug": "databases", "icon": "FaDatabase" }, 
+  { "id": "cat6", "name": "DevOps", "slug": "devops", "icon": "FaCloudUploadAlt" } 
+]

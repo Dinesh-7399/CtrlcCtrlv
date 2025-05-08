@@ -1,0 +1,266 @@
+/* client/src/pages/DppPage/DppPage.css */
+
+/* --- Base Container --- */
+.dpp-page-container {
+  max-width: 900px; /* Adjust as needed */
+  margin: var(--spacing-lg) auto;
+  padding: var(--spacing-lg);
+}
+
+/* --- Loading / Error States --- */
+.dpp-status {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--color-text-secondary);
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  min-height: 40vh;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-sm);
+}
+
+.loading-icon {
+  width: 2em;
+  height: 2em;
+  animation: spin 1s linear infinite;
+  color: var(--color-primary);
+}
+
+.dpp-error h1 {
+    color: var(--color-error);
+    margin-bottom: var(--spacing-sm);
+    font-size: 1.5rem;
+}
+.dpp-error p {
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-lg);
+    max-width: 500px;
+    line-height: 1.6;
+}
+.dpp-error .button-icon {
+    margin-right: var(--spacing-xs);
+}
+
+/* --- Back Button & Title --- */
+.back-button {
+  margin-bottom: var(--spacing-lg);
+  display: inline-flex;
+  align-items: center;
+}
+
+.dpp-page-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+.dpp-page-title .title-icon {
+  color: var(--color-primary);
+  font-size: 1em; /* Adjust if needed */
+  flex-shrink: 0;
+}
+.dpp-due-date {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* --- Problem & Submission Sections (Using Card Base) --- */
+.dpp-problem-section,
+.dpp-submission-section {
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-lg);
+    text-align: left;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-sm);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.dpp-problem-section h2,
+.dpp-submission-section h2 {
+    font-size: 1.3rem;
+    color: var(--color-text-primary);
+    margin-top: 0;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px dashed var(--color-border);
+}
+
+/* Style the description which contains the problem */
+.dpp-description {
+    color: var(--color-text-primary);
+    line-height: 1.7;
+    white-space: pre-wrap; /* Preserve formatting like newlines */
+    font-family: 'Courier New', Courier, monospace; /* Optional: Monospace for code */
+    background-color: rgba(0,0,0,0.02); /* Slight background for code block feel */
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--color-border);
+    overflow-x: auto; /* Add horizontal scroll if needed */
+}
+
+/* --- Dropzone Styles --- */
+.dropzone {
+    border: 3px dashed var(--color-border);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-xl);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+    background-color: var(--color-background);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-md);
+    position: relative; /* For overlay potentially */
+}
+
+.dropzone.active {
+    border-color: var(--color-primary);
+    background-color: var(--color-secondary-creamy);
+}
+
+.dropzone.reject {
+    border-color: var(--color-error);
+    background-color: rgba(220, 53, 69, 0.05);
+}
+
+.dropzone.has-file {
+     border-style: solid;
+     border-color: var(--color-success);
+     background-color: rgba(25, 135, 84, 0.05);
+     cursor: default; /* No pointer needed when file is present */
+}
+
+.dropzone-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    min-height: 100px; /* Give it some minimum height */
+}
+
+.dropzone-icon {
+    font-size: 3rem;
+    color: var(--color-primary);
+    opacity: 0.5;
+    transition: color 0.3s ease, opacity 0.3s ease;
+}
+.dropzone.active .dropzone-icon {
+    opacity: 0.8;
+}
+.dropzone.has-file .dropzone-icon {
+    display: none; /* Hide upload icon when file is present */
+}
+.dropzone.reject .dropzone-icon {
+    color: var(--color-error);
+     opacity: 0.6;
+}
+
+.dropzone p {
+    margin: 0;
+    font-size: 0.95rem;
+    max-width: 80%; /* Prevent long text overflowing badly */
+}
+.dropzone.has-file p {
+    font-weight: 500;
+    color: var(--color-text-primary);
+    font-size: 1rem;
+}
+
+.upload-error-message {
+    color: var(--color-error);
+    font-size: 0.9rem;
+    margin-top: var(--spacing-sm);
+    text-align: center; /* Center error message */
+}
+
+.uploaded-file-info {
+    margin-top: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    font-size: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-secondary-creamy); /* Use creamy color */
+    border-radius: var(--border-radius);
+    border: 1px solid var(--color-border);
+}
+.uploaded-file-info p {
+    margin: 0;
+    word-break: break-all;
+    color: var(--color-text-secondary);
+}
+.uploaded-file-info strong {
+    color: var(--color-text-primary);
+}
+.uploaded-file-info button {
+    margin-left: var(--spacing-md);
+    flex-shrink: 0; /* Prevent button shrinking */
+}
+.uploaded-file-info button .fa-trash { /* Specific icon styling */
+    margin-right: var(--spacing-xs);
+}
+
+.submit-solution-button {
+    margin-top: var(--spacing-lg);
+    display: block;
+    width: 100%;
+}
+
+.submit-note {
+    font-size: 0.85rem;
+    font-style: italic;
+    color: var(--color-text-secondary);
+    text-align: center;
+    margin-top: var(--spacing-md);
+}
+
+/* --- Spin Animation --- */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* --- Responsive --- */
+@media (max-width: 480px) {
+    .dpp-page-container {
+        padding: var(--spacing-md);
+    }
+    .dpp-page-title {
+        font-size: 1.5rem;
+    }
+    .dpp-problem-section,
+    .dpp-submission-section {
+        padding: var(--spacing-md);
+    }
+     .dpp-problem-section h2,
+    .dpp-submission-section h2 {
+        font-size: 1.15rem;
+    }
+     .dropzone {
+        padding: var(--spacing-lg);
+    }
+    .uploaded-file-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-xs);
+    }
+     .uploaded-file-info button {
+        margin-left: 0;
+        margin-top: var(--spacing-xs);
+    }
+}

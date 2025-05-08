@@ -1,0 +1,178 @@
+/* src/pages/admin/AdminArticleList.css */
+/* Styles are very similar to AdminUserList.css - consider consolidating */
+
+.admin-page-container {
+  padding: var(--spacing-lg);
+}
+
+.admin-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.admin-page-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.admin-page-header .button-icon {
+    margin-right: var(--spacing-xs);
+}
+
+.admin-table-container {
+  overflow-x: auto;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-sm);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px; /* Adjusted min-width for more columns */
+}
+
+.admin-table th,
+.admin-table td {
+  padding: var(--spacing-md);
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+  white-space: nowrap; /* Prevent wrapping by default */
+}
+/* Allow title to wrap */
+.admin-table td[data-label="Title"] {
+   white-space: normal;
+   min-width: 200px; /* Give title more space */
+}
+.admin-table td[data-label="Slug"] {
+    font-family: monospace;
+    font-size: 0.9em;
+    color: var(--color-text-secondary);
+}
+
+.admin-table th {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: var(--color-secondary-creamy);
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table tbody tr:hover {
+  background-color: rgba(0,0,0,0.02);
+}
+body.dark-theme .admin-table tbody tr:hover {
+    background-color: rgba(255,255,255,0.04);
+}
+
+.admin-table-thumbnail {
+  width: 80px;
+  height: 45px;
+  object-fit: cover;
+  border-radius: calc(var(--border-radius) / 2);
+  background-color: var(--color-secondary-creamy);
+  vertical-align: middle;
+  border: 1px solid var(--color-border);
+}
+
+
+/* Status Badges */
+.status-badge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+.status-published {
+  background-color: color-mix(in srgb, var(--color-success) 20%, transparent);
+  color: color-mix(in srgb, var(--color-success) 100%, black 10%);
+}
+.status-draft {
+  background-color: var(--color-secondary-creamy);
+  color: var(--color-text-secondary);
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.action-buttons .button {
+  padding: var(--spacing-xs);
+  line-height: 1;
+}
+.action-buttons .button svg {
+    font-size: 1rem;
+}
+
+.action-buttons .delete-btn {
+    color: var(--color-error);
+}
+.action-buttons .delete-btn:hover {
+     background-color: color-mix(in srgb, var(--color-error) 15%, transparent);
+}
+
+.action-buttons .status-toggle-btn {
+    font-size: 1.3rem;
+    cursor: pointer;
+}
+.action-buttons .status-toggle-btn.published {
+     color: var(--color-success);
+}
+.action-buttons .status-toggle-btn.draft {
+     color: var(--color-text-secondary);
+     opacity: 0.7;
+}
+.action-buttons .status-toggle-btn:hover {
+    opacity: 1;
+    background-color: transparent;
+}
+
+.admin-empty-message {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* Responsive Table Handling */
+@media (max-width: 768px) {
+    .admin-table thead {
+        border: none; clip: rect(0 0 0 0); height: 1px; margin: -1px; overflow: hidden; padding: 0; position: absolute; width: 1px;
+    }
+    .admin-table tr {
+        display: block; margin-bottom: var(--spacing-md); border: 1px solid var(--color-border); border-radius: var(--border-radius); box-shadow: var(--box-shadow-sm);
+    }
+    .admin-table td {
+        display: block; text-align: right; border-bottom: 1px dashed var(--color-border); padding-left: 40%; position: relative; white-space: normal; /* Allow wrap */
+    }
+     .admin-table td:last-child { border-bottom: none; }
+    .admin-table td::before {
+        content: attr(data-label); position: absolute; left: var(--spacing-md); width: calc(40% - var(--spacing-lg)); padding-right: var(--spacing-sm); white-space: nowrap; text-align: left; font-weight: 600; color: var(--color-text-primary);
+    }
+     .admin-table td:first-child { /* Thumbnail */
+         text-align: center; padding-left: 0; padding-bottom: 0;
+     }
+      .admin-table td:first-child::before { display: none; }
+     .admin-table-thumbnail { width: 60%; height: auto; margin: 0 auto var(--spacing-md) auto; }
+     .action-buttons { justify-content: flex-end; }
+}

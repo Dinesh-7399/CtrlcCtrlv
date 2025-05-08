@@ -1,0 +1,86 @@
+/* src/pages/QnAPage/QnAPage.css */
+
+.qna-page {
+  padding: var(--spacing-lg);
+}
+
+.qna-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.qna-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: var(--color-text-primary);
+}
+
+.qna-header .button { /* Style the Ask Question Button */
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.qna-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-md);
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.qna-search-input {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-size: 0.95rem;
+  flex-grow: 1; /* Take available space */
+  min-width: 250px; /* Minimum width before wrapping */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.qna-search-input:focus {
+   outline: none;
+   border-color: var(--color-primary);
+   box-shadow: 0 0 0 2px var(--color-primary-light-transparent);
+}
+
+
+.qna-filter-sort {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+.qna-filter-sort .button svg {
+    margin-right: var(--spacing-xs); /* Add space for icons */
+}
+
+.qna-list {
+  margin-top: var(--spacing-lg);
+}
+
+.qna-no-results {
+  color: var(--color-text-secondary);
+  font-style: italic;
+  text-align: center;
+  padding: var(--spacing-xl) 0;
+}
+
+/* --- Media Query for smaller screens --- */
+@media (max-width: 768px) {
+    .qna-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+    .qna-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .qna-filter-sort {
+        justify-content: space-between; /* Space out buttons */
+    }
+}
