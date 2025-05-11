@@ -1,117 +1,218 @@
+// client/src/pages/DoubtLiveClassPage/DoubtLiveClassPage.jsx
 import React, { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom'; // For getting sessionId from URL
 import ReactPlayer from 'react-player/lazy';
-// Import motion
 import { motion } from 'framer-motion';
-import { FaExpand, FaCompress } from 'react-icons/fa';
-import './DoubtLiveClassPage.css'; // Import the regular CSS file
+import { FaExpand, FaCompress, FaVideoSlash, FaCommentSlash, FaSpinner } from 'react-icons/fa';
+import './DoubtLiveClassPage.css';
 
-const courseName = "Advanced Quantum Physics"; // Placeholder
+// --- Redux Imports ---
+import { useDispatch, useSelector } from 'react-redux';
+import { useAuth } from '../../context/AuthContext';
+import {
+  fetchCurrentLiveSession,
+  initializeLiveSessionSockets,
+  sendLiveChatMessage,
+  clearLiveSessionState,
+  selectCurrentLiveSession,
+  selectLiveSessionMessages,
+  selectLiveSessionChatStatus,
+  selectLiveSessionLoadingStatus,
+  selectLiveSessionError,
+  selectLiveSessionSendMessageError,
+} from '../../features/liveSession/liveSessionSlice';
+import Spinner from '../../components/common/Spinner';
+
+// const courseName = "Advanced Quantum Physics"; // This should come from sessionDetails.courseName or similar
 
 function DoubtLiveClassPage() {
-  const [sessionTitle, setSessionTitle] = useState('');
-  const [liveStatus, setLiveStatus] = useState('loading');
-  const [streamUrl, setStreamUrl] = useState(null);
-  const [startTime, setStartTime] = useState(null);
-  const [liveMessages, setLiveMessages] = useState([]);
+  // Assuming sessionId is part of the URL, e.g., /live/:sessionId
+  const { sessionIdFromParams } = useParams();
+  const sessionId = sessionIdFromParams || 'defaultLiveSession123'; // Fallback or get from props/context
+
+  const dispatch = useDispatch();
+  const { user: currentUser, isAuthenticated } = useAuth();
+
+  // --- Redux State ---
+  const currentSession = useSelector(selectCurrentLiveSession);
+  const liveMessages = useSelector(selectLiveSessionMessages);
+  const chatStatus = useSelector(selectLiveSessionChatStatus); // 'disconnected', 'connecting', 'connected', 'error'
+  const sessionLoadingStatus = useSelector(selectLiveSessionLoadingStatus); // 'idle', 'loading', 'succeeded', 'failed'
+  const sessionError = useSelector(selectLiveSessionError);
+  const sendMessageError = useSelector(selectLiveSessionSendMessageError);
+
+  // --- Local UI State ---
   const [liveInputValue, setLiveInputValue] = useState('');
-  const [isFullScreen, setIsFullScreen] = useState(false); // State for fullscreen toggle
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   const liveMessageListRef = useRef(null);
 
-  // --- Fetch Session Data (Placeholder - No Changes) ---
+  // --- Effects ---
+  // Fetch session details and initialize sockets
   useEffect(() => {
-    // ... same fetch logic ...
-    console.log("Fetching live session details (simulated)...");
-    setTimeout(() => { /* ... same simulation ... */
-       const scenario = Math.random();
-       if (scenario < 0.3) { setSessionTitle("Live Q&A Session - Week 5"); setStreamUrl('https://www.youtube.com/watch?v=ysz5S6PUM-U'); setLiveStatus('live'); setLiveMessages([{ id: Date.now(), sender: 'system', text: 'Welcome to the live session!' }]); }
-       else if (scenario < 0.7) { setSessionTitle("Upcoming Doubt Clearing Session"); const upcomingTime = new Date(Date.now() + 2 * 60 * 60 * 1000); setStartTime(upcomingTime.toLocaleString('en-IN')); setStreamUrl(null); setLiveStatus('upcoming'); setLiveMessages([{ id: Date.now(), sender: 'system', text: `Session starting soon at ${upcomingTime.toLocaleTimeString('en-IN')}...` }]); }
-       else { setSessionTitle("Previous Doubt Session"); setStreamUrl(null); setLiveStatus('ended'); setLiveMessages([{ id: Date.now(), sender: 'system', text: 'This live session has ended.' }]); }
-    }, 1500);
-  }, []);
+    if (sessionId && isAuthenticated && currentUser?.id) {
+      dispatch(fetchCurrentLiveSession(sessionId));
+    }
+    // Cleanup on unmount
+    return () => {
+      dispatch(clearLiveSessionState());
+      socketService.disconnect(); // Ensure general socket is closed if this page initiated it
+    };
+  }, [dispatch, sessionId, isAuthenticated, currentUser?.id]);
 
-  // --- WebSocket for Live Chat (Placeholder - No Changes) ---
+  // Initialize socket listeners once session is fetched and has a courseId
   useEffect(() => {
-    // ... same websocket logic ...
-     if (liveStatus === 'live') { console.log("Connecting..."); const intervalId = setInterval(() => { const randomMsg = { id: Date.now(), sender: 'other_user', text: `Random question ${Math.random().toFixed(2)}` }; setLiveMessages(prev => [...prev, randomMsg]); }, 5000); return () => { console.log("Disconnecting..."); clearInterval(intervalId); }; }
-  }, [liveStatus]);
+    if (currentSession && currentSession.status && currentSession.courseId && currentUser?.id && chatStatus !== 'connected' && chatStatus !== 'connecting') {
+      // Pass courseId for room joining, sessionId for context, currentUserId for message sender identification
+      dispatch(initializeLiveSessionSockets({ sessionId: currentSession.id, courseId: currentSession.courseId, currentUserId: currentUser.id }));
+    }
+  }, [dispatch, currentSession, currentUser?.id, chatStatus]);
 
-  // --- Scroll live chat to bottom (No Changes) ---
+
+  // Scroll live chat to bottom
   useEffect(() => {
-    // ... same scroll logic ...
-     if (liveMessageListRef.current) { liveMessageListRef.current.scrollTop = liveMessageListRef.current.scrollHeight; }
+    if (liveMessageListRef.current) {
+      liveMessageListRef.current.scrollTop = liveMessageListRef.current.scrollHeight;
+    }
   }, [liveMessages]);
 
-  // --- Handlers (No Changes to Send/Input Logic) ---
-  const handleSendLiveMessage = (event) => { /* ... same logic ... */ event.preventDefault(); const trimmedInput = liveInputValue.trim(); if (!trimmedInput || liveStatus !== 'live') return; const userMessage = { id: Date.now(), sender: 'user', text: trimmedInput }; setLiveMessages(prev => [...prev, userMessage]); setLiveInputValue(''); console.log("Sending msg:", trimmedInput); };
-  const handleLiveInputChange = (event) => setLiveInputValue(event.target.value);
-  const getMessageClass = (sender) => { /* ... same logic ... */ switch (sender) { case 'user': return 'user-message'; case 'system': return 'system-message'; default: return 'participant-message';} };
-  const getStatusClass = () => { /* ... same logic ... */ switch (liveStatus) { case 'live': return 'status-live'; case 'upcoming': return 'status-upcoming'; case 'ended': return 'status-ended'; default: return 'status-loading';} };
-  // --- End Handlers ---
+  // --- Handlers ---
+  const handleSendLiveMessage = (event) => {
+    event.preventDefault();
+    const trimmedInput = liveInputValue.trim();
+    if (!trimmedInput || !currentSession || currentSession.status !== 'live' || chatStatus !== 'connected') return;
 
-  // --- Fullscreen Toggle Handler (No Changes) ---
-  const toggleFullScreen = () => setIsFullScreen(!isFullScreen);
-  // --- End Fullscreen Handler ---
-
-  // Define the transition for the layout animation
-  const fullscreenTransition = {
-      duration: 0.4, // Adjust duration as needed
-      ease: "easeInOut" // Adjust easing as needed
+    dispatch(sendLiveChatMessage({
+      sessionId: currentSession.id,
+      courseId: currentSession.courseId, // Include courseId for context on backend
+      text: trimmedInput,
+      userId: currentUser?.id,
+      userName: currentUser?.name
+    }));
+    setLiveInputValue('');
   };
 
+  const handleLiveInputChange = (event) => setLiveInputValue(event.target.value);
+
+  const getMessageClass = (sender) => {
+    switch (sender) {
+      case 'user': return 'user-message';
+      case 'system': return 'system-message';
+      case 'participant': // Fallback for other participants if senderType is used
+      default: return 'participant-message';
+    }
+  };
+
+  const getStatusClass = () => {
+    if (!currentSession || !currentSession.status) return 'status-loading';
+    switch (currentSession.status) {
+      case 'live': return 'status-live';
+      case 'upcoming': return 'status-upcoming';
+      case 'ended': return 'status-ended';
+      default: return 'status-loading';
+    }
+  };
+
+  const toggleFullScreen = () => setIsFullScreen(!isFullScreen);
+  const fullscreenTransition = { duration: 0.4, ease: "easeInOut" };
+
   // --- Render JSX ---
+  if (sessionLoadingStatus === 'loading' && !currentSession) {
+    return <div className="live-class-container page-container status-loading-fullscreen"><Spinner label="Loading session..." size="large" /></div>;
+  }
+
+  if (sessionLoadingStatus === 'failed' && sessionError) {
+    return (
+      <div className="live-class-container page-container status-error-fullscreen">
+        <FaVideoSlash size={50} />
+        <h2>Error Loading Session</h2>
+        <p>{typeof sessionError === 'string' ? sessionError : 'Could not load session details.'}</p>
+        <button onClick={() => dispatch(fetchCurrentLiveSession(sessionId))}>Try Again</button>
+      </div>
+    );
+  }
+
+  if (!currentSession && sessionLoadingStatus !== 'loading') {
+    return <div className="live-class-container page-container status-loading-fullscreen"><p>No session data available. It might have ended or not started.</p></div>;
+  }
+
+
+  const sessionTitleDisplay = currentSession?.title || 'Live Doubt Class';
+  const currentStatus = currentSession?.status || 'loading';
+  const streamUrl = currentSession?.streamUrl;
+  const startTime = currentSession?.startTime ? new Date(currentSession.startTime).toLocaleString('en-IN') : null;
+
+
   return (
-    // Convert outer div to motion.div and add layout + transition props
     <motion.div
-        layout // Enable layout animation
-        transition={fullscreenTransition} // Apply the defined transition
-        className={`live-class-container ${isFullScreen ? 'fullscreen-mode' : ''}`}
+      layout
+      transition={fullscreenTransition}
+      className={`live-class-container ${isFullScreen ? 'fullscreen-mode' : ''}`}
     >
-      {/* Header */}
       <header className="live-header">
         <div className="header-text">
-          <h1 className="page-title">{sessionTitle || 'Live Doubt Class'}</h1>
+          <h1 className="page-title">{sessionTitleDisplay}</h1>
           <span className={`status-indicator ${getStatusClass()}`}>
-            {liveStatus === 'live' && <span className="live-pulse"></span>}
-            {liveStatus === 'loading' ? 'Loading...' : liveStatus.charAt(0).toUpperCase() + liveStatus.slice(1)}
-            {liveStatus === 'upcoming' && startTime && ` - Starts at ${startTime}`}
+            {currentStatus === 'live' && <span className="live-pulse"></span>}
+            {currentStatus === 'loading' ? 'Loading Status...' : currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
+            {currentStatus === 'upcoming' && startTime && ` - Starts at ${startTime.split(', ')[1]}`} {/* Show only time */}
           </span>
         </div>
-        {/* Fullscreen Toggle Button */}
-        <button
-            onClick={toggleFullScreen}
-            className="fullscreen-toggle-button"
-            title={isFullScreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-        >
-            {isFullScreen ? <FaCompress /> : <FaExpand />}
+        <button onClick={toggleFullScreen} className="fullscreen-toggle-button" title={isFullScreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}>
+          {isFullScreen ? <FaCompress /> : <FaExpand />}
         </button>
       </header>
 
-      {/* Main Content Area (Video + Chat) */}
-      {/* Add initial/animate props if you want content to fade/slide, otherwise layout handles container */}
       <motion.div className="main-content">
-        {/* Video Player Area */}
         <div className="video-player-area">
-         {/* ... Video Player Logic ... */}
-         {liveStatus === 'live' && streamUrl ? (<ReactPlayer url={streamUrl} className="react-player" playing={true} controls={true} width='100%' height='100%' />) : (<div className="video-placeholder">{/* ... placeholder text ... */}</div>)}
+          {currentStatus === 'live' && streamUrl ? (
+            <ReactPlayer url={streamUrl} className="react-player" playing={true} controls={true} width='100%' height='100%' />
+          ) : (
+            <div className="video-placeholder">
+              {currentStatus === 'upcoming' && <p>Session is upcoming. Video will appear here once live.</p>}
+              {currentStatus === 'ended' && <p>This live session has ended.</p>}
+              {currentStatus === 'loading' && <Spinner label="Waiting for video stream..." />}
+              {currentStatus === 'live' && !streamUrl && <Spinner label="Connecting to video stream..." />}
+              {(!currentStatus || (currentStatus !== 'live' && currentStatus !== 'upcoming' && currentStatus !== 'ended')) && <p>Video stream status is unknown.</p>}
+            </div>
+          )}
         </div>
 
-        {/* Live Chat Area */}
         <div className="live-chat-area">
           <h3 className="chat-title">Live Chat</h3>
+          {chatStatus === 'connecting' && <div className="chat-status-overlay"><FaSpinner className="fa-spin"/> Connecting to chat...</div>}
+          {chatStatus === 'error' && <div className="chat-status-overlay error"><FaCommentSlash/> Chat connection error. Please refresh.</div>}
+
           <div className="live-message-list" ref={liveMessageListRef}>
-            {/* ... message mapping ... */}
-            {liveMessages.map((msg) => (<div key={msg.id} className={`message ${getMessageClass(msg.sender)}`}>{msg.sender !== 'user' && msg.sender !== 'system' && <span className="sender-name">{msg.sender}</span>}<p>{msg.text}</p></div>))}
-            {liveMessages.length === 0 && liveStatus !== 'loading' && <p className="no-messages">Chat is empty.</p>}
+            {liveMessages.map((msg) => (
+              <div key={msg.id} className={`message ${getMessageClass(msg.sender)}`}>
+                {msg.sender !== 'user' && msg.sender !== 'system' && <span className="sender-name">{msg.senderName || msg.sender}</span>}
+                <p>{msg.text}</p>
+              </div>
+            ))}
+            {liveMessages.length === 0 && currentStatus !== 'loading' && chatStatus === 'connected' && <p className="no-messages">Chat is empty. Be the first to type!</p>}
           </div>
           <form className="live-input-area" onSubmit={handleSendLiveMessage}>
-             {/* ... input and button ... */}
-             <input type="text" placeholder={liveStatus === 'live' ? "Ask a question..." : "Chat disabled"} value={liveInputValue} onChange={handleLiveInputChange} className="input-field" disabled={liveStatus !== 'live'} />
-             <button type="submit" className="send-button" disabled={!liveInputValue.trim() || liveStatus !== 'live'}> Send </button>
+            <input
+              type="text"
+              placeholder={(currentStatus === 'live' && chatStatus === 'connected') ? "Ask a question..." : "Chat disabled"}
+              value={liveInputValue}
+              onChange={handleLiveInputChange}
+              className="input-field"
+              disabled={currentStatus !== 'live' || chatStatus !== 'connected'}
+            />
+            <button
+              type="submit"
+              className="send-button"
+              disabled={!liveInputValue.trim() || currentStatus !== 'live' || chatStatus !== 'connected'}
+            >
+              Send
+            </button>
           </form>
+           {sendMessageError && <p className="send-error-message">Failed to send: {sendMessageError}</p>}
         </div>
       </motion.div>
-    </motion.div> // Close motion.div
+    </motion.div>
   );
 }
 

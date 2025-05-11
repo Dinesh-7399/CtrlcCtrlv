@@ -1,391 +1,438 @@
-/* client/src/components/Layout/Navbar.css */
-
-/* ======================================================== */
-/* Root Variables (Copied from your index.css for context)  */
-/* ======================================================== */
-/* :root { */
-/* --color-primary-light: #0056d2; ... */
-/* --color-primary-dark-light: #003f9e; ... */
-/* ... other variables ... */
-/* --color-primary: var(--color-primary-light); */
-/* --color-secondary-creamy: var(--color-secondary-creamy-light); */
-/* --color-surface: var(--color-surface-light); */
-/* --color-border: var(--color-border-light); */
-/* --color-text-primary: var(--color-text-primary-light); */
-/* --color-text-secondary: var(--color-text-secondary-light); */
-/* --color-text-on-primary: var(--color-text-on-primary-light); */
-/* --spacing-xs: 4px; ... */
-/* --spacing-sm: 8px; ... */
-/* --spacing-md: 16px; ... */
-/* --spacing-lg: 24px; ... */
-/* --spacing-xl: 32px; ... */
-/* --border-radius: 4px; ... */
-/* --box-shadow-sm: 0 1px 2px var(--color-shadow); ... */
-/* } */
-/* body.dark-theme { ... overrides ... } */
-/* ======================================================== */
-
-
-/* --- Base Navbar Styles --- */
+/* --- Navbar General Styling --- */
 .navbar {
   background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  padding: var(--spacing-sm) 0; /* Adjusted padding, container will handle side padding */
   border-bottom: 1px solid var(--color-border);
-  padding: 0 var(--spacing-lg);
-  height: 65px;
-  display: flex;
-  align-items: center;
+  box-shadow: var(--box-shadow-sm);
   position: sticky;
   top: 0;
   left: 0;
   width: 100%;
   z-index: 1000;
-  box-shadow: var(--box-shadow-sm);
   transition: background-color 0.3s ease, border-color 0.3s ease;
-  box-sizing: border-box;
 }
 
-/* --- Centered Container --- */
 .navbar-container {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  width: 100%;
   max-width: 1440px;
   margin: 0 auto;
+  padding: 0 var(--spacing-lg); /* Container side padding */
 }
 
-/* --- Logo --- */
 .navbar-logo {
-  color: var(--color-primary);
   font-size: 1.6rem;
-  font-weight: 600;
-  text-decoration: none;
-  flex-shrink: 0;
-  margin-right: var(--spacing-xl);
-}
-
-/* --- Desktop: Wrapper for Links + Actions --- */
-.navbar-links-auth-wrapper {
-  display: flex;
-  align-items: center;
-  margin-left: auto;
-  gap: var(--spacing-lg);
-  width: 100%;
-}
-
-/* --- Desktop: Main Navigation Links --- */
-.navbar-menu {
-  list-style: none;
-  display: flex;
-  gap: var(--spacing-md);
-  margin: 0;
-  padding: 0;
-  align-items: center;
-}
-
-.navbar-item { }
-
-.navbar-link {
-  color: var(--color-text-primary);
-  text-decoration: none;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--border-radius);
-  transition: color 0.2s ease, background-color 0.2s ease;
-  white-space: nowrap;
-  font-weight: 500;
-  display: inline-block;
-}
-
-.navbar-link:hover,
-.navbar-link:focus {
+  font-weight: bold;
   color: var(--color-primary);
-  background-color: var(--color-secondary-creamy);
+  text-decoration: none;
+  transition: color 0.3s ease;
+  margin-right: var(--spacing-md); /* Space between logo and next element */
+  white-space: nowrap; /* Prevent logo text from wrapping */
 }
 
-.navbar-link.active {
-   color: var(--color-primary);
-   font-weight: 600;
+.navbar-logo:hover {
+  color: var(--color-primary-dark-variant);
 }
 
-/* --- Desktop: Actions Section (Theme + Auth) --- */
-.navbar-actions {
-  display: flex;
+/* --- Search Form --- */
+.navbar-search-form {
+  display: none; /* Hidden by default, shown on larger screens */
   align-items: center;
-  gap: var(--spacing-md);
-  margin-left: auto;
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: 0 var(--spacing-sm);
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+  flex-grow: 0.5;
+  max-width: 400px;
+  margin: 0 var(--spacing-md); /* Margin around search form */
 }
 
-/* --- Theme Toggle Button (Base Style - Round for Desktop) --- */
-.theme-toggle-button {
-  background: none;
-  border: 1px solid var(--color-border);
+.navbar-search-input {
+  border: none;
+  outline: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 0.9rem;
+  background-color: transparent;
+  color: var(--color-text-primary);
+  flex-grow: 1;
+  min-width: 100px; /* Ensure input has some base width */
+}
+
+.navbar-search-input::placeholder {
   color: var(--color-text-secondary);
-  padding: 0;
-  border-radius: 50%; /* Round on desktop */
+}
+
+.navbar-search-button {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
   cursor: pointer;
-  font-size: 1.1rem;
-  line-height: 1;
+  padding: var(--spacing-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
-
-.theme-toggle-button:hover {
-  background-color: var(--color-secondary-creamy);
+.navbar-search-button:hover {
   color: var(--color-primary);
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px var(--color-primary-light-variant, rgba(0, 123, 255, 0.25));
 }
 
-/* --- Desktop: Authentication Section --- */
-.navbar-auth {
-  display: flex;
+/* --- Navigation Links (Main Menu for Desktop, Collapsible for Mobile) --- */
+.navbar-links {
+  list-style: none;
+  display: flex; /* Will be flex on desktop, overridden on mobile */
   align-items: center;
-  gap: var(--spacing-md);
-  flex-shrink: 0;
+  margin: 0;
+  padding: 0;
+  flex-grow: 1; /* Desktop: allow links to take space */
+  justify-content: center; /* Desktop: center links */
 }
 
-.navbar-user-greeting {
-  color: var(--color-text-secondary);
-  font-size: 0.9rem;
+.navbar-links li {
+  margin-left: var(--spacing-lg);
+}
+.navbar-links li:first-child {
+  margin-left: 0;
+}
+
+.nav-link {
+  color: var(--color-text-primary);
+  text-decoration: none;
+  padding: var(--spacing-sm) var(--spacing-xs);
+  position: relative;
+  transition: color 0.3s ease;
+  font-size: 0.95rem;
   white-space: nowrap;
 }
 
-.navbar-user-link {
-    color: var(--color-text-secondary);
-    text-decoration: none;
-    white-space: nowrap;
-    font-size: 0.9rem;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--border-radius);
-    transition: color 0.2s ease, background-color 0.2s ease;
+.nav-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background-color: var(--color-primary);
+  transition: width 0.3s ease;
 }
-.navbar-user-link:hover {
+
+.nav-link:hover,
+.nav-link.active {
   color: var(--color-primary);
-  background-color: var(--color-secondary-creamy);
 }
 
-.logout-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--color-text-secondary);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    text-align: left;
-    font-family: inherit;
-    font-size: 0.9rem;
-    border-radius: var(--border-radius);
-    transition: color 0.2s ease, background-color 0.2s ease;
-}
-.logout-button:hover {
-    color: var(--color-primary);
-    background-color: var(--color-secondary-creamy);
+.nav-link.active::after,
+.nav-link:hover::after {
+  width: 100%;
 }
 
-.nav-button { }
 
-/* ======================================================== */
-/* --- Mobile Styles (< 992px) --- */
-/* ======================================================== */
+/* --- Desktop Actions (Theme Toggle, Profile/Auth) --- */
+.navbar-actions-desktop {
+  display: none; /* Hidden by default, shown on desktop */
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-left: var(--spacing-lg); /* Separate from nav links if they are also present */
+}
 
-/* --- Mobile Menu Toggle Button --- */
-.mobile-menu-toggle {
-  display: none;
+.theme-toggle-button, /* For desktop */
+.profile-button {
   background: none;
   border: none;
-  font-size: 1.8rem;
-  color: var(--color-text-primary);
+  color: var(--color-text-secondary);
   cursor: pointer;
-  padding: var(--spacing-xs);
-  margin-left: auto;
-  z-index: 1100;
+  font-size: 1.3rem;
+  padding: var(--spacing-sm);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s ease, background-color 0.3s ease;
+}
+.theme-toggle-button:hover,
+.profile-button:hover {
+  color: var(--color-primary);
+  background-color: var(--color-secondary-creamy); /* Ensure this var is defined or use a fallback */
 }
 
-@media (max-width: 992px) {
-  .navbar {
-     padding: 0 var(--spacing-md);
+.login-btn-desktop, .signup-btn-desktop, .logout-btn-desktop {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 0.9rem;
+}
+
+/* Profile Dropdown (Desktop) */
+.profile-dropdown-container {
+  position: relative;
+}
+
+.profile-button { /* Already styled above, shared with theme-toggle */
+  gap: var(--spacing-xs);
+}
+
+.dropdown-arrow {
+  font-size: 0.7em;
+  transition: transform 0.2s ease-in-out;
+}
+.dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+.profile-dropdown-menu {
+  position: absolute;
+  top: calc(100% + var(--spacing-md));
+  right: 0;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-md);
+  min-width: 220px;
+  z-index: 1001;
+  padding: var(--spacing-sm) 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out, visibility 0.2s;
+}
+
+.profile-dropdown-container .profile-button[aria-expanded="true"] + .profile-dropdown-menu,
+.profile-dropdown-menu:hover, /* Keep open on hover for easier interaction */
+.profile-dropdown-container:focus-within .profile-dropdown-menu { /* Keep open if an item inside has focus */
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-user-info {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--spacing-sm);
+  text-align: left;
+}
+.dropdown-user-info strong {
+  display: block;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+}
+.dropdown-user-info small {
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.dropdown-item:hover {
+  background-color: var(--color-secondary-creamy); /* Ensure this var is defined */
+  color: var(--color-primary);
+}
+.dropdown-item.logout-button { /* This was for the old logout in dropdown, can be removed if not reused */
+  color: var(--color-error);
+}
+.dropdown-item.logout-button:hover {
+  background-color: var(--color-error);
+  color: var(--color-text-on-primary);
+}
+
+
+/* --- Mobile Specific Header Actions (Profile Icon + Hamburger) --- */
+.navbar-mobile-header-actions {
+  display: none; /* Hidden by default, shown on mobile */
+  align-items: center;
+  gap: var(--spacing-sm); /* Space between profile icon and hamburger */
+  margin-left: auto; /* Push to the right, after search if it were visible */
+}
+
+.navbar-mobile-profile-icon {
+  color: var(--color-text-primary);
+  font-size: 1.3rem; /* Match hamburger icon size */
+  padding: var(--spacing-xs); /* Tappable area */
+  display: flex;
+  align-items: center;
+  border-radius: 50%;
+  transition: color 0.3s ease, background-color 0.3s ease;
+}
+.navbar-mobile-profile-icon:hover {
+  color: var(--color-primary);
+  background-color: var(--color-surface-variant); /* Light background on hover */
+}
+
+.navbar-hamburger-icon {
+  font-size: 1.6rem;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  padding: var(--spacing-sm); /* Ensure it's easily tappable */
+  z-index: 1002; /* Above the slide-out menu if they overlap initially */
+  display: flex; /* To center icon if needed */
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* --- Actions within the Slide-Out Mobile Menu --- */
+.navbar-actions-in-mobile-slideout-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Align items to the start of the container */
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg); /* Padding inside the slide-out menu for these actions */
+  border-top: 1px solid var(--color-border);
+  margin-top: var(--spacing-md);
+  width: 100%; /* Take full width of the parent li */
+}
+
+.theme-toggle-button-mobile-slideout,
+.logout-button-mobile-slideout,
+.auth-actions-in-mobile-slideout-menu a Button, /* Target buttons within links */
+.profile-actions-in-mobile-slideout-menu .nav-link { /* Target nav-links in this section */
+  width: 100%;
+  justify-content: flex-start;
+  padding: var(--spacing-sm) 0; /* Adjust padding as needed, remove side padding if parent handles it */
+  font-size: 1rem;
+  box-sizing: border-box; /* Ensure padding doesn't break layout */
+}
+.theme-toggle-button-mobile-slideout {
+  color: var(--color-text-secondary);
+  background: none; /* Ensure icon button has no background */
+  border: none;
+}
+.theme-toggle-button-mobile-slideout:hover {
+  color: var(--color-primary);
+}
+.profile-actions-in-mobile-slideout-menu {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: var(--spacing-sm);
+}
+.auth-actions-in-mobile-slideout-menu {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: var(--spacing-sm);
+}
+.auth-actions-in-mobile-slideout-menu > a > Button { /* Style buttons inside links for login/signup */
+   width: 100%;
+   text-align: left;
+   justify-content: flex-start;
+}
+
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 992px) { /* Tablet and Mobile */
+  .navbar-container {
+    padding: 0 var(--spacing-md); /* Slightly less padding on smaller screens for container */
   }
 
-  .mobile-menu-toggle {
-    display: block;
+  .navbar-search-form {
+    display: none; /* Hide search form on smaller screens */
   }
-
-  .navbar-links-auth-wrapper {
-    display: none;
+  
+  .navbar-links { /* This is the <ul> for main nav links */
+    display: none; /* Hidden by default on mobile */
+    flex-direction: column;
     position: absolute;
-    top: 100%;
+    top: 100%; /* Position below the navbar header */
     left: 0;
     width: 100%;
     background-color: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
     box-shadow: var(--box-shadow-md);
-    border-top: 1px solid var(--color-border);
-    z-index: 1050;
-    transform: translateY(-10px);
-    opacity: 0;
-    pointer-events: none;
-    transition: transform 0.3s ease, opacity 0.3s ease;
+    padding: var(--spacing-md) 0; /* Vertical padding for the slide-out menu */
+    z-index: 999; /* Below hamburger icon if it overlaps, but above page content */
+  }
+
+  .navbar-links.active { /* When mobile menu is open */
+    display: flex;
+  }
+
+  .navbar-links li { /* List items in the mobile menu */
     margin-left: 0;
-    gap: 0;
-    flex-direction: column;
-    align-items: stretch;
-    padding: 0;
-    max-height: calc(100vh - 65px);
-    overflow-y: auto;
-  }
-
-  .navbar-links-auth-wrapper.mobile-active {
-    display: flex;
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
-
-  /* --- Mobile Menu Content Sections --- */
-  .navbar-menu,
-  .navbar-actions {
-    display: flex;
-    flex-direction: column;
     width: 100%;
-    align-items: stretch; /* Default alignment for children */
+    text-align: center; /* Center nav link text if desired, or align left */
   }
-
-  .navbar-actions {
-      padding-top: var(--spacing-sm);
-      margin-top: var(--spacing-sm);
-      border-top: 1px solid var(--color-border);
-      /* Make the container center its direct children (the button) */
-      align-items: center;
-      padding-bottom: var(--spacing-sm); /* Add padding below button */
-  }
-
-  /* --- Mobile Menu: General Item Styling --- */
-  .navbar-links-auth-wrapper.mobile-active .navbar-link,
-  /* Exclude theme-toggle from this general rule */
-  .navbar-links-auth-wrapper.mobile-active .navbar-user-greeting,
-  .navbar-links-auth-wrapper.mobile-active .navbar-user-link,
-  .navbar-links-auth-wrapper.mobile-active .logout-button,
-  .navbar-links-auth-wrapper.mobile-active .navbar-auth > a {
-    display: block;
+  .navbar-links li .nav-link { /* Individual nav links in mobile menu */
+    display: block; /* Make them full width */
+    padding: var(--spacing-md) var(--spacing-lg); /* Larger tap targets */
     width: 100%;
-    text-align: left;
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-radius: 0;
-    border: none;
-    box-sizing: border-box;
+    font-size: 1rem;
+    text-align: left; /* Align text to the left */
+  }
+  .nav-link::after { /* Underline for mobile nav links */
+    left: var(--spacing-lg); /* Align with text */
+    transform: none;
+    bottom: var(--spacing-xs);
+  }
+  .nav-link.active::after,
+  .nav-link:hover::after {
+    width: calc(100% - (2 * var(--spacing-lg))); /* Adjust width considering padding */
   }
 
-  .navbar-links-auth-wrapper.mobile-active .navbar-link:hover,
-  .navbar-links-auth-wrapper.mobile-active .navbar-user-link:hover,
-  .navbar-links-auth-wrapper.mobile-active .logout-button:hover {
-     color: var(--color-primary);
-     background-color: var(--color-secondary-creamy);
+
+  .navbar-actions-desktop {
+    display: none; /* Hide desktop actions on mobile */
   }
 
-  /* --- Mobile Menu: Specific Item Styling --- */
-
-  /* Theme Toggle Button: Rectangular, Centered, Better Hover */
-  .navbar-links-auth-wrapper.mobile-active .theme-toggle-button {
-      display: inline-flex; /* Keep icon centered inside */
-      width: auto; /* Allow content width */
-      height: auto; /* Allow content height */
-      padding: var(--spacing-sm) var(--spacing-lg); /* Make it button-like */
-      border-radius: var(--border-radius); /* Make rectangular */
-      margin: 0; /* Centered by parent (.navbar-actions) */
-      /* Keep base transition */
-      transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-      /* Explicitly set text color and border for mobile state */
-      color: var(--color-text-secondary);
-      border: 1px solid var(--color-border);
-      background-color: transparent; /* Ensure no background initially */
+  .navbar-mobile-header-actions {
+    display: flex; /* Show mobile profile icon + hamburger */
   }
-  .navbar-links-auth-wrapper.mobile-active .theme-toggle-button:hover {
-       /* More pronounced hover effect */
-       background-color: var(--color-primary);
-       color: var(--color-text-on-primary);
-       border-color: var(--color-primary);
-       box-shadow: none; /* Remove ring if distracting */
+  .navbar-hamburger-icon { /* No change needed, already visible via parent */
+      /* display: block; -- old rule for .navbar-menu-icon, now controlled by parent */
   }
-
-  /* Auth Block: Separated by border */
-  .navbar-auth {
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      width: 100%;
-      gap: 0;
-      padding: 0;
-      border-top: 1px solid var(--color-border);
-      margin: 0;
-  }
-
-  /* User Greeting: Left aligned, consistent padding */
-  .navbar-links-auth-wrapper.mobile-active .navbar-user-greeting {
-      font-weight: 600;
-      color: var(--color-text-primary);
-      text-align: left; /* Override potential centering */
-      border-bottom: none;
-  }
-
-  /* Settings/Logout: Use standard padding, left aligned */
-  .navbar-links-auth-wrapper.mobile-active .navbar-user-link,
-  .navbar-links-auth-wrapper.mobile-active .logout-button {
-      text-align: left; /* Ensure left align */
-  }
-
-  /* Login/Signup Buttons */
-  .navbar-links-auth-wrapper.mobile-active .navbar-auth > a {
-      padding: var(--spacing-xs) var(--spacing-lg);
-  }
-  .navbar-links-auth-wrapper.mobile-active .navbar-auth .nav-button {
-     width: 100%;
-     padding: var(--spacing-sm) var(--spacing-md);
-     text-align: center;
-     display: block;
-     font-size: 1rem;
-  }
-  .navbar-links-auth-wrapper.mobile-active .navbar-auth > a + a {
-      margin-top: var(--spacing-sm);
-  }
-
 }
 
+@media (min-width: 993px) { /* Desktop */
+  .navbar-search-form {
+    display: flex; /* Show search form on desktop */
+  }
+  .navbar-actions-desktop {
+    display: flex; /* Show desktop actions */
+  }
+  .navbar-mobile-header-actions {
+    display: none; /* Hide mobile-specific profile icon and hamburger */
+  }
+  .navbar-links {
+    display: flex !important; /* Ensure main links are displayed as flex, overriding mobile absolute/column */
+    position: static;
+    flex-direction: row;
+    width: auto;
+    background-color: transparent;
+    border-bottom: none;
+    box-shadow: none;
+    padding: 0;
+  }
+  .navbar-links li {
+    margin-left: var(--spacing-lg);
+    width: auto;
+  }
+  .navbar-links li .nav-link {
+    padding: var(--spacing-sm) var(--spacing-xs); /* Restore desktop padding */
+    font-size: 0.95rem;
+    text-align: left;
+  }
+  .nav-link::after {
+    left: 0;
+  }
+  .nav-link.active::after,
+  .nav-link:hover::after {
+    width: 100%;
+  }
 
-/* ======================================================== */
-/* --- Smaller Mobile Styles (< 480px) --- */
-/* ======================================================== */
-@media (max-width: 480px) {
-    .navbar {
-        padding: 0 var(--spacing-sm);
-        height: 60px;
-    }
-    .navbar-logo {
-        font-size: 1.4rem;
-        margin-right: var(--spacing-sm);
-    }
-    .mobile-menu-toggle {
-        font-size: 1.7rem;
-    }
-
-     .navbar-links-auth-wrapper.mobile-active {
-         top: 60px;
-         max-height: calc(100vh - 60px);
-     }
-
-    /* Reduce padding inside mobile menu */
-    .navbar-links-auth-wrapper.mobile-active .navbar-link,
-    .navbar-links-auth-wrapper.mobile-active .navbar-user-greeting,
-    .navbar-links-auth-wrapper.mobile-active .navbar-user-link,
-    .navbar-links-auth-wrapper.mobile-active .logout-button,
-    .navbar-links-auth-wrapper.mobile-active .navbar-auth > a {
-        padding-left: var(--spacing-md);
-        padding-right: var(--spacing-md);
-    }
-    /* Adjust theme button padding/margin for smaller screens */
-    .navbar-links-auth-wrapper.mobile-active .theme-toggle-button {
-         padding: var(--spacing-sm) var(--spacing-md); /* Slightly smaller padding */
-         /* Margin adjusted by parent padding */
-    }
+  /* Hide the mobile actions list item within the ul.navbar-links on desktop */
+  .navbar-actions-in-mobile-slideout-menu {
+    display: none;
+  }
 }

@@ -1,277 +1,384 @@
-// client/src/pages/admin/AdminArticleEdit.jsx
-import React, { useState, useEffect, useCallback } from 'react';
+// client/src/pages/admin/AdminArticleEdit/AdminArticleEdit.jsx
+import React, { useState, useEffect, useCallback, useRef } from 'react'; // Added useRef
 import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-// Import EditorContent and useEditor (BubbleMenu is removed)
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
-import Link from '@tiptap/extension-link'; // Keep Link for general link handling
+import LinkExtension from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
-
-// !! Ensure paths are correct !!
-import { selectArticleById, articleUpdated } from '../../../features/articles/articlesSlice.js';
+import {
+  fetchAdminArticle,
+  createAdminArticle,
+  updateAdminArticle,
+  uploadEditorImage,
+  selectCurrentEditingArticle,
+  selectAdminArticleEditStatus,    // Corrected
+  selectAdminArticleEditError,     // Corrected
+  selectAdminArticleSaveSuccessMessage,
+  selectIsUploadingEditorImage,
+  selectEditorImageUploadError,
+  clearAdminArticleState,
+  clearSaveSuccessMessage,
+  clearAdminArticleError,
+} from '../../../features/admin/adminArticlesSlice.js';
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 import Textarea from '../../../components/common/Textarea';
 import Select from '../../../components/common/Select';
 import Spinner from '../../../components/common/Spinner';
 import './AdminArticleEdit.css';
-// Icons for Toolbar + Save/Cancel
 import {
     FaSave, FaTimes, FaBold, FaItalic, FaStrikethrough, FaParagraph,
-    FaListUl, FaListOl, FaCode, FaHeading, FaImage, FaLink, FaUnlink , FaCheckCircle // Added back FaImage, FaLink, FaUnlink
+    FaListUl, FaListOl, FaCode, FaHeading, FaImage, FaLink, FaUnlink, FaCheckCircle
 } from 'react-icons/fa';
+// import { useAuth } from '../../../context/AuthContext.jsx'; // Not explicitly used for authorId if backend handles it
 
-// --- MenuBar Component (Restored Static Toolbar) ---
-const MenuBar = ({ editor }) => {
+const MenuBar = ({ editor, onImageUpload }) => {
   if (!editor) { return null; }
 
-  // --- Function to add image via URL (Placeholder using prompt) ---
-  // TODO: Replace with a proper modal and upload/URL logic
-  const addImage = useCallback(() => {
-    const url = window.prompt('Enter image URL:');
-    if (url) {
-      const alt = window.prompt('Enter Alt text (optional):', '');
-      editor.chain().focus().setImage({ src: url, alt: alt || null }).run();
-    }
-  }, [editor]);
-  // --- End Image Function ---
-
-  // --- Function to set/unset Link ---
-   const setLink = useCallback(() => {
-        const previousUrl = editor.getAttributes('link').href;
-        const url = window.prompt('Enter URL:', previousUrl);
-        if (url === null) return; // cancelled
-        if (url === '') { // empty
-            editor.chain().focus().extendMarkRange('link').unsetLink().run();
-            return;
+  const addImageViaToolbar = useCallback(async () => {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.onchange = async (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const imageUrl = await onImageUpload(file);
+        if (imageUrl) {
+          editor.chain().focus().setImage({ src: imageUrl, alt: file.name }).run();
         }
-        editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-    }, [editor]);
-  // --- End Link Function ---
+      }
+    };
+    fileInput.click();
+  }, [editor, onImageUpload]);
 
+  const setLink = useCallback(() => {
+    const previousUrl = editor.getAttributes('link').href;
+    const url = window.prompt('Enter URL:', previousUrl);
+    if (url === null) return;
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      return;
+    }
+    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  }, [editor]);
 
-  // Define buttons for the toolbar
   const buttons = [
     { action: () => editor.chain().focus().toggleBold().run(), icon: FaBold, label: 'Bold', isActive: editor.isActive('bold') },
     { action: () => editor.chain().focus().toggleItalic().run(), icon: FaItalic, label: 'Italic', isActive: editor.isActive('italic') },
     { action: () => editor.chain().focus().toggleStrike().run(), icon: FaStrikethrough, label: 'Strike', isActive: editor.isActive('strike') },
-    { action: setLink, icon: FaLink, label: 'Link', isActive: editor.isActive('link') }, // Add Link button
-    { action: () => editor.chain().focus().unsetLink().run(), icon: FaUnlink, label: 'Unlink', isActive: false, condition: editor.isActive('link') }, // Add Unlink button conditional
-    { type: 'divider' }, // Optional divider
+    { action: setLink, icon: FaLink, label: 'Link', isActive: editor.isActive('link') },
+    { action: () => editor.chain().focus().unsetLink().run(), icon: FaUnlink, label: 'Unlink', condition: editor.isActive('link') },
+    { type: 'divider' },
     { action: () => editor.chain().focus().setParagraph().run(), icon: FaParagraph, label: 'Paragraph', isActive: editor.isActive('paragraph') },
     { action: () => editor.chain().focus().toggleHeading({ level: 2 }).run(), icon: FaHeading, label: 'H2', isActive: editor.isActive('heading', { level: 2 }) },
     { action: () => editor.chain().focus().toggleHeading({ level: 3 }).run(), icon: FaHeading, label: 'H3', isActive: editor.isActive('heading', { level: 3 }) },
     { action: () => editor.chain().focus().toggleBulletList().run(), icon: FaListUl, label: 'Bullet List', isActive: editor.isActive('bulletList') },
     { action: () => editor.chain().focus().toggleOrderedList().run(), icon: FaListOl, label: 'Ordered List', isActive: editor.isActive('orderedList') },
     { action: () => editor.chain().focus().toggleCodeBlock().run(), icon: FaCode, label: 'Code Block', isActive: editor.isActive('codeBlock') },
-     { type: 'divider' },
-    { action: addImage, icon: FaImage, label: 'Image', isActive: false }, // Add Image button
+    { type: 'divider' },
+    { action: addImageViaToolbar, icon: FaImage, label: 'Image', isActive: false },
   ];
 
   return (
     <div className="tiptap-toolbar">
       {buttons.map((btn, index) => {
-        // Render divider
-        if (btn.type === 'divider') {
-          return <div key={index} className="toolbar-divider"></div>;
-        }
-        // Conditionally render button (e.g., only show Unlink if Link is active)
-        if (btn.condition !== undefined && !btn.condition) {
-            return null;
-        }
-        // Render standard button
+        if (btn.type === 'divider') return <div key={index} className="toolbar-divider"></div>;
+        if (btn.condition !== undefined && !btn.condition) return null;
         return (
-            <button
-              key={index}
-              onClick={btn.action}
-              className={btn.isActive ? 'is-active' : ''}
-              title={btn.label}
-              type="button"
-              disabled={!editor.isEditable || (btn.disabledCheck && btn.disabledCheck())} // Example: disable unlink if no link selected
-            >
-              <btn.icon />
-            </button>
+          <button
+            key={index}
+            onClick={btn.action}
+            className={`toolbar-button ${btn.isActive ? 'is-active' : ''}`}
+            title={btn.label}
+            type="button"
+            disabled={!editor.isEditable || (btn.disabledCheck && btn.disabledCheck())}
+          >
+            <btn.icon />
+          </button>
         );
-       })}
+      })}
     </div>
   );
 };
-// --- End MenuBar Component ---
 
 
 const AdminArticleEdit = () => {
-    const { articleId } = useParams();
-    const navigate = useNavigate();
-    const dispatch = useDispatch();
+  const { articleId } = useParams();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  // const { user: adminUser } = useAuth(); // Needed if you set authorId client-side
 
-    const article = useSelector((state) => selectArticleById(state, articleId));
+  const articleForEdit = useSelector(selectCurrentEditingArticle);
+  const editStatus = useSelector(selectAdminArticleEditStatus); // Corrected
+  const saveError = useSelector(selectAdminArticleEditError);     // Corrected
+  const saveSuccessMessage = useSelector(selectAdminArticleSaveSuccessMessage);
+  const isUploadingImage = useSelector(selectIsUploadingEditorImage);
+  const imageUploadError = useSelector(selectEditorImageUploadError);
 
-    // --- Component State ---
-    const [title, setTitle] = useState('');
-    const [slug, setSlug] = useState('');
-    const [excerpt, setExcerpt] = useState('');
-    const [author, setAuthor] = useState('Admin');
-    const [imageUrl, setImageUrl] = useState(''); // Featured image
-    const [publishDate, setPublishDate] = useState('');
-    const [status, setStatus] = useState('draft');
-    const [content, setContent] = useState(''); // Tiptap content (HTML)
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
-    const [error, setError] = useState('');
-    const [isUploading, setIsUploading] = useState(false); // Keep for drag/drop upload state
-    const [saveSuccessMessage, setSaveSuccessMessage] = useState('');
-    // --- End State ---
+  // Derive boolean states
+  const isLoading = editStatus === 'loading' || (articleId && editStatus === 'idle' && !articleForEdit); // isLoading true if fetching existing
+  const isSaving = editStatus === 'saving';
 
-    // --- Tiptap Editor Setup ---
-    const editor = useEditor({
-        extensions: [
-            StarterKit,
-            Image, // Keep Image for rendering and drag/drop
-            Link.configure({ openOnClick: false, autolink: true }), // Keep Link
-            Placeholder.configure({ placeholder: 'Start writing...' }) // Keep Placeholder
-        ],
-        editorProps: { // Keep editorProps for drag/drop
-            handleDOMEvents: {
-                drop(view, event) {
+
+  const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
+  const [content, setContentState] = useState('');
+  const [excerpt, setExcerpt] = useState('');
+  const [thumbnailUrl, setThumbnailUrl] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [tags, setTags] = useState('');
+  const [status, setStatus] = useState('DRAFT');
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [publishedAt, setPublishedAt] = useState('');
+
+  const [categories, setCategories] = useState([{ value: '', label: 'Select Category' }]);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Image.configure({ inline: false, allowBase64: false }),
+      LinkExtension.configure({ openOnClick: false, autolink: true }),
+      Placeholder.configure({ placeholder: 'Start writing your amazing article...' }),
+    ],
+    content: '',
+    onUpdate: ({ editor }) => {
+      setContentState(editor.getHTML());
+    },
+    editorProps: {
+      attributes: { class: 'tiptap-editor-content' },
+      handleDOMEvents: {
+        drop(view, event) {
+          event.preventDefault();
+          const files = event.dataTransfer?.files;
+          if (!files || files.length === 0 || !view.editable) return false;
+          const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+          if (imageFiles.length === 0) return false;
+
+          imageFiles.forEach(file => handleImageUpload(file, view));
+          return true;
+        },
+        paste(view, event) {
+            const items = (event.clipboardData || event.originalEvent.clipboardData)?.items;
+            if (!items || !view.editable) return false;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf("image") === 0) {
                     event.preventDefault();
-                    const files = event.dataTransfer?.files;
-                    if (!files || files.length === 0) return false;
-                    const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
-                    if (imageFiles.length === 0) return false;
-
-                    imageFiles.forEach(async (file) => {
-                        setIsUploading(true);
-                        try {
-                            const url = await uploadImage(file); // Uses placeholder upload
-                             if (url && view.editable) {
-                                const { state } = view;
-                                const { tr } = state;
-                                const node = state.schema.nodes.image.create({ src: url, alt: file.name });
-                                const transaction = tr.replaceSelectionWith(node);
-                                view.dispatch(transaction);
-                             }
-                        } catch (uploadError) {
-                            console.error("Image upload failed:", uploadError);
-                            setError("Image upload failed. Please try again.");
-                        } finally {
-                            setIsUploading(false);
-                        }
-                    });
+                    const file = items[i].getAsFile();
+                    if (file) handleImageUpload(file, view);
                     return true;
-                },
-            },
-        },
-        content: content,
-        onUpdate: ({ editor }) => {
-            setContent(editor.getHTML());
-        },
-    });
-    // --- End Tiptap Setup ---
-
-    // --- Effect to load article data (remains the same) ---
-    useEffect(() => {
-        if (article) {
-           setTitle(article.title || '');
-           setSlug(article.slug || '');
-           setExcerpt(article.excerpt || '');
-           setAuthor(article.author || 'Admin');
-           setImageUrl(article.imageUrl || '');
-           setPublishDate(article.publishDate ? article.publishDate.split('T')[0] : '');
-           setStatus(article.status || 'draft');
-
-           const initialContent = article.content || '';
-           setContent(initialContent);
-           if (editor && !editor.isDestroyed) {
-                try {
-                   if (editor.isEditable) editor.commands.setContent(initialContent, false);
-                } catch(e) { console.error("Error setting initial content", e)}
-           }
-           setIsLoading(false);
-       } else if (!isLoading) {
-            setError(`Article with ID "${articleId}" not found.`);
-            setIsLoading(false);
-       }
-   }, [article, articleId]); // Removed editor from dependencies for stability
-
-    // --- Handle Form Submission (remains the same) ---
-    const handleSubmit = (e) => {
-         e.preventDefault();
-        if (!editor) return;
-        setIsSaving(true);
-        setError('');
-        setSaveSuccessMessage(''); // Clear previous success message
-        const latestContent = editor.getHTML();
-        const updatedArticleData = { _id: articleId, title, slug, excerpt, author, imageUrl, publishDate, status, content: latestContent };
-        console.log("Submitting updated article data:", updatedArticleData);
-        try {
-            dispatch(articleUpdated(updatedArticleData));
-            setSaveSuccessMessage('Article updated successfully!');
-            navigate('/admin/articles');
-            setTimeout(() => {
-              navigate('/admin/articles'); // Redirect after a short delay
-            }, 1500);
-        } catch (err) {
-            console.error("Failed to update article:", err);
-            setError('Failed to save article.');
-            setIsSaving(false);
+                }
+            }
+            return false;
         }
+      },
+    },
+  });
+
+  const handleImageUpload = useCallback(async (file, tiptapView) => {
+    if (!file) return null;
+    dispatch(clearAdminArticleError());
+    try {
+      const resultAction = await dispatch(uploadEditorImage(file)).unwrap();
+      if (resultAction && resultAction.url && tiptapView && tiptapView.editable) {
+        const { state } = tiptapView;
+        const { tr } = state;
+        const node = state.schema.nodes.image.create({ src: resultAction.url, alt: file.name });
+        const transaction = tr.replaceSelectionWith(node);
+        tiptapView.dispatch(transaction);
+        return resultAction.url;
+      }
+    } catch (err) {
+      console.error("Image upload failed in component:", err);
+    }
+    return null;
+  }, [dispatch]);
+
+
+  useEffect(() => {
+    if (articleId) {
+      dispatch(fetchAdminArticle(articleId));
+    } else {
+      dispatch(clearAdminArticleState());
+    }
+    // TODO: Fetch categories
+    // Example: dispatch(fetchCategoriesForAdminForm()).then(...)
+    return () => {
+      dispatch(clearAdminArticleState());
+    };
+  }, [dispatch, articleId]);
+
+  useEffect(() => {
+    if (articleForEdit && editor && !editor.isDestroyed) {
+      setTitle(articleForEdit.title || '');
+      setSlug(articleForEdit.slug || '');
+      const currentEditorContent = articleForEdit.content || '';
+      setContentState(currentEditorContent);
+      if (editor.getHTML() !== currentEditorContent) {
+         try {
+            if(editor.isEditable) editor.commands.setContent(currentEditorContent, false);
+         } catch(e) { console.error("Error setting editor content on load:", e)}
+      }
+      setExcerpt(articleForEdit.excerpt || '');
+      setThumbnailUrl(articleForEdit.thumbnailUrl || '');
+      setCategoryId(articleForEdit.categoryId?.toString() || '');
+      setTags((articleForEdit.tags || []).join(', '));
+      setStatus(articleForEdit.status || 'DRAFT');
+      setIsFeatured(articleForEdit.isFeatured || false);
+      setPublishedAt(articleForEdit.publishedAt ? new Date(articleForEdit.publishedAt).toISOString().split('T')[0] : '');
+    } else if (!articleId) {
+        setTitle(''); setSlug(''); setContentState('');
+        if (editor && !editor.isDestroyed && editor.isEditable) editor.commands.setContent('', false);
+        setExcerpt(''); setThumbnailUrl(''); setCategoryId('');
+        setTags(''); setStatus('DRAFT'); setIsFeatured(false); setPublishedAt('');
+    }
+  }, [articleForEdit, editor, articleId]);
+
+  const articleIdAfterSaveRef = useRef(null);
+
+  useEffect(() => {
+    if (saveSuccessMessage) {
+      const timer = setTimeout(() => {
+        dispatch(clearSaveSuccessMessage());
+        if (articleIdAfterSaveRef.current || !articleId) { // If new article was created or was create mode
+            navigate('/admin/articles');
+        }
+      }, 2000); // Shortened delay before redirect
+      return () => clearTimeout(timer);
+    }
+  }, [saveSuccessMessage, dispatch, navigate, articleId]);
+
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!editor) return;
+    dispatch(clearAdminArticleError());
+
+    const finalContent = editor.getHTML();
+    const articleData = {
+      title: title.trim(),
+      slug: slug.trim() || undefined,
+      content: finalContent,
+      excerpt: excerpt.trim(),
+      thumbnailUrl: thumbnailUrl.trim() || null,
+      categoryId: categoryId ? parseInt(categoryId, 10) : null,
+      tags: tags.split(',').map(tag => tag.trim()).filter(Boolean),
+      status,
+      isFeatured,
+      publishedAt: publishedAt || null,
     };
 
-    // --- Cleanup editor (remains the same) ---
-    useEffect(() => { return () => { editor?.destroy(); }; }, [editor]);
+    try {
+      let resultAction;
+      if (articleId) {
+        resultAction = await dispatch(updateAdminArticle({ articleId, articleData })).unwrap();
+        // Success message will show, then useEffect for saveSuccessMessage handles navigation
+      } else {
+        resultAction = await dispatch(createAdminArticle(articleData)).unwrap();
+        articleIdAfterSaveRef.current = resultAction.id; // Set ref for new article
+        // Success message will show, then useEffect for saveSuccessMessage handles navigation
+      }
+    } catch (rejectedValueOrSerializedError) {
+      console.error('Failed to save article:', rejectedValueOrSerializedError);
+    }
+  };
 
+  useEffect(() => {
+    return () => { editor?.destroy(); };
+  }, [editor]);
 
-    // --- Render ---
-    if (isLoading) { return <div className="admin-page-container"><Spinner size="large" /></div>; }
-    if (error && !article) { return <div className="admin-page-container admin-error-message">{error} <RouterLink to="/admin/articles">Back to list</RouterLink></div>; }
-
+  if (isLoading && articleId && !articleForEdit) {
+    return <div className="admin-page-container page-loading-spinner"><Spinner size="large" label="Loading article..." /></div>;
+  }
+   // This condition might need adjustment based on how 'idle' state is handled.
+   // If 'idle' means not yet fetched, it's part of isLoading.
+   // If error occurs during fetch:
+  if (saveError && editStatus === 'failed' && articleId && !articleForEdit) {
     return (
-        <div className="admin-page-container admin-edit-form">
-            <h1 className="admin-page-title">Edit Article: {article?.title || '...'}</h1>
-            {/* Render the static MenuBar ABOVE the editor content */}
-            {editor && <MenuBar editor={editor} />}
-            <form onSubmit={handleSubmit}>
-                 {error && article && <p className="admin-error-message">{error}</p>}
-                 {/* Input fields for title, slug, excerpt, etc. */}
-                 {saveSuccessMessage && <p className="admin-success-message"><FaCheckCircle /> {saveSuccessMessage}</p>}
-                 <Input label="Title" id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-                 <Input label="Slug" id="slug" value={slug} onChange={(e) => setSlug(e.target.value)} required />
-                 <Textarea label="Excerpt" id="excerpt" value={excerpt} onChange={(e) => setExcerpt(e.target.value)} rows={3} />
-                 <Input label="Author" id="author" value={author} onChange={(e) => setAuthor(e.target.value)} />
-                 <Input label="Featured Image URL" id="imageUrl" type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
-                 <div className="form-row">
-                     <Input label="Publish Date" id="publishDate" type="date" value={publishDate} onChange={(e) => setPublishDate(e.target.value)} />
-                     <Select
-                        label="Status"
-                        id="status"
-                        value={status}
-                        onChange={(e) => setStatus(e.target.value)}
-                        options={[ { value: 'draft', label: 'Draft' }, { value: 'published', label: 'Published' } ]}
-                     />
-                 </div>
-
-                 {/* Tiptap Editor Content Area */}
-                 <div className="form-group">
-                    <label>Content {isUploading ? '(Uploading image...)' : ''}</label>
-                    {/* REMOVED BubbleMenu component */}
-                    {/* Render the editor area */}
-                     <EditorContent editor={editor} className={`tiptap-editor-content ${isUploading ? 'is-uploading' : ''}`} />
-                 </div>
-
-                {/* Action Buttons */}
-                <div className="form-actions">
-                    <Button type="submit" variant="primary" disabled={isSaving || isUploading || !editor}>
-                        {isSaving ? <Spinner size="small"/> : <FaSave />} Save Changes
-                    </Button>
-                     <Button type="button" variant="secondary" onClick={() => navigate('/admin/articles')} disabled={isSaving || isUploading}>
-                       <FaTimes/> Cancel
-                    </Button>
-                </div>
-            </form>
-        </div>
+      <div className="admin-page-container admin-form-error-fullpage">
+        <p>Error loading article: {typeof saveError === 'string' ? saveError : JSON.stringify(saveError)}</p>
+        <RouterLink to="/admin/articles" className="button-link">Back to Article List</RouterLink>
+      </div>
     );
+  }
+
+  return (
+    <div className="admin-page-container admin-article-edit-form">
+      <h1 className="admin-page-title">
+        {articleId ? `Edit Article: ${articleForEdit?.title || 'Loading...'}` : 'Create New Article'}
+      </h1>
+
+      {editor && <MenuBar editor={editor} onImageUpload={handleImageUpload} />}
+      {isUploadingImage && <p className="image-upload-indicator"><Spinner size="small" /> Uploading image...</p>}
+      {imageUploadError && <p className="admin-form-error image-upload-error">Image upload failed: {typeof imageUploadError === 'string' ? imageUploadError : JSON.stringify(imageUploadError)}</p>}
+
+      <form onSubmit={handleSubmit} className="article-form">
+        {saveError && editStatus === 'failed' && ( // Display save/create error only when a save/create attempt failed
+          <div className="admin-form-error">
+            <h4>Save Failed:</h4>
+            {typeof saveError === 'string' ? <p>{saveError}</p> :
+              Array.isArray(saveError) ? (
+                <ul>{saveError.map((err, i) => <li key={i}>{err.field ? `${err.field}: ` : ''}{err.message}</li>)}</ul>
+              ) : <p>An unexpected error occurred.</p>
+            }
+          </div>
+        )}
+        {saveSuccessMessage && <p className="admin-form-success"><FaCheckCircle /> {saveSuccessMessage}</p>}
+
+        <Input label="Title" id="title" value={title} onChange={(e) => setTitle(e.target.value)} required disabled={isSaving}/>
+        <Input label="Slug (optional)" id="slug" value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="e.g., my-awesome-article" disabled={isSaving}/>
+        <Textarea label="Excerpt (optional)" id="excerpt" value={excerpt} onChange={(e) => setExcerpt(e.target.value)} rows={3} disabled={isSaving}/>
+        <Input label="Featured Image URL (optional)" id="thumbnailUrl" type="url" value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)} placeholder="https://example.com/image.jpg" disabled={isSaving}/>
+
+        <div className="form-row">
+          <Select
+            label="Category"
+            id="categoryId"
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            options={categories}
+            disabled={isSaving}
+          />
+          <Input label="Tags (comma-separated)" id="tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="e.g., tech,news,updates" disabled={isSaving}/>
+        </div>
+
+        <div className="form-row">
+          <Input label="Publish Date (optional)" id="publishDate" type="date" value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)} disabled={isSaving}/>
+          <Select
+            label="Status"
+            id="status"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            options={[
+              { value: 'DRAFT', label: 'Draft' },
+              { value: 'PUBLISHED', label: 'Published' },
+              { value: 'ARCHIVED', label: 'Archived' },
+            ]}
+            disabled={isSaving}
+          />
+        </div>
+        <div className="form-group form-group-checkbox">
+            <input type="checkbox" id="isFeatured" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} disabled={isSaving} />
+            <label htmlFor="isFeatured">Feature this article?</label>
+        </div>
+
+        <div className="form-group tiptap-container">
+          <label htmlFor="tiptap-content">Content</label>
+          <EditorContent editor={editor} id="tiptap-content" />
+        </div>
+
+        <div className="form-actions">
+          <Button type="submit" variant="primary" disabled={isSaving || isUploadingImage || !editor ||isLoading}>
+            {isSaving ? <Spinner size="small"/> : <FaSave />} {articleId ? 'Save Changes' : 'Create Article'}
+          </Button>
+          <Button type="button" variant="secondary" onClick={() => navigate('/admin/articles')} disabled={isSaving || isUploadingImage}>
+            <FaTimes/> Cancel
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
 };
 
 export default AdminArticleEdit;

@@ -1,87 +1,65 @@
 // src/features/testimonials/testimonialsSlice.js
-import { createSlice, createSelector, createAsyncThunk } from '@reduxjs/toolkit';
-import testimonialsData from '../../assets/dummyTestimonials.json'; // Adjust path if needed
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { fetchVisibleTestimonialsAPI } from '../../services/testimonialService.js'; // Adjust path
 
-// --- Simulate API Call Delay ---
-const ARTIFICIAL_DELAY_MS = 600; // Another different delay
+// Renamed thunk to fetchTestimonials for consistency with how HomePage was trying to import it.
+// However, if you prefer fetchVisibleTestimonials, ensure HomePage imports that exact name.
+export const fetchVisibleTestimonials = createAsyncThunk(
+  'testimonials/fetchVisibleTestimonials', // Action type string can remain
+  async (_, { rejectWithValue }) => {
+    try {
+      const apiResponse = await fetchVisibleTestimonialsAPI();
+      if (apiResponse.success) {
+        return apiResponse.data.testimonials;
+      } else {
+        return rejectWithValue(apiResponse.message || 'Failed to fetch testimonials.');
+      }
+    } catch (error) {
+      return rejectWithValue(error.message || 'An unknown error occurred while fetching testimonials.');
+    }
+  }
+);
 
-// --- Define the Initial State ---
-// Start empty, fetch data async
 const initialState = {
-    items: [],         // Will be populated by the thunk
-    status: 'idle',    // 'idle' | 'loading' | 'succeeded' | 'failed'
-    error: null,
+  testimonialsList: [],
+  status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
+  error: null,
 };
 
-// --- Create Async Thunk to Fetch Testimonials ---
-export const fetchTestimonials = createAsyncThunk(
-    'testimonials/fetchTestimonials',
-    async (_, { rejectWithValue }) => {
-        console.log("Redux Thunk: Simulating testimonial fetch...");
-        await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY_MS));
-
-        try {
-            // Simulate potential error (uncomment to test)
-            // if (Math.random() > 0.5) { throw new Error('Simulated testimonial fetch error'); }
-
-            // In a real app: const response = await axios.get('/api/testimonials'); return response.data;
-            console.log("Redux Thunk: Simulated testimonial fetch SUCCEEDED.");
-            return testimonialsData || []; // Return the imported data (or empty array)
-        } catch (error) {
-            console.error("Redux Thunk: Error during simulated testimonial fetch:", error);
-            return rejectWithValue(error.message || 'Failed to fetch testimonials');
-        }
-    }
-);
-
-// --- Create the Slice ---
 const testimonialsSlice = createSlice({
-    name: 'testimonials',
-    initialState,
-    reducers: {
-        // Add reducers later if needed (e.g., addTestimonial for admin)
-    },
-    // --- Handle Async Thunk Lifecycle ---
-    extraReducers: (builder) => {
-        builder
-            .addCase(fetchTestimonials.pending, (state) => {
-                console.log("Redux extraReducer: fetchTestimonials.pending");
-                state.status = 'loading';
-                state.error = null;
-            })
-            .addCase(fetchTestimonials.fulfilled, (state, action) => {
-                console.log("Redux extraReducer: fetchTestimonials.fulfilled");
-                state.status = 'succeeded';
-                state.items = action.payload; // Set items to the fetched array
-                state.error = null;
-            })
-            .addCase(fetchTestimonials.rejected, (state, action) => {
-                console.log("Redux extraReducer: fetchTestimonials.rejected");
-                state.status = 'failed';
-                state.error = action.payload || action.error.message || 'Unknown error fetching testimonials';
-                state.items = []; // Clear items on failure
-            });
-    },
+  name: 'testimonials',
+  initialState,
+  reducers: {
+    // Can add reducers like clearTestimonialsError if needed
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchVisibleTestimonials.pending, (state) => { // Changed from fetchVisibleTestimonials
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(fetchVisibleTestimonials.fulfilled, (state, action) => { // Changed from fetchVisibleTestimonials
+        state.status = 'succeeded';
+        state.testimonialsList = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchVisibleTestimonials.rejected, (state, action) => { // Changed from fetchVisibleTestimonials
+        state.status = 'failed';
+        state.error = action.payload || 'Failed to fetch testimonials.';
+        state.testimonialsList = [];
+      });
+  },
 });
 
-// --- Exports ---
-
-// Export the reducer function
 export default testimonialsSlice.reducer;
 
-// Export the async thunk
-// export { fetchTestimonials }; // Already exported above
+// Selectors
+// Exporting as selectAllTestimonials to match HomePage's import attempt
+export const selectAllTestimonials = (state) => state.testimonials.testimonialsList;
+// Exporting as selectTestimonialsStatus for consistency
+export const selectTestimonialsStatus = (state) => state.testimonials.status;
+export const selectTestimonialsError = (state) => state.testimonials.error;
 
-// --- Selectors ---
-export const selectAllTestimonials = (state) => state.testimonials?.items || [];
-
-// Renamed for consistency and added error selector
-export const selectTestimonialsStatus = (state) => state.testimonials?.status || 'idle';
-export const selectTestimonialsError = (state) => state.testimonials?.error;
-
-// Example: Selector to get a testimonial by ID (if needed)
-export const selectTestimonialById = createSelector(
-    selectAllTestimonials,
-    (state, testimonialId) => testimonialId,
-    (testimonials, testimonialId) => testimonials.find(t => t.id === testimonialId) || null
-);
+// Original selectors if you prefer to use these names in HomePage:
+// export const selectAllVisibleTestimonials = (state) => state.testimonials.testimonialsList;
+// export const selectTestimonialsLoading = (state) => state.testimonials.isLoading; // isLoading was in your original slice

@@ -1,20 +1,16 @@
-// src/main.jsx (or index.js) - Corrected
+// src/main.jsx (or index.js) - From your previous upload
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
-import { AuthProvider } from "./context/AuthContext.jsx"; // Your Auth Context
-import { store } from "./app/store.js";       // Your Redux Store
-import { Provider } from "react-redux";    // Redux Provider
+// AuthProvider is NOT imported or used here in THIS version you showed
+import { store } from "./app/store.js";
+import { Provider } from "react-redux";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    {/* 1. Pass the store to the Redux Provider */}
     <Provider store={store}>
-      {/* 2. AuthProvider likely doesn't need the store prop */}
-      <AuthProvider>
-        <App />
-      </AuthProvider>
+      <App /> {/* <== App component is rendered here */}
     </Provider>
   </StrictMode>
 );

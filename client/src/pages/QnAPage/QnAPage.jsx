@@ -1,118 +1,215 @@
 // src/pages/QnAPage/QnAPage.jsx
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom'; // Assuming you'll link items later
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom'; // Link not used directly, QuestionListItem handles links
+import { motion, AnimatePresence } from 'framer-motion'; // Import Framer Motion
+
+// Assuming Button, QuestionListItem, Spinner, Input are your existing components
 import Button from '../../components/common/Button';
-import QuestionListItem from '../../components/QnA/QuestionListItem'; // We'll create this next
-import './QnAPage.css';
-import { FaPlus, FaFilter, FaSortAmountDown } from 'react-icons/fa';
+import QuestionListItem from '../../components/QnA/QuestionListItem';
+import Spinner from '../../components/common/Spinner';
+import Input from '../../components/common/Input';
 
-// --- Dummy Data ---
-const dummyQuestions = [
-  {
-    id: 'q1',
-    title: 'How does Quantum Entanglement work with respect to Bell\'s Theorem?',
-    tags: ['quantum-physics', 'entanglement', 'bells-theorem'],
-    asker: 'PhysicsFan123',
-    answerCount: 3,
-    voteCount: 15,
-    viewCount: 120,
-    createdAt: new Date(Date.now() - 86400000 * 1).toISOString(), // 1 day ago
-    hasAcceptedAnswer: true,
-  },
-  {
-    id: 'q2',
-    title: 'Best way to implement asynchronous operations in React using hooks?',
-    tags: ['react', 'javascript', 'async', 'hooks'],
-    asker: 'ReactDev',
-    answerCount: 5,
-    voteCount: 25,
-    viewCount: 250,
-    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
-    hasAcceptedAnswer: false,
-  },
-  {
-    id: 'q3',
-    title: 'Understanding the significance of the p-value in statistical hypothesis testing',
-    tags: ['statistics', 'hypothesis-testing', 'p-value'],
-    asker: 'StatsStudent',
-    answerCount: 1,
-    voteCount: 8,
-    viewCount: 95,
-    createdAt: new Date(Date.now() - 86400000 * 0.5).toISOString(), // 12 hours ago
-    hasAcceptedAnswer: false,
-  },
-  // Add more dummy questions as needed
-];
-// --- End Dummy Data ---
+import './QnAPage.css'; // Import CSS for base styling
 
+import { FaPlus, FaFilter, FaSortAmountDown, FaExclamationTriangle, FaSearch } from 'react-icons/fa';
+
+import { useSelector, useDispatch } from 'react-redux';
+import {
+  fetchQuestions,
+  selectAllQnAQuestions,
+  selectQnAStatus,
+  selectQnAError,
+  selectQnAPagination,
+  clearQnAState // Assuming you want to keep this for potential use
+} from '../../features/qna/qnaSlice';
+
+const ITEMS_PER_PAGE = 10;
+
+// --- Framer Motion Variants ---
+const pageVariants = {
+  initial: { opacity: 0, y: 20 },
+  in: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeInOut" } },
+  out: { opacity: 0, y: -20, transition: { duration: 0.3, ease: "easeInOut" } }
+};
+
+const listContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.07, // Stagger delay for each question item
+    },
+  },
+};
+
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.4, ease: "easeOut" } },
+};
+
+const buttonHoverTap = {
+  hover: { scale: 1.05, transition: { duration: 0.15 } },
+  tap: { scale: 0.95 },
+};
 
 const QnAPage = () => {
-  const [questions, setQuestions] = useState(dummyQuestions);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('newest'); // newest, votes, unanswered
-  const [filterTags, setFilterTags] = useState([]); // ['react', 'quantum-physics']
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  // Basic filtering logic (can be expanded)
-  const filteredQuestions = questions
-    .filter(q =>
-      q.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      q.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
-    .filter(q =>
-      filterTags.length === 0 || filterTags.every(ft => q.tags.includes(ft))
-    )
-    .sort((a, b) => {
-      if (sortBy === 'votes') {
-        return b.voteCount - a.voteCount;
-      }
-      // Add logic for 'unanswered' if needed
-      // Default to newest
-      return new Date(b.createdAt) - new Date(a.createdAt);
-    });
+  const questions = useSelector(selectAllQnAQuestions);
+  const qnaStatus = useSelector(selectQnAStatus);
+  const qnaError = useSelector(selectQnAError);
+  const pagination = useSelector(selectQnAPagination);
 
-  const handleAskQuestion = () => {
-    // Navigate to the Ask Question page (implement routing later)
-    console.log("Navigate to Ask Question page");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(() => searchParams.get('search') || '');
+  const [sortBy, setSortBy] = useState(() => searchParams.get('sort') || 'newest');
+  const [activeTags, setActiveTags] = useState(() => searchParams.getAll('tag') || []);
+  const [currentPage, setCurrentPage] = useState(() => parseInt(searchParams.get('page') || '1', 10));
+
+  useEffect(() => {
+    const paramsToFetch = {
+      page: currentPage,
+      limit: ITEMS_PER_PAGE,
+      ...(searchTerm && { searchTerm }),
+      ...(sortBy && { sortBy }),
+      ...(activeTags.length > 0 && { tags: activeTags.join(',') }),
+    };
+    dispatch(fetchQuestions(paramsToFetch));
+
+    const newSearchParams = new URLSearchParams();
+    if (searchTerm) newSearchParams.set('search', searchTerm);
+    if (sortBy && sortBy !== 'newest') newSearchParams.set('sort', sortBy);
+    activeTags.forEach(tag => newSearchParams.append('tag', tag));
+    if (currentPage > 1) newSearchParams.set('page', currentPage.toString());
+    setSearchParams(newSearchParams, { replace: true });
+  }, [dispatch, searchTerm, sortBy, activeTags, currentPage, setSearchParams]);
+
+  useEffect(() => {
+    // Optional: Clear state on unmount if needed, or based on specific navigation
+    // return () => { dispatch(clearQnAState()); };
+  }, [dispatch]);
+
+  const handleAskQuestion = () => navigate('/qna/ask');
+  const handleSearchSubmit = (e) => { e.preventDefault(); setCurrentPage(1); };
+  const handleSortChange = (e) => { setSortBy(e.target.value); setCurrentPage(1); };
+  const toggleTagFilter = (tagToToggle) => {
+    setActiveTags(prevTags =>
+      prevTags.includes(tagToToggle)
+        ? prevTags.filter(t => t !== tagToToggle)
+        : [...prevTags, tagToToggle]
+    );
+    setCurrentPage(1);
+  };
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages && newPage !== currentPage && qnaStatus !== 'loading') {
+      setCurrentPage(newPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
-  return (
-    <div className="qna-page page-container">
-      <div className="qna-header">
-        <h1>Questions & Answers</h1>
-        <Button onClick={handleAskQuestion} variant="primary">
-          <FaPlus /> Ask Question
-        </Button>
-      </div>
+  const allAvailableTags = ['react', 'javascript', 'redux', 'css', 'node', 'python', 'express']; // Example tags
 
-      <div className="qna-controls">
-        {/* Basic Search Input */}
-        <input
-          type="search"
-          placeholder="Search questions or tags..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="qna-search-input"
-        />
-        {/* Add Filter/Sort Dropdowns later */}
-        <div className="qna-filter-sort">
-             <Button variant="outline" size="small"><FaFilter /> Filter</Button>
-             <Button variant="outline" size="small"><FaSortAmountDown /> Sort By: {sortBy}</Button>
-             {/* Implement dropdowns for actual filtering/sorting */}
-        </div>
-      </div>
-
-      <div className="qna-list">
-        {filteredQuestions.length > 0 ? (
-          filteredQuestions.map(question => (
-            <QuestionListItem key={question.id} question={question} />
-          ))
-        ) : (
-          <p className="qna-no-results">No questions found matching your criteria.</p>
+  let contentDisplay;
+  if (qnaStatus === 'loading' && questions.length === 0) {
+    contentDisplay = <motion.div key="loading" className="qna-status-section loading" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}><Spinner label="Loading questions..." size="large" /></motion.div>;
+  } else if (qnaStatus === 'failed') {
+    contentDisplay = <motion.div key="error" className="qna-status-section error-message" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
+      <FaExclamationTriangle className="status-icon" />
+      <p className="status-title">Error Loading Questions</p>
+      <p className="status-message">{qnaError || "Failed to load questions. Please try again."}</p>
+      <motion.div variants={buttonHoverTap} whileHover="hover" whileTap="tap">
+        <Button onClick={() => dispatch(fetchQuestions({ page: currentPage, limit: ITEMS_PER_PAGE, searchTerm, sortBy, tags: activeTags.join(',') }))} variant="outline" className="retry-button">Retry</Button>
+      </motion.div>
+    </motion.div>;
+  } else if (qnaStatus === 'succeeded' && questions.length === 0) {
+    contentDisplay = <motion.div key="empty" className="qna-status-section empty" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
+      <FaInfoCircle className="status-icon" />
+      <p className="status-title">No Questions Found</p>
+      <p className="status-message">No questions found matching your criteria.</p>
+    </motion.div>;
+  } else if (questions.length > 0) {
+    contentDisplay = (
+      <motion.div key="list" initial="hidden" animate="visible" variants={{hidden:{opacity:0}, visible:{opacity:1}}}>
+        <motion.div className="qna-list" variants={listContainerVariants} initial="hidden" animate="visible">
+          {questions.map(question => (
+            // QuestionListItem itself can have internal motion, or be wrapped like this
+            <motion.div key={question.id} variants={listItemVariants}>
+              <QuestionListItem question={question} />
+            </motion.div>
+          ))}
+        </motion.div>
+        {pagination.totalPages > 1 && (
+          <motion.div className="qna-pagination" initial={{opacity:0}} animate={{opacity:1}} transition={{delay:0.5}}>
+            <motion.div variants={buttonHoverTap} whileHover="hover" whileTap="tap">
+              <Button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage <= 1 || qnaStatus === 'loading'}>Previous</Button>
+            </motion.div>
+            <span>Page {currentPage} of {pagination.totalPages} (Total: {pagination.totalQuestions})</span>
+            <motion.div variants={buttonHoverTap} whileHover="hover" whileTap="tap">
+              <Button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage >= pagination.totalPages || qnaStatus === 'loading'}>Next</Button>
+            </motion.div>
+          </motion.div>
         )}
-      </div>
+        {qnaStatus === 'loading' && questions.length > 0 && (
+          <div className="qna-status-section subsequent-loading"><Spinner label="Updating questions..." /></div>
+        )}
+      </motion.div>
+    );
+  } else {
+    contentDisplay = <div className="qna-status-section"><p>Initializing Q&A...</p></div>; // Initial idle state
+  }
 
-      {/* Add Pagination later if needed */}
-    </div>
+  return (
+    <motion.div className="qna-page page-container" variants={pageVariants} initial="initial" animate="in" exit="out">
+      <motion.div className="qna-header" initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1, duration: 0.4 }}>
+        <h1>Questions & Answers</h1>
+        <motion.div variants={buttonHoverTap} whileHover="hover" whileTap="tap">
+          <Button onClick={handleAskQuestion} variant="primary" className="ask-question-btn">
+            <FaPlus /> Ask Question
+          </Button>
+        </motion.div>
+      </motion.div>
+
+      <motion.div className="qna-controls" initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2, duration: 0.4 }}>
+        <form onSubmit={handleSearchSubmit} className="qna-search-form">
+          <Input
+            id="qna-search" type="search" placeholder="Search questions..." value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)} className="qna-search-input"
+          />
+          <motion.div variants={buttonHoverTap} whileHover="hover" whileTap="tap">
+            <Button type="submit" variant="secondary" className="search-action-btn"><FaSearch/> Search</Button>
+          </motion.div>
+        </form>
+        <div className="qna-filter-sort">
+            <div className="filter-group">
+                <label htmlFor="sort-by" className="filter-label"><FaSortAmountDown /> Sort By:</label>
+                <select id="sort-by" value={sortBy} onChange={handleSortChange} className="filter-select">
+                    <option value="newest">Newest</option><option value="votes">Most Votes</option><option value="unanswered">Unanswered</option>
+                </select>
+            </div>
+            <div className="filter-group">
+                <label className="filter-label"><FaFilter /> Tags:</label>
+                <div className="tags-filter-list">
+                    {allAvailableTags.map(tag => (
+                        <motion.div key={tag} variants={buttonHoverTap} whileHover="hover" whileTap="tap" className="tag-button-wrapper">
+                             <Button
+                                variant={activeTags.includes(tag) ? 'primary' : 'outline'}
+                                size="small"
+                                onClick={() => toggleTagFilter(tag)}
+                                className="tag-filter-button"
+                            >
+                                {tag}
+                            </Button>
+                        </motion.div>
+                    ))}
+                </div>
+            </div>
+        </div>
+      </motion.div>
+      <AnimatePresence mode="wait">
+        {contentDisplay}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

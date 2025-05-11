@@ -9,7 +9,7 @@ export default defineConfig({
     proxy: {
       // Proxy API requests starting with /api to your backend server
       '/api': {
-        target: 'http://localhost:5000', // Your backend server address
+        target: 'http://localhost:5001', // Your backend server address
         changeOrigin: true,
         // Optional: rewrite path if needed, e.g., remove /api prefix
         // rewrite: (path) => path.replace(/^\/api/, '')

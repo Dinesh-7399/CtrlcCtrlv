@@ -1,261 +1,343 @@
 // server/src/controllers/adminArticleController.js
-
-import prisma from '../config/db.js'; // Verify this path (e.g., ../config/db.js or ../db/db.js)
+import prisma from '../config/db.js';
+import ApiError from '../utils/apiError.js';
+import ApiResponse from '../utils/apiResponse.js';
 import { validationResult } from 'express-validator';
-import slugify from 'slugify'; // Ensure this is installed: npm install slugify
+import slugify from 'slugify'; // For generating slugs
 
-// --- Helper for Article Slug Generation ---
-const generateUniqueArticleSlug = async (title, currentArticleId = null) => {
-  let baseSlug = slugify(title, { lower: true, strict: true, remove: /[*+~.()'"!:@]/g });
-  if (!baseSlug) { baseSlug = `article-${Date.now()}`; }
-  let uniqueSlug = baseSlug;
-  let counter = 1;
-  let existingArticle;
-  try {
-    do {
-      const whereClause = { slug: uniqueSlug };
-      if (currentArticleId) { // For updates, exclude the current article from the check
-        whereClause.NOT = { id: currentArticleId };
-      }
-      existingArticle = await prisma.article.findFirst({ where: whereClause });
-      if (existingArticle) {
-        uniqueSlug = `${baseSlug}-${counter}`;
-        counter++;
-      }
-    } while (existingArticle);
-  } catch (error) {
-    console.error("Error checking article slug uniqueness:", error);
-    uniqueSlug = `${baseSlug}-${Date.now()}`; // Fallback in case of DB error
+const ARTICLES_PER_PAGE_ADMIN = 15;
+
+/**
+ * @desc    Create a new article
+ * @route   POST /api/admin/articles
+ * @access  Private (Admin)
+ */
+export const createArticle = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new ApiError(400, 'Validation failed', errors.array().map(e => e.msg)));
   }
-  return uniqueSlug;
+
+  const {
+    title,
+    content, // HTML content from Tiptap
+    excerpt,
+    thumbnailUrl,
+    categoryId, // ID of the category
+    tags,       // Array of strings
+    status,     // DRAFT, PUBLISHED, ARCHIVED
+    isFeatured,
+    publishedAt, // Optional: can be set manually or when status becomes PUBLISHED
+  } = req.body;
+
+  const authorId = req.user.userId; // Admin creating the article is the author
+
+  if (!title || !content) {
+    return next(new ApiError(400, 'Title and content are required for an article.'));
+  }
+
+  try {
+    let generatedSlug = slugify(title, { lower: true, strict: true, trim: true });
+    // Ensure slug uniqueness
+    let existingArticleWithSlug = await prisma.article.findUnique({ where: { slug: generatedSlug } });
+    let counter = 1;
+    while (existingArticleWithSlug) {
+      generatedSlug = `${slugify(title, { lower: true, strict: true, trim: true })}-${counter}`;
+      existingArticleWithSlug = await prisma.article.findUnique({ where: { slug: generatedSlug } });
+      counter++;
+    }
+
+    const articleData = {
+      title,
+      slug: generatedSlug,
+      content,
+      excerpt: excerpt || content.substring(0, 150) + (content.length > 150 ? '...' : ''), // Auto-generate excerpt if not provided
+      thumbnailUrl,
+      authorId,
+      status: status || 'DRAFT', // Default to DRAFT
+      isFeatured: typeof isFeatured === 'boolean' ? isFeatured : false,
+      tags: Array.isArray(tags) ? tags.filter(tag => typeof tag === 'string' && tag.trim() !== '') : [],
+    };
+
+    if (categoryId) {
+      const numericCategoryId = parseInt(categoryId, 10);
+      if (!isNaN(numericCategoryId)) {
+        // Verify category exists
+        const categoryExists = await prisma.category.findUnique({ where: { id: numericCategoryId } });
+        if (categoryExists) {
+          articleData.categoryId = numericCategoryId;
+        } else {
+          console.warn(`Category ID ${categoryId} not found, article will be created without category.`);
+        }
+      }
+    }
+
+    if (status === 'PUBLISHED' && !publishedAt) {
+      articleData.publishedAt = new Date();
+    } else if (publishedAt) {
+      articleData.publishedAt = new Date(publishedAt);
+    }
+
+
+    const newArticle = await prisma.article.create({
+      data: articleData,
+      include: {
+        author: { select: { id: true, name: true } },
+        category: { select: { id: true, name: true } },
+      },
+    });
+
+    return res
+      .status(201)
+      .json(new ApiResponse(201, { article: newArticle }, 'Article created successfully.'));
+
+  } catch (error) {
+    console.error('Error creating article:', error);
+    next(new ApiError(500, 'Failed to create article.', [error.message]));
+  }
 };
 
 /**
- * @description Get ALL articles (drafts and published) for Admin view
- * @route GET /api/admin/articles
- * @access Private (Admin)
+ * @desc    Get all articles (for admin view, includes drafts)
+ * @route   GET /api/admin/articles
+ * @access  Private (Admin)
  */
-export const adminGetAllArticles = async (req, res, next) => {
-    const errors = validationResult(req); // Validate pagination queries from route
-    if (!errors.isEmpty()) { return res.status(400).json({ errors: errors.array() }); }
-
-    const page = parseInt(req.query.page || '1', 10);
-    const limit = parseInt(req.query.limit || '10', 10);
+export const getAllArticlesForAdmin = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || ARTICLES_PER_PAGE_ADMIN;
     const skip = (page - 1) * limit;
 
-    // TODO: Add filtering by status, search by title for admin
+    const { status, categoryId, authorId, searchTerm, sortBy = 'newest' } = req.query;
 
-    try {
-        const [articles, totalCount] = await prisma.$transaction([
-            prisma.article.findMany({
-                skip: skip,
-                take: limit,
-                include: {
-                    author: { select: { id: true, name: true } },
-                    category: { select: { id: true, name: true } }
-                },
-                orderBy: { updatedAt: 'desc' },
-            }),
-            prisma.article.count() // Get total count of all articles
-        ]);
+    let whereClause = {};
+    if (status) whereClause.status = status.toUpperCase();
+    if (categoryId) whereClause.categoryId = parseInt(categoryId, 10);
+    if (authorId) whereClause.authorId = parseInt(authorId, 10);
 
-        res.status(200).json({
-             message: 'Admin: Articles retrieved successfully.',
-             data: articles,
-             pagination: {
-                 currentPage: page,
-                 totalPages: Math.ceil(totalCount / limit),
-                 totalArticles: totalCount,
-                 pageSize: limit
-             }
-         });
-    } catch (error) {
-        console.error("Admin Error fetching all articles:", error);
-        next(error);
+    if (searchTerm) {
+      whereClause.OR = [
+        { title: { contains: searchTerm, mode: 'insensitive' } },
+        { excerpt: { contains: searchTerm, mode: 'insensitive' } },
+        { content: { contains: searchTerm, mode: 'insensitive' } },
+        { tags: { has: searchTerm } }, // Search if searchTerm is one of the tags
+      ];
     }
+
+    let orderByClause = {};
+    switch (sortBy) {
+      case 'oldest': orderByClause = { createdAt: 'asc' }; break;
+      case 'title_asc': orderByClause = { title: 'asc' }; break;
+      case 'title_desc': orderByClause = { title: 'desc' }; break;
+      case 'updated_asc': orderByClause = { updatedAt: 'asc' }; break;
+      case 'updated_desc': orderByClause = { updatedAt: 'desc' }; break;
+      case 'newest':
+      default: orderByClause = { createdAt: 'desc' }; break;
+    }
+
+    const articles = await prisma.article.findMany({
+      where: whereClause,
+      select: {
+        id: true, title: true, slug: true, status: true, thumbnailUrl: true,
+        author: { select: { id: true, name: true } },
+        category: { select: { id: true, name: true } },
+        publishedAt: true, createdAt: true, updatedAt: true, viewCount: true,
+        _count: { select: { /* Add any counts needed, e.g., comments if you add them */ } }
+      },
+      orderBy: orderByClause,
+      skip: skip,
+      take: limit,
+    });
+
+    const totalArticles = await prisma.article.count({ where: whereClause });
+    const totalPages = Math.ceil(totalArticles / limit);
+
+    return res.status(200).json(
+      new ApiResponse(200, { articles, currentPage: page, totalPages, totalArticles, }, 'Admin: Articles fetched successfully.')
+    );
+  } catch (error) {
+    console.error('Error fetching articles for admin:', error);
+    next(new ApiError(500, 'Failed to fetch articles for admin.', [error.message]));
+  }
 };
 
 /**
- * @description Get a specific article by ID (for admin editing)
- * @route GET /api/admin/articles/:articleId
- * @access Private (Admin)
+ * @desc    Get a single article by ID (for admin editing)
+ * @route   GET /api/admin/articles/:articleId
+ * @access  Private (Admin)
  */
-export const adminGetArticleById = async (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) { return res.status(400).json({ errors: errors.array() }); }
+export const getArticleByIdForAdmin = async (req, res, next) => {
+  try {
+    const { articleId } = req.params;
+    const numericArticleId = parseInt(articleId, 10);
 
-    const articleId = parseInt(req.params.articleId, 10);
-    try {
-        const article = await prisma.article.findUnique({
-            where: { id: articleId },
-            include: { // Include details needed for editing form
-                author: { select: { id: true, name: true } },
-                category: { select: { id: true, name: true } }
-            }
-        });
-        if (!article) {
-            return res.status(404).json({ message: `Article with ID ${articleId} not found.` });
-        }
-        res.status(200).json(article);
-    } catch (error) {
-        console.error(`Admin Error fetching article ${articleId}:`, error);
-        next(error);
+    if (isNaN(numericArticleId)) {
+      return next(new ApiError(400, 'Invalid Article ID format.'));
     }
+
+    const article = await prisma.article.findUnique({
+      where: { id: numericArticleId },
+      include: { // Include all necessary data for the edit form
+        author: { select: { id: true, name: true } },
+        category: { select: { id: true, name: true } },
+      },
+    });
+
+    if (!article) {
+      return next(new ApiError(404, `Article with ID ${numericArticleId} not found.`));
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { article }, 'Article details fetched for admin.'));
+  } catch (error) {
+    console.error(`Error fetching article ID '${req.params.articleId}' for admin:`, error);
+    next(new ApiError(500, 'Failed to fetch article details for admin.', [error.message]));
+  }
 };
 
 /**
- * @description Create a new article
- * @route POST /api/admin/articles
- * @access Private (Admin)
+ * @desc    Update an article
+ * @route   PUT /api/admin/articles/:articleId
+ * @access  Private (Admin)
  */
-export const adminCreateArticle = async (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) { return res.status(400).json({ errors: errors.array() }); }
+export const updateArticle = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new ApiError(400, 'Validation failed', errors.array().map(e => e.msg)));
+  }
 
-    const authorId = req.user.id; // Admin creating the article is the author
-    const { title, content, excerpt, thumbnailUrl, categoryId, published, slug: userProvidedSlug } = req.body;
+  const { articleId } = req.params;
+  const numericArticleId = parseInt(articleId, 10);
 
-    let finalCategoryId = null;
-    if (categoryId !== undefined && categoryId !== null && categoryId !== '') {
-        const parsedCategoryId = parseInt(categoryId, 10);
-        if (isNaN(parsedCategoryId)) return res.status(400).json({ message: 'Invalid Category ID format.' });
-        finalCategoryId = parsedCategoryId;
+  const {
+    title, content, excerpt, thumbnailUrl, categoryId, tags, status, isFeatured, publishedAt, slug: newSlug // Allow manual slug override
+  } = req.body;
+  // authorId is not typically changed on update, it's the original author
+
+  if (isNaN(numericArticleId)) {
+    return next(new ApiError(400, 'Invalid Article ID format.'));
+  }
+
+  try {
+    const existingArticle = await prisma.article.findUnique({ where: { id: numericArticleId } });
+    if (!existingArticle) {
+      return next(new ApiError(404, `Article with ID ${numericArticleId} not found.`));
     }
-
-    try {
-        if (finalCategoryId) {
-            const categoryExists = await prisma.category.findUnique({ where: { id: finalCategoryId } });
-            if (!categoryExists) return res.status(400).json({ message: `Category with ID ${finalCategoryId} not found.` });
-        }
-
-        let slug = userProvidedSlug ? slugify(userProvidedSlug, { lower: true, strict: true, remove: /[*+~.()'"!:@]/g }) : await generateUniqueArticleSlug(title);
-        if (userProvidedSlug) { // If user provided slug, check its uniqueness
-            const existingSlug = await prisma.article.findUnique({where: {slug}});
-            if(existingSlug) {
-                return res.status(409).json({ message: `Conflict: Slug "${slug}" is already in use.` });
-            }
-        }
-
-
-        const articleData = {
-            title,
-            slug,
-            content,
-            excerpt: excerpt || content.substring(0, 150) + (content.length > 150 ? '...' : ''),
-            thumbnailUrl: thumbnailUrl || null,
-            authorId,
-            categoryId: finalCategoryId,
-            published: published === true || published === 'true',
-            publishedAt: (published === true || published === 'true') ? new Date() : null,
-        };
-
-        const newArticle = await prisma.article.create({
-            data: articleData,
-            include: { author: { select: { id: true, name: true } }, category: { select: { id: true, name: true } } }
-        });
-        res.status(201).json({ message: 'Article created successfully.', article: newArticle });
-    } catch (error) {
-        console.error("Admin Error creating article:", error);
-        if (error.code === 'P2002' && error.meta?.target?.includes('slug')) {
-            return res.status(409).json({ message: 'Conflict: This slug is already in use. Try a different title or slug.' });
-        }
-        if (error.code === 'P2003') {
-            const constraint = error.meta?.constraint || 'unknown foreign key';
-            return res.status(400).json({ message: `Invalid input: Referenced data not found (${constraint}). Check authorId or categoryId.` });
-        }
-        next(error);
-    }
-};
-
-/**
- * @description Update an article
- * @route PUT /api/admin/articles/:articleId
- * @access Private (Admin)
- */
-export const adminUpdateArticle = async (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) { return res.status(400).json({ errors: errors.array() }); }
-
-    const articleId = parseInt(req.params.articleId, 10);
-    const { title, content, excerpt, thumbnailUrl, categoryId, published, slug: reqSlug, authorId: newAuthorId } = req.body;
 
     const dataToUpdate = {};
     if (title !== undefined) dataToUpdate.title = title;
-    if (reqSlug !== undefined) dataToUpdate.slug = slugify(reqSlug, { lower: true, strict: true, remove: /[*+~.()'"!:@]/g });
     if (content !== undefined) dataToUpdate.content = content;
     if (excerpt !== undefined) dataToUpdate.excerpt = excerpt;
     if (thumbnailUrl !== undefined) dataToUpdate.thumbnailUrl = thumbnailUrl;
-    if (categoryId !== undefined) dataToUpdate.categoryId = categoryId ? parseInt(categoryId, 10) : null;
-    if (published !== undefined) {
-        dataToUpdate.published = Boolean(published === true || published === 'true');
-        // Only set publishedAt if changing to published and it wasn't already set, or if unpublishing
-        if (dataToUpdate.published && (!req.body.publishedAt || published === false) ) {
-            dataToUpdate.publishedAt = dataToUpdate.published ? new Date() : null;
-        } else if (published === false) {
-            dataToUpdate.publishedAt = null;
+    if (tags !== undefined) dataToUpdate.tags = Array.isArray(tags) ? tags.filter(tag => typeof tag === 'string' && tag.trim() !== '') : existingArticle.tags;
+    if (status !== undefined) dataToUpdate.status = status;
+    if (typeof isFeatured === 'boolean') dataToUpdate.isFeatured = isFeatured;
+
+    if (categoryId !== undefined) {
+      if (categoryId === null || categoryId === '') { // Allow unsetting category
+        dataToUpdate.categoryId = null;
+      } else {
+        const numericCatId = parseInt(categoryId, 10);
+        if (!isNaN(numericCatId)) {
+          const categoryExists = await prisma.category.findUnique({ where: { id: numericCatId } });
+          if (categoryExists) dataToUpdate.categoryId = numericCatId;
+          else console.warn(`Update Article: Category ID ${numericCatId} not found. Category not changed.`);
         }
+      }
     }
-    if (newAuthorId !== undefined) dataToUpdate.authorId = parseInt(newAuthorId, 10);
 
-    try {
-        // If title is being updated AND no explicit slug is provided, regenerate slug
-        if (dataToUpdate.title && reqSlug === undefined) {
-            const currentArticle = await prisma.article.findUnique({ where: { id: articleId }, select: { title: true }});
-            if (currentArticle && currentArticle.title !== dataToUpdate.title) {
-                dataToUpdate.slug = await generateUniqueArticleSlug(dataToUpdate.title, articleId);
-            }
-        } else if (dataToUpdate.slug) { // If slug IS provided, check uniqueness
-            const existingSlug = await prisma.article.findFirst({ where: { slug: dataToUpdate.slug, NOT: { id: articleId } } });
-            if (existingSlug) return res.status(409).json({ message: `Conflict: Slug "${dataToUpdate.slug}" is already in use.`});
-        }
-
-        if (dataToUpdate.categoryId !== undefined && dataToUpdate.categoryId !== null) {
-            const categoryExists = await prisma.category.findUnique({ where: { id: dataToUpdate.categoryId }});
-            if (!categoryExists) return res.status(400).json({ message: `Invalid input: Category ID ${dataToUpdate.categoryId} not found.`});
-        }
-        if (dataToUpdate.authorId !== undefined) {
-            const authorExists = await prisma.user.findUnique({ where: { id: dataToUpdate.authorId }});
-            if (!authorExists) return res.status(400).json({ message: `Invalid input: Author ID ${dataToUpdate.authorId} not found.`});
-        }
-
-        if (Object.keys(dataToUpdate).length === 0) {
-            return res.status(400).json({ message: 'No valid fields provided for update.' });
-        }
-
-        const updatedArticle = await prisma.article.update({
-            where: { id: articleId },
-            data: dataToUpdate,
-            include: { author: { select: { id: true, name: true } }, category: { select: { id: true, name: true } } }
-        });
-        res.status(200).json({ message: 'Article updated successfully.', article: updatedArticle });
-    } catch (error) {
-        console.error(`Admin Error updating article ${articleId}:`, error);
-        if (error.code === 'P2002' && error.meta?.target?.includes('slug')) return res.status(409).json({ message: 'Conflict: Slug already in use.' });
-        if (error.code === 'P2025') return res.status(404).json({ message: `Article with ID ${articleId} not found.` });
-        if (error.code === 'P2003') {
-             const constraint = error.meta?.constraint || 'unknown foreign key';
-             return res.status(400).json({ message: `Invalid input: Referenced data not found (${constraint}). Check authorId or categoryId.` });
-         }
-        next(error);
+    // Handle slug: if title changes and no manual slug is provided, regenerate. If manual slug is provided, use it (ensure uniqueness).
+    if (title && title !== existingArticle.title && !newSlug) {
+      let generatedSlug = slugify(title, { lower: true, strict: true, trim: true });
+      let existingArticleWithSlug = await prisma.article.findFirst({ where: { slug: generatedSlug, NOT: { id: numericArticleId } } });
+      let counter = 1;
+      while (existingArticleWithSlug) {
+        generatedSlug = `${slugify(title, { lower: true, strict: true, trim: true })}-${counter}`;
+        existingArticleWithSlug = await prisma.article.findFirst({ where: { slug: generatedSlug, NOT: { id: numericArticleId } } });
+        counter++;
+      }
+      dataToUpdate.slug = generatedSlug;
+    } else if (newSlug && newSlug !== existingArticle.slug) {
+      const existingArticleWithNewSlug = await prisma.article.findFirst({ where: { slug: newSlug, NOT: { id: numericArticleId } } });
+      if (existingArticleWithNewSlug) {
+        return next(new ApiError(409, `Slug '${newSlug}' is already in use.`));
+      }
+      dataToUpdate.slug = newSlug;
     }
+
+    // Handle publishedAt based on status
+    if (status === 'PUBLISHED' && existingArticle.status !== 'PUBLISHED') {
+      dataToUpdate.publishedAt = publishedAt ? new Date(publishedAt) : new Date(); // Set to now if not provided
+    } else if (status !== 'PUBLISHED' && publishedAt) { // If manually setting publish date for a draft
+      dataToUpdate.publishedAt = new Date(publishedAt);
+    } else if (status !== 'PUBLISHED' && existingArticle.status === 'PUBLISHED') {
+      // If unpublishing, you might want to nullify publishedAt or leave it as historical record
+      // dataToUpdate.publishedAt = null; // Option 1: Clear it
+    }
+
+
+    if (Object.keys(dataToUpdate).length === 0) {
+      return res.status(200).json(new ApiResponse(200, { article: existingArticle }, 'No changes provided to update article.'));
+    }
+
+    const updatedArticle = await prisma.article.update({
+      where: { id: numericArticleId },
+      data: dataToUpdate,
+      include: {
+        author: { select: { id: true, name: true } },
+        category: { select: { id: true, name: true } },
+      },
+    });
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { article: updatedArticle }, 'Article updated successfully.'));
+
+  } catch (error) {
+    console.error(`Error updating article ID '${articleId}':`, error);
+    if (error.code === 'P2002' && error.meta?.target?.includes('slug')) { // Unique constraint violation for slug
+        return next(new ApiError(409, `The slug generated or provided is already in use.`));
+    }
+    if (error.code === 'P2025') { // Record to update not found
+        return next(new ApiError(404, `Article with ID ${articleId} not found.`));
+    }
+    next(new ApiError(500, 'Failed to update article.', [error.message]));
+  }
 };
 
 /**
- * @description Delete an article
- * @route DELETE /api/admin/articles/:articleId
- * @access Private (Admin)
+ * @desc    Delete an article
+ * @route   DELETE /api/admin/articles/:articleId
+ * @access  Private (Admin)
  */
-export const adminDeleteArticle = async (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) { return res.status(400).json({ errors: errors.array() }); }
+export const deleteArticle = async (req, res, next) => {
+  try {
+    const { articleId } = req.params;
+    const numericArticleId = parseInt(articleId, 10);
 
-    const articleId = parseInt(req.params.articleId, 10);
-    try {
-        await prisma.article.delete({ where: { id: articleId } });
-        res.status(200).json({ message: `Article with ID ${articleId} deleted successfully.` });
-    } catch (error) {
-        console.error(`Admin Error deleting article ${articleId}:`, error);
-        if (error.code === 'P2025') return res.status(404).json({ message: `Article with ID ${articleId} not found.` });
-        next(error);
+    if (isNaN(numericArticleId)) {
+      return next(new ApiError(400, 'Invalid Article ID format.'));
     }
+
+    // Check if article exists before trying to delete
+    const articleExists = await prisma.article.findUnique({ where: { id: numericArticleId } });
+    if (!articleExists) {
+        return next(new ApiError(404, `Article with ID ${numericArticleId} not found.`));
+    }
+
+    await prisma.article.delete({
+      where: { id: numericArticleId },
+    });
+
+    return res
+      .status(200) // Or 204 No Content
+      .json(new ApiResponse(200, null, 'Article deleted successfully.'));
+  } catch (error) {
+    console.error(`Error deleting article ID '${req.params.articleId}':`, error);
+    if (error.code === 'P2025') { // Record to delete not found
+        return next(new ApiError(404, `Article with ID '${req.params.articleId}' not found.`));
+    }
+    next(new ApiError(500, 'Failed to delete article.', [error.message]));
+  }
 };

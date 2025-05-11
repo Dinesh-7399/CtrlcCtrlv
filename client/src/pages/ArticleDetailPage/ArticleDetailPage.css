@@ -1,48 +1,68 @@
-/* client/src/pages/ArticleDetailPage.css */
+/* client/src/pages/ArticleDetailPage/ArticleDetailPage.css */
 
+/* --- Container & General Layout --- */
 .article-detail-container {
   max-width: 800px; /* Optimal width for reading */
   margin: var(--spacing-lg) auto; /* Use variable */
-  padding: 0 var(--spacing-lg); /* Use variable */
+  padding: 0 var(--spacing-lg); /* Use variable for L/R padding within the max-width container */
   box-sizing: border-box;
 }
 
-/* Styling for loading/error messages */
+/* --- Status Messages (Loading, Error, Not Found) --- */
 .article-detail-status {
   text-align: center;
   padding: var(--spacing-xl) var(--spacing-md); /* Use variables */
   color: var(--color-text-secondary); /* Use variable */
   font-size: 1.1rem;
-  min-height: 300px;
+  min-height: 300px; /* Minimum height for these states */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-md); /* Added gap for loading state */
+  gap: var(--spacing-md);
 }
 
-/* Assume .article-error inherits from .article-detail-status */
-.article-error p {
+.article-detail-status .error-icon,
+.article-detail-status .info-icon {
+  font-size: 2.5rem;
+  margin-bottom: var(--spacing-sm);
+  /* Ensure colors are defined in your global variables */
+  /* e.g., color: var(--color-danger); for error-icon */
+  /* e.g., color: var(--color-info); for info-icon */
+}
+
+.article-detail-status .error-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-text-primary); /* Use variable */
+    margin-bottom: var(--spacing-xs);
+}
+
+/* Assume .article-error and .article-not-found inherit general .article-detail-status styles */
+.article-error p,
+.article-not-found p {
   margin-bottom: var(--spacing-md); /* Use variable */
 }
-/* Specific class for the button in error state if needed */
-.back-button-error .button-icon { /* Target icon within button */
+
+.back-button-error { /* Class for the button in error/not-found states */
+  /* Assuming Button component has its own styles */
+}
+.back-button-error .button-icon {
   margin-right: var(--spacing-xs); /* Use variable */
 }
 
-/* Back button styling */
+/* --- Back Button Styling (General) --- */
 .back-button {
-  margin-bottom: var(--spacing-lg); /* Use variable */
+  margin-bottom: var(--spacing-lg);
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-xs); /* Use variable */
-  /* Assumes Button component applies base styles */
+  gap: var(--spacing-xs); /* Use gap for spacing between icon and text */
+  /* Base button styles (padding, border, bg-color) should come from your Button component */
 }
-.back-button .button-icon { /* Target icon within button */
-   margin-right: var(--spacing-xs); /* Or use gap property on button */
-}
+/* .back-button .button-icon is handled by 'gap' on .back-button if icon is a direct child */
 
-/* Container for the main article content */
+
+/* --- Main Article Content Area --- */
 .article-content-main {
   background-color: var(--color-surface); /* Use variable */
   padding: var(--spacing-xl); /* Use variable */
@@ -51,103 +71,208 @@
   box-shadow: var(--box-shadow-sm); /* Use variable */
 }
 
-/* Article title styling */
+/* Article Header (Category, Title, Meta) */
+.article-header {
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.article-category-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    background-color: var(--color-primary-light, #eef); /* Define --color-primary-light */
+    color: var(--color-primary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius);
+    font-size: 0.85rem;
+    font-weight: 500; /* Or var(--font-weight-medium) */
+    text-decoration: none;
+    margin-bottom: var(--spacing-md);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+.article-category-link:hover {
+    background-color: var(--color-primary);
+    color: var(--color-surface, #fff); /* Assuming --color-surface is light for text contrast */
+}
+
 .article-detail-title {
   font-size: 2.5rem; /* Consider var(--font-size-h1) */
   font-weight: 700; /* Consider var(--font-weight-bold) */
   color: var(--color-text-primary); /* Use variable */
   line-height: 1.3;
+  margin-top: 0; /* If category link is above */
   margin-bottom: var(--spacing-md); /* Use variable */
-  text-wrap: balance; /* Improve title wrapping */
+  text-wrap: balance;
 }
 
-/* Metadata section (author, date) */
 .article-detail-meta {
   display: flex;
   flex-wrap: wrap;
+  align-items: center; /* Vertically align items in a row */
   gap: var(--spacing-sm) var(--spacing-lg); /* Row and Column gap */
   font-size: 0.9rem;
-  color: var(--color-text-secondary); /* Use variable */
-  margin-bottom: var(--spacing-lg); /* Use variable */
-  padding-bottom: var(--spacing-lg); /* Use variable */
-  border-bottom: 1px solid var(--color-border); /* Use variable */
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-md);
 }
 
-.article-detail-meta span {
+.article-detail-meta .meta-item {
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-xs); /* Use variable */
+  gap: var(--spacing-xs); /* Space between icon and text within a meta-item */
 }
-.article-detail-meta span svg { /* Style meta icons */
-  width: 1em; /* Relative to font size */
-  height: 1em; /* Relative to font size */
+.article-detail-meta .meta-item svg {
+  width: 1em;
+  height: 1em;
   opacity: 0.8;
+  vertical-align: middle; /* Better vertical alignment with text */
 }
-/* Added style for read time if uncommented */
+
+/* Author specific meta styling with avatar */
+.article-detail-meta .author-meta {
+  /* Inherits .meta-item styles */
+}
+
+.author-profile-link.has-avatar { /* Class for the RouterLink around author info */
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: inherit; /* Inherit from .meta-item */
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.author-profile-link.has-avatar:hover .author-name-meta {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+.author-profile-link.has-avatar:hover .author-icon-meta { /* If using icon within link */
+    color: var(--color-primary);
+}
+
+.author-avatar-meta {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  /* margin-right handled by gap on parent link or .author-meta if not a link */
+  border: 1px solid var(--color-border, #eee);
+}
+
+.author-icon-meta { /* Fallback icon when no avatar */
+  font-size: 1em; /* Match surrounding text */
+  color: var(--color-text-secondary);
+  /* margin-right handled by gap on parent link or .author-meta if not a link */
+  /* Ensure it aligns well with text if used next to .author-name-meta without a parent flex link */
+}
+.author-meta > .author-avatar-meta, /* Spacing if author is not a link */
+.author-meta > .author-icon-meta {
+    margin-right: var(--spacing-xs);
+}
+
+
+.author-name-meta {
+  font-weight: var(--font-weight-semibold, 600); /* Make name slightly bolder */
+}
+
+
 .read-time {
-    font-style: italic;
-    margin-left: var(--spacing-xs);
+  font-style: italic;
+  margin-left: var(--spacing-xs); /* Keep if distinct spacing needed */
 }
 
+.article-tags-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-sm); /* Gap between icon and first tag, and between tags */
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-sm);
+    /* Optional: border-top: 1px solid var(--color-border-light, #eee); */
+}
+.article-tags-meta .tags-icon {
+    color: var(--color-text-secondary);
+}
+.tag-link {
+    background-color: var(--color-secondary-creamy); /* Use existing variable */
+    color: var(--color-text-secondary);
+    padding: 0.2rem var(--spacing-sm);
+    border-radius: var(--border-radius);
+    font-size: 0.8rem;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+.tag-link:hover {
+    background-color: var(--color-primary);
+    color: var(--color-surface, #fff); /* Ensure text is readable on hover */
+}
 
-/* Banner image styling */
+/* --- Article Banner Image --- */
 .article-detail-banner {
   width: 100%;
   max-height: 400px;
   height: auto;
   aspect-ratio: 16 / 9;
   object-fit: cover;
-  border-radius: var(--border-radius); /* Use variable */
-  margin-bottom: var(--spacing-xl); /* Use variable */
-  background-color: var(--color-secondary-creamy); /* Use variable */
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-xl);
+  background-color: var(--color-secondary-creamy); /* Placeholder background */
   display: block;
 }
 
-/* Container for the main article body text (rendered from HTML) */
+/* --- Article Body (Prose) --- */
 .article-body {
-  font-size: 1.1rem; /* Base reading size */
-  line-height: 1.8; /* Ample line spacing for readability */
-  color: var(--color-text-primary); /* Use variable */
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: var(--color-text-primary);
   overflow-wrap: break-word;
-  word-wrap: break-word; /* Legacy support */
-  word-break: break-word;
 }
 
-/* Basic styling for common HTML elements within the article body */
 .article-body p {
-  margin-bottom: var(--spacing-md); /* Use variable */
+  margin-bottom: var(--spacing-md);
+}
+
+.article-body h1, /* These styles apply to Hx tags *within* the .article-body */
+.article-body h2,
+.article-body h3,
+.article-body h4,
+.article-body h5,
+.article-body h6 {
+  color: var(--color-text-primary); /* Or var(--color-text-headings) */
+  font-weight: 600; /* Or var(--font-weight-semibold) */
+  line-height: 1.4;
+  margin-bottom: var(--spacing-sm);
+  margin-top: var(--spacing-lg); /* Default top margin */
 }
 
 .article-body h2 {
   font-size: 1.6rem;
-  font-weight: 600;
-  margin-top: var(--spacing-xl); /* Use variable */
-  margin-bottom: var(--spacing-md); /* Use variable */
-  padding-bottom: var(--spacing-xs); /* Use variable */
-  border-bottom: 1px solid var(--color-border); /* Use variable */
-  line-height: 1.3;
-  color: var(--color-text-primary); /* Ensure heading color */
+  margin-top: var(--spacing-xl);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--color-border);
 }
 .article-body h3 {
   font-size: 1.3rem;
-  font-weight: 600;
-  margin-top: var(--spacing-lg); /* Use variable */
-  margin-bottom: var(--spacing-sm); /* Use variable */
-  line-height: 1.4;
-  color: var(--color-text-primary); /* Ensure heading color */
+  margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
 }
 
 .article-body ul,
 .article-body ol {
-  margin-bottom: var(--spacing-md); /* Use variable */
-  padding-left: var(--spacing-xl); /* Use variable - Standard indent */
+  margin-bottom: var(--spacing-md);
+  padding-left: var(--spacing-xl);
 }
 .article-body li {
-  margin-bottom: var(--spacing-sm); /* Use variable */
+  margin-bottom: var(--spacing-sm);
+}
+.article-body ul li::marker {
+  color: var(--color-primary); /* Style list bullets */
 }
 
 .article-body a {
-  color: var(--color-primary); /* Use variable */
+  color: var(--color-primary);
   text-decoration: underline;
   transition: color 0.2s ease;
 }
@@ -155,172 +280,196 @@
   color: var(--color-primary-dark-variant); /* Use variable */
 }
 
-.article-body strong {
-  font-weight: 600; /* Or use --font-weight-bold */
+.article-body strong, .article-body b {
+  font-weight: 600; /* Or var(--font-weight-bold) */
 }
-.article-body em {
+.article-body em, .article-body i {
   font-style: italic;
 }
 
 /* Inline code */
-.article-body code {
-  background-color: var(--color-secondary-creamy); /* Use variable */
-  padding: 2px var(--spacing-xs); /* Use variable */
-  border-radius: var(--border-radius); /* Use variable */
-  font-family: monospace; /* Consider --font-family-mono variable */
+.article-body code:not(pre > code) {
+  background-color: var(--color-secondary-creamy);
+  padding: 0.2em 0.4em;
+  border-radius: var(--border-radius);
+  font-family: var(--font-family-monospace, monospace); /* Use variable */
   font-size: 0.9em;
-  color: var(--color-text-primary); /* Use variable - ensure readability */
-  white-space: nowrap;
-  /* Optional: Subtle border */
-  /* border: 1px solid var(--color-border); */
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border, #eee); /* Optional subtle border */
 }
 
 /* Code blocks */
 .article-body pre {
-  /* Consider specific theme variables for code blocks */
-  background-color: #2d2d2d; /* NOTE: Hardcoded dark background */
-  color: #f0f0f0;            /* NOTE: Hardcoded light text */
-  padding: var(--spacing-md); /* Use variable */
-  border-radius: var(--border-radius); /* Use variable */
+  background-color: #2d2d2d; /* Hardcoded dark background */
+  color: #f0f0f0;            /* Hardcoded light text */
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
   overflow-x: auto;
-  margin-bottom: var(--spacing-md); /* Use variable */
-  font-family: monospace; /* Consider --font-family-mono variable */
+  margin-top: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  font-family: var(--font-family-monospace, monospace); /* Use variable */
+  font-size: 0.95em;
 }
-/* Reset inline code styles when inside a pre block */
 .article-body pre code {
   background-color: transparent;
   padding: 0;
-  color: inherit; /* Inherit from pre */
-  font-size: 0.9em;
-  white-space: pre; /* Important for preserving formatting */
-  border: none; /* Remove border if added to inline code */
-  border-radius: 0; /* Remove radius */
+  color: inherit;
+  font-size: inherit;
+  white-space: pre;
+  border: none;
+  border-radius: 0;
 }
 
 /* Blockquote styling */
 .article-body blockquote {
-  border-left: 4px solid var(--color-primary); /* Use variable */
-  padding-left: var(--spacing-md); /* Use variable */
-  margin-left: 0; /* Reset default indent */
+  border-left: 4px solid var(--color-primary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-left: 0;
   margin-right: 0;
-  margin-bottom: var(--spacing-md); /* Use variable */
-  color: var(--color-text-secondary); /* Use variable */
+  margin-top: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text-secondary);
   font-style: italic;
+  background-color: var(--color-surface-accent, #f9f9f9); /* Define if needed */
 }
-/* Optional: Clearer separation for paragraphs inside blockquotes */
 .article-body blockquote p {
-    margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
 }
 .article-body blockquote p:last-child {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 /* Images within article body */
 .article-body img {
   max-width: 100%;
   height: auto;
-  border-radius: var(--border-radius); /* Use variable */
-  margin-top: var(--spacing-sm); /* Use variable */
-  margin-bottom: var(--spacing-md); /* Use variable */
-  display: block; /* Remove extra space */
+  border-radius: var(--border-radius);
+  margin: var(--spacing-md) auto; /* Center block images */
+  display: block;
+  box-shadow: var(--box-shadow-sm);
 }
 
-/* Message for missing article body */
 .article-body-missing {
-    font-style: italic;
-    color: var(--color-text-secondary);
-    padding: var(--spacing-lg) 0;
-    text-align: center;
+  font-style: italic;
+  color: var(--color-text-secondary);
+  padding: var(--spacing-lg) 0;
+  text-align: center;
 }
 
+/* KaTeX display math styling */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: var(--spacing-sm) 0;
+  margin: var(--spacing-md) 0;
+}
 
-/* --- Responsive Adjustments (Kept existing rules, added variables) --- */
+/* --- Responsive Adjustments --- */
 
 @media (max-width: 768px) {
   .article-detail-container {
-    padding: 0 var(--spacing-md); /* Use variable */
-    margin-top: var(--spacing-md); /* Use variable */
-    margin-bottom: var(--spacing-md); /* Use variable */
+    padding: 0 var(--spacing-md);
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
   }
   .article-content-main {
-    padding: var(--spacing-lg); /* Use variable */
+    padding: var(--spacing-lg);
   }
   .article-detail-title {
     font-size: 2rem;
+    line-height: 1.25;
   }
   .article-detail-meta {
-    gap: var(--spacing-sm) var(--spacing-md); /* Use variables */
-    margin-bottom: var(--spacing-md); /* Use variable */
-    padding-bottom: var(--spacing-md); /* Use variable */
+    gap: var(--spacing-xs) var(--spacing-md);
+    font-size: 0.85rem;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
   }
   .article-detail-banner {
     max-height: 300px;
-    margin-bottom: var(--spacing-lg); /* Use variable */
-  }
-  .article-body {
-    font-size: 1.05rem;
-    line-height: 1.7;
-  }
-  .article-body h2 {
-    font-size: 1.4rem;
-    margin-top: var(--spacing-lg); /* Use variable */
-  }
-  .article-body h3 {
-    font-size: 1.2rem;
-    margin-top: var(--spacing-md); /* Use variable */
-  }
-  .article-body ul,
-  .article-body ol {
-    padding-left: var(--spacing-lg); /* Use variable */
-  }
-}
-
-@media (max-width: 480px) {
-  .article-detail-container {
-    padding: 0 var(--spacing-sm); /* Use variable */
-    margin-top: var(--spacing-sm); /* Use variable */
-    margin-bottom: var(--spacing-sm); /* Use variable */
-  }
-   .back-button {
-     margin-bottom: var(--spacing-md); /* Use variable */
-   }
-  .article-content-main {
-    padding: var(--spacing-md); /* Use variable */
-    /* Optional: Remove card appearance */
-     /* border: none;
-     box-shadow: none;
-     border-radius: 0; */
-  }
-  .article-detail-title {
-    font-size: 1.7rem;
-  }
-  .article-detail-meta {
-    font-size: 0.85rem;
-  }
-  .article-detail-banner {
-    max-height: 250px;
-    margin-bottom: var(--spacing-md); /* Use variable */
-     /* Optional: remove radius if content bg removed */
-     /* border-radius: 0; */
+    margin-bottom: var(--spacing-lg);
   }
   .article-body {
     font-size: 1rem;
     line-height: 1.7;
   }
   .article-body h2 {
-    font-size: 1.3rem;
-    margin-top: var(--spacing-md); /* Use variable */
-    margin-bottom: var(--spacing-sm); /* Use variable */
+    font-size: 1.4rem;
+    margin-top: var(--spacing-lg);
   }
   .article-body h3 {
-    font-size: 1.1rem;
-    margin-top: var(--spacing-md); /* Use variable */
+    font-size: 1.2rem;
+    margin-top: var(--spacing-md);
   }
-   .article-body pre {
-     padding: var(--spacing-sm); /* Use variable */
-   }
-   .article-body ul,
-   .article-body ol {
-     padding-left: var(--spacing-md); /* Use variable */
-   }
+  .article-body ul,
+  .article-body ol {
+    padding-left: var(--spacing-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .article-detail-container {
+    padding: 0 var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+  }
+  .back-button {
+    margin-bottom: var(--spacing-md);
+  }
+  .article-content-main {
+    padding: var(--spacing-md);
+  }
+  .article-detail-title {
+    font-size: 1.7rem; /* Your value */
+    line-height: 1.2;
+  }
+  .article-detail-meta {
+    font-size: 0.85rem; /* Your value */
+    flex-direction: column; /* Stack meta items for small screens */
+    align-items: flex-start;
+    gap: var(--spacing-sm); /* Consistent gap for stacked items */
+  }
+  .author-avatar-meta { /* Adjust avatar for mobile in meta */
+    width: 20px;
+    height: 20px;
+  }
+  .article-detail-meta .author-meta .author-icon-meta { /* Fallback icon size on mobile */
+    font-size: 0.9em;
+  }
+  .article-detail-banner {
+    max-height: 250px; /* Your value */
+    margin-bottom: var(--spacing-md);
+  }
+  .article-body {
+    font-size: 1rem; /* Your value */
+    line-height: 1.7; /* Your value */
+  }
+  .article-body h2 {
+    font-size: 1.3rem; /* Your value */
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+  }
+  .article-body h3 {
+    font-size: 1.1rem; /* Your value */
+    margin-top: var(--spacing-md);
+  }
+  .article-body pre {
+    padding: var(--spacing-sm);
+    font-size: 0.85em; /* Slightly smaller code on mobile */
+  }
+  .article-body code:not(pre > code) { /* Inline code on mobile */
+      font-size: 0.85em;
+  }
+  .article-body ul,
+  .article-body ol {
+    padding-left: var(--spacing-md);
+  }
+  .article-category-link {
+    font-size: 0.75rem;
+    padding: 0.25rem var(--spacing-sm);
+  }
+  .tag-link {
+    font-size: 0.7rem;
+    padding: 0.2rem var(--spacing-xs);
+  }
 }

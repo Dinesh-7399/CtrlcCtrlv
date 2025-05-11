@@ -1,34 +1,78 @@
+// client/src/pages/DoubtChatPage/DoubtChatPage.jsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams } from 'react-router-dom'; // Assuming courseId might come from URL
 import { useDropzone } from 'react-dropzone';
-// Import motion and icons
-import { motion, AnimatePresence } from 'framer-motion'; // <--- Added AnimatePresence back for message animation
-import { FaPaperclip, FaTimes, FaExpand, FaCompress, FaPlus } from 'react-icons/fa';
-import './DoubtChatPage.css'; // Use regular CSS file
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaPaperclip, FaTimes, FaExpand, FaCompress, FaPlus, FaCommentSlash, FaWifi, FaUserTie } from 'react-icons/fa';
+import './DoubtChatPage.css';
 
-// --- Placeholder Data & Logic ---
-const courseName = "Advanced Quantum Physics";
-const placeholderChatHistory = [
-  { id: 'chat1', title: 'April 28th - Quantum Entanglement', lastMessage: 'Okay, that makes sense now...' },
-  { id: 'chat2', title: 'April 25th - Wave Function Collapse', lastMessage: 'Can you explain superposition again?' },
-  { id: 'chat3', title: 'April 22nd - Schrödinger Equation Basics', lastMessage: 'Got it, thanks!' },
-];
-// -------------------------------
+// --- Redux Imports ---
+import { useDispatch, useSelector } from 'react-redux';
+import { useAuth } from '../../context/AuthContext'; // To get current user ID and name
+import {
+  initializeChatSession,
+  sendMessage,
+  addMessage, // For optimistic updates if needed, or if server doesn't echo
+  setSelectedChatId,
+  setInstructorStatus, // May not be needed if backend pushes this via socket
+  setIsConnectingToInstructor,
+  clearChatMessages,
+  selectChatMessages,
+  selectChatHistoryList,
+  selectSelectedChatId,
+  selectChatConnectionStatus,
+  selectInstructorStatus,
+  selectIsConnectingToInstructor,
+  selectChatError,
+  selectSendMessageError,
+  clearChatError,
+} from '../../features/chat/chatSlice';
+import { socketService }from '../../services/socketService'; // For direct emits if not using thunks for all
+
+// --- Component Imports ---
+import Spinner from '../../components/common/Spinner'; // Assuming you have a Spinner
+
+// --- Placeholder Data & Logic (can be removed if chatHistoryList comes from Redux) ---
+const courseName = "Advanced Quantum Physics"; // Example, should come from course context/props
 
 function DoubtChatPage() {
-  // State
-  const [messages, setMessages] = useState([ { id: 1, sender: 'bot', text: `Welcome... (Current Session)` } ]);
+  const { courseIdFromParams } = useParams(); // Get courseId if page is specific to a course
+  const dispatch = useDispatch();
+  const { user: currentUser, isAuthenticated } = useAuth(); // Get current logged-in user
+
+  // --- Redux State ---
+  const messages = useSelector(selectChatMessages);
+  const chatHistory = useSelector(selectChatHistoryList); // From Redux now
+  const selectedChatId = useSelector(selectSelectedChatId);
+  const connectionStatus = useSelector(selectChatConnectionStatus);
+  const instructorStatusRedux = useSelector(selectInstructorStatus);
+  const isConnectingToInstructorRedux = useSelector(selectIsConnectingToInstructor);
+  const chatError = useSelector(selectChatError);
+  const sendMessageError = useSelector(selectSendMessageError);
+
+  // --- Local UI State ---
   const [inputValue, setInputValue] = useState('');
-  const [chatMode, setChatMode] = useState('bot');
-  const [instructorStatus, setInstructorStatus] = useState(null);
-  const [isConnecting, setIsConnecting] = useState(false);
+  const [chatMode, setChatMode] = useState('bot'); // 'bot' or 'instructor'
   const [filesToSend, setFilesToSend] = useState([]);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [selectedChatId, setSelectedChatId] = useState('current');
-  const [chatHistory, setChatHistory] = useState(placeholderChatHistory);
-
+  
   const messageListRef = useRef(null);
+  const courseId = courseIdFromParams || "defaultCourse"; // Use from params or a default/prop
 
   // --- Effects ---
+  // Initialize and manage chat session
+  useEffect(() => {
+    if (isAuthenticated && currentUser?.id) {
+        // Pass currentUserId for message sender identification
+        dispatch(initializeChatSession({ courseId, sessionId: 'current', currentUserId: currentUser.id }));
+    }
+    return () => {
+      socketService.disconnect(); // Ensure disconnection on component unmount
+      dispatch(clearChatMessages()); // Clear messages for this session
+      dispatch(clearChatError());
+    };
+  }, [dispatch, courseId, isAuthenticated, currentUser?.id]);
+
   // Scroll message list to bottom
   useEffect(() => {
     if (messageListRef.current) {
@@ -36,79 +80,133 @@ function DoubtChatPage() {
     }
   }, [messages]);
 
-  // Load chat messages based on selection (Placeholder)
+  // Load messages or reset based on selectedChatId (from Redux)
   useEffect(() => {
-    console.log("Selected Chat ID:", selectedChatId);
+    console.log("Selected Chat ID (from Redux):", selectedChatId);
     if (selectedChatId !== 'current') {
-      setMessages([
-          { id: Date.now(), sender: 'system', text: `Loading history for: ${chatHistory.find(c=>c.id === selectedChatId)?.title || selectedChatId}...` },
-          // Add dummy past messages
-           { id: Date.now()+1, sender: 'user', text: 'This is a message from the past.' },
-           { id: Date.now()+2, sender: 'instructor', text: 'This is an instructor response from the past.' },
-      ]);
-    } else {
-       setMessages([{ id: 1, sender: 'bot', text: `Welcome back to the current session!` }]);
+      // TODO: Dispatch an action to load historical messages for selectedChatId
+      // For now, clearing and showing a system message as before.
+      dispatch(clearChatMessages());
+      dispatch(addMessage({ id: Date.now(), sender: 'system', text: `Loading history for chat: ${chatHistory.find(c => c.id === selectedChatId)?.title || selectedChatId}... (Placeholder)` }));
+      // Simulate loading historical data
+      setTimeout(() => {
+         dispatch(addMessage({ id: Date.now()+1, sender: 'user', text: 'This is a message from the past.' }));
+         dispatch(addMessage({ id: Date.now()+2, sender: 'instructor', text: 'This is an instructor response from the past.' }));
+      }, 500);
+
+    } else if (messages.length === 0 || messages[0]?.sender !== 'bot' || !messages[0]?.text.includes('Welcome')) {
+      // If current chat is selected and messages are empty or not the welcome message
+      dispatch(clearChatMessages());
+      dispatch(addMessage({ id: `sys-${Date.now()}`, sender: 'bot', text: `Welcome to ${courseName} chat support! How can I help you today? (Current Session)` }));
     }
     setInputValue('');
     setFilesToSend([]);
-  }, [selectedChatId, chatHistory]);
-
+  }, [selectedChatId, dispatch, chatHistory, courseName]); // Removed messages from deps to avoid loop with welcome message
 
   // --- Handlers ---
-  const handleModeChange = (event) => { /* ... */ };
-  const handleInputChange = (event) => setInputValue(event.target.value);
-  const onDrop = useCallback((acceptedFiles, fileRejections) => { /* ... */ }, []);
-  const removeFile = (fileName) => setFilesToSend(prevFiles => prevFiles.filter(file => file.name !== fileName));
-  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({ onDrop, noClick: true, noKeyboard: true, multiple: true });
+  const handleModeChange = (event) => {
+    const newMode = event.target.value;
+    setChatMode(newMode);
+    dispatch(clearChatError()); // Clear errors on mode change
 
-    // Get message props including class and animation variants
+    if (newMode === 'instructor') {
+      dispatch(setIsConnectingToInstructor(true));
+      // Backend should emit 'instructorStatusUpdate' via socket
+      // Example: socketService.emit('requestInstructorConnect', { courseId });
+      // Simulating the process for now:
+      console.log("Attempting to connect to instructor...");
+      // Backend would determine availability and send 'instructorStatusUpdate'
+      // This is now handled by the 'instructorStatusUpdate' socket event in chatSlice
+    } else { // Switched to 'bot'
+      dispatch(setIsConnectingToInstructor(false));
+      dispatch(setInstructorStatus(null)); // Reset instructor status
+      if (connectionStatus === 'connected') { // If connected to instructor, maybe send a "switchedToBot" event
+         // socketService.emit('switchedToBot', { courseId });
+      }
+      dispatch(addMessage({ id: `sys-${Date.now()}`, sender: 'system', text: 'Switched to AI Assistant.' }));
+    }
+  };
+
+  const handleInputChange = (event) => setInputValue(event.target.value);
+  
+  const onDrop = useCallback((acceptedFiles, fileRejections) => {
+    setFilesToSend(prevFiles => [...prevFiles, ...acceptedFiles.map(file => Object.assign(file, { preview: URL.createObjectURL(file) }))]);
+    if (fileRejections.length > 0) {
+      console.error("File Rejections:", fileRejections);
+      dispatch(addMessage({ id: `syserr-${Date.now()}`, sender: 'system', text: `File Error: ${fileRejections[0].errors[0].message}` }));
+    }
+  }, [dispatch]);
+
+  const removeFile = (fileName) => {
+    setFilesToSend(prevFiles => prevFiles.filter(file => {
+      if (file.name === fileName) URL.revokeObjectURL(file.preview); // Clean up preview URL
+      return file.name !== fileName;
+    }));
+  };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, noClick: true, noKeyboard: true, multiple: true });
+
   const getMessageProps = (sender) => {
+    // ... (getMessageProps remains largely the same as in user's code, adjust if needed for new sender types)
     let className = 'message ';
     let initial = { opacity: 0, y: 10 };
     let animate = { opacity: 1, y: 0 };
     let transition = { duration: 0.3, ease: "easeOut" };
 
     switch (sender) {
-      case 'user':
-        className += 'user-message';
-        initial = { opacity: 0, x: 20 }; // From right
-        animate = { opacity: 1, x: 0 };
-        break;
-      case 'bot':
-      case 'instructor':
-        className += sender === 'bot' ? 'bot-message' : 'instructor-message';
-        initial = { opacity: 0, x: -20 }; // From left
-        animate = { opacity: 1, x: 0 };
-        break;
-      case 'system':
-        className += 'system-message';
-        initial = { opacity: 0, scale: 0.95 }; // Fade/scale
-        animate = { opacity: 1, scale: 1 };
-        break;
-      default:
-        className += 'bot-message';
-        initial = { opacity: 0, x: -20 };
-        animate = { opacity: 1, x: 0 };
-        break;
+      case 'user': className += 'user-message'; initial = { opacity: 0, x: 20 }; animate = { opacity: 1, x: 0 }; break;
+      case 'bot': className += 'bot-message'; initial = { opacity: 0, x: -20 }; animate = { opacity: 1, x: 0 }; break;
+      case 'instructor': className += 'instructor-message'; initial = { opacity: 0, x: -20 }; animate = { opacity: 1, x: 0 }; break;
+      case 'system': className += 'system-message'; initial = { opacity: 0, scale: 0.95 }; animate = { opacity: 1, scale: 1 }; break;
+      default: className += 'bot-message'; initial = { opacity: 0, x: -20 }; animate = { opacity: 1, x: 0 }; break;
     }
-    // Ensure text prop exists for conditional rendering later if needed
-     // Ensure text prop exists, handling cases where msg.text might be empty or undefined
-    const textExists = typeof messages.find(msg => msg.id === (arguments[1]?.id))?.text === 'string'; // Check if text exists if msg object is passed
-
     return { className, initial, animate, transition };
   };
 
-
   const toggleFullScreen = () => setIsFullScreen(!isFullScreen);
-  const handleSelectChat = (chatId) => { /* ... */ };
-  const handleSendMessage = (event) => { /* ... */ };
+
+  const handleSelectChat = (chatId) => {
+    dispatch(setSelectedChatId(chatId));
+    // Reset chat mode/instructor status when switching to current or new chat
+    if (chatId === 'current') {
+      setChatMode('bot'); // Default to bot mode for current session
+      dispatch(setIsConnectingToInstructor(false));
+      dispatch(setInstructorStatus(null));
+    }
+  };
+
+  const handleSendMessage = (event) => {
+    event.preventDefault();
+    const trimmedInput = inputValue.trim();
+    if ((!trimmedInput && filesToSend.length === 0) || selectedChatId !== 'current') {
+      if (selectedChatId !== 'current') console.warn("Cannot send message in historical chat view.");
+      return;
+    }
+    if (chatMode === 'instructor' && instructorStatusRedux !== 'connected') {
+      dispatch(addMessage({ id: `syserr-${Date.now()}`, sender: 'system', text: 'Please connect to an instructor first or switch to AI mode.' }));
+      return;
+    }
+
+    // Dispatch sendMessage thunk
+    dispatch(sendMessage({
+      courseId, // Or relevant room/session ID
+      text: trimmedInput,
+      files: filesToSend, // Pass file objects; thunk/service will handle upload logic
+      userId: currentUser?.id,
+      userName: currentUser?.name
+    }));
+
+    // Optimistic UI updates for sent message:
+    // The `sendMessage` thunk can handle this, or the 'newMessage' socket event can add it.
+    // If purely optimistic (and server doesn't echo back user's own messages immediately):
+    // dispatch(addMessage({ id: `temp-${Date.now()}`, sender: 'user', text: trimmedInput, attachments: filesToSend.map(f=>({fileName: f.name})) }));
+    
+    setInputValue('');
+    setFilesToSend([]); // Clear files after attempting to send
+  };
   // --- End Handlers ---
 
-  // Framer Motion transition
   const layoutTransition = { duration: 0.3, ease: "easeInOut" };
-
-   // --- Render JSX ---
-  console.log('Rendering DoubtChatPage - selectedChatId:', selectedChatId); // Keep debug log
 
   return (
     <motion.div
@@ -119,37 +217,38 @@ function DoubtChatPage() {
     >
       <input {...getInputProps()} />
 
-      {/* Header */}
       <header className="chat-header">
-        {/* Title */}
-        <h2 className="header-title">Chat Support</h2>
-        {/* Mode Selector (Conditional) */}
+        <h2 className="header-title">{courseName} - Chat Support</h2>
         {selectedChatId === 'current' && (
             <div className="mode-selector">
                 <label htmlFor="chatModeSelect">Mode:</label>
-                <select id="chatModeSelect" value={chatMode} onChange={handleModeChange} disabled={isConnecting} className="mode-dropdown">
+                <select id="chatModeSelect" value={chatMode} onChange={handleModeChange} disabled={isConnectingToInstructorRedux || connectionStatus === 'connecting'} className="mode-dropdown">
                     <option value="bot">AI Assistant</option>
                     <option value="instructor">Instructor</option>
                 </select>
             </div>
         )}
-        {/* Spacer */}
         {selectedChatId !== 'current' && <div style={{ flexGrow: 1 }}></div>}
-        {/* Fullscreen Button */}
         <button onClick={toggleFullScreen} className="fullscreen-toggle-button" title={isFullScreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}>
              {isFullScreen ? <FaCompress /> : <FaExpand />}
         </button>
       </header>
 
-      {/* Status Messages */}
-      {isConnecting && <p className="status-message">Checking availability...</p>}
-      {instructorStatus === 'unavailable' && <p className="status-message-error">Instructor unavailable.</p>}
-      {instructorStatus === 'connected' && selectedChatId === 'current' && <p className="status-message-success">Connected to instructor!</p>}
+        {/* Status Messages from Redux */}
+        {connectionStatus === 'connecting' && <p className="status-message"><Spinner size="inline" /> Connecting to chat...</p>}
+        {connectionStatus === 'error' && chatError && <p className="status-message-error"><FaCommentSlash /> Chat Error: {typeof chatError === 'string' ? chatError : JSON.stringify(chatError)}</p>}
+        
+        {selectedChatId === 'current' && chatMode === 'instructor' && (
+            <>
+                {isConnectingToInstructorRedux && instructorStatusRedux === 'checking' && <p className="status-message"><Spinner size="inline" /> Connecting to instructor...</p>}
+                {instructorStatusRedux === 'unavailable' && <p className="status-message-error"><FaUserTie style={{opacity: 0.7}}/> Instructor is currently unavailable.</p>}
+                {instructorStatusRedux === 'connected' && <p className="status-message-success"><FaUserTie /> Connected to Instructor!</p>}
+            </>
+        )}
+        {sendMessageError && <p className="status-message-error">Send Error: {typeof sendMessageError === 'string' ? sendMessageError : 'Could not send message.'}</p>}
 
 
-      {/* Main Area */}
       <div className="chat-main-area">
-        {/* --- Chat History Sidebar --- */}
         <aside className="chat-history-sidebar">
             <div className="sidebar-header"> <h3>Chat History</h3> </div>
             <div className="sidebar-content">
@@ -163,23 +262,18 @@ function DoubtChatPage() {
                 {chatHistory.length === 0 && <p className="no-history">No past chats found.</p>}
             </div>
         </aside>
-        {/* --- End Sidebar --- */}
 
-
-        {/* --- Chat View --- */}
         <motion.div layout transition={layoutTransition} className="chat-view">
              {isDragActive && <div className="dropzone-overlay-text">Drop files here...</div>}
-
-             {/* Message List */}
              <div className="message-list" ref={messageListRef}>
                <AnimatePresence initial={false}>
                  {messages.map((msg) => {
                    const motionProps = getMessageProps(msg.sender);
-                    // Ensure msg.text exists before rendering the paragraph to avoid errors
-                    const textContent = typeof msg.text === 'string' ? msg.text : '';
+                   const textContent = typeof msg.text === 'string' ? msg.text : '';
+                   const attachments = msg.attachments || (msg.filesToSend && msg.filesToSend.length > 0 ? msg.filesToSend : []); // Handle both structures
                    return (
                      <motion.div
-                       key={msg.id}
+                       key={msg.id || `msg-${Math.random()}`} // Ensure key, fallback for temp messages
                        layout
                        initial={motionProps.initial}
                        animate={motionProps.animate}
@@ -187,18 +281,28 @@ function DoubtChatPage() {
                        transition={motionProps.transition}
                        className={motionProps.className}
                      >
-                       <p>{textContent}</p> {/* Render textContent */}
+                       <p>{textContent}</p>
+                       {/* Display attachments if any */}
+                       {attachments && attachments.length > 0 && (
+                           <div className="message-attachments">
+                               {attachments.map((file, index) => (
+                                   <div key={index} className="attachment-chip">
+                                       <FaPaperclip size="0.8em" /> {file.fileName || file.name}
+                                   </div>
+                               ))}
+                           </div>
+                       )}
                      </motion.div>
                    );
                  })}
                </AnimatePresence>
              </div>
 
-             {/* File Preview Area */}
-             {filesToSend.length > 0 && selectedChatId === 'current' && (
+            {filesToSend.length > 0 && selectedChatId === 'current' && (
                  <div className="file-preview-area">
                      {filesToSend.map(file => (
                          <div key={file.name} className="file-preview-item">
+                             {file.type.startsWith('image/') && file.preview && <img src={file.preview} alt={file.name} className="file-image-preview" />}
                              <span className="file-name">{file.name}</span>
                              <span className="file-size">({(file.size / 1024).toFixed(1)} KB)</span>
                              <button onClick={() => removeFile(file.name)} className="remove-file-button" title="Remove file"> <FaTimes /> </button>
@@ -207,12 +311,19 @@ function DoubtChatPage() {
                  </div>
              )}
 
-             {/* Input Area (Conditional) */}
-             {selectedChatId === 'current' ? (
+            {selectedChatId === 'current' ? (
                  <form className="input-area" onSubmit={handleSendMessage}>
-                     <button type="button" onClick={open} className="attach-button" title="Attach files" disabled={isConnecting || (chatMode === 'instructor' && instructorStatus !== 'connected')}> <FaPaperclip /> </button>
-                     <input type="text" placeholder={ chatMode === 'instructor' && instructorStatus !== 'connected' ? "Connect to instructor..." : "Type your message or drop files..." } value={inputValue} onChange={handleInputChange} className="input-field" disabled={isConnecting || (chatMode === 'instructor' && instructorStatus !== 'connected')} />
-                     <button type="submit" className="send-button" disabled={(!inputValue.trim() && filesToSend.length === 0) || isConnecting || (chatMode === 'instructor' && instructorStatus !== 'connected')}> Send </button>
+                     <button type="button" onClick={open} className="attach-button" title="Attach files" disabled={isConnectingToInstructorRedux || (chatMode === 'instructor' && instructorStatusRedux !== 'connected')}> <FaPaperclip /> </button>
+                     <textarea
+                        value={inputValue}
+                        onChange={handleInputChange}
+                        onKeyPress={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e);}}}
+                        placeholder={chatMode === 'instructor' && instructorStatusRedux !== 'connected' ? "Waiting for instructor..." : "Type your message or drop files..."}
+                        className="input-field"
+                        rows={1} // Start with 1 row, CSS will handle expansion
+                        disabled={connectionStatus !== 'connected' || isConnectingToInstructorRedux || (chatMode === 'instructor' && instructorStatusRedux !== 'connected')}
+                     />
+                     <button type="submit" className="send-button" disabled={(!inputValue.trim() && filesToSend.length === 0) || connectionStatus !== 'connected' || isConnectingToInstructorRedux || (chatMode === 'instructor' && instructorStatusRedux !== 'connected')}> Send </button>
                  </form>
              ) : (
                  <div className="input-area history-notice">
@@ -221,10 +332,8 @@ function DoubtChatPage() {
                  </div>
              )}
          </motion.div>
-         {/* --- End Chat View --- */}
-
-      </div> {/* End Chat Main Area */}
-    </motion.div> // End Main Container
+      </div>
+    </motion.div>
   );
 }
 

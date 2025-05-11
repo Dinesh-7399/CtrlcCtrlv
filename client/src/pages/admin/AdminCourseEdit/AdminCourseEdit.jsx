@@ -1,306 +1,458 @@
-// src/pages/admin/AdminCourseEdit/AdminCourseEdit.jsx
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+// client/src/pages/admin/AdminCourseEdit/AdminCourseEdit.jsx
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 
-// Import Redux actions and selectors
 import {
-    selectCourseById,
-    selectCoursesStatus,
-    selectCoursesError, // Import error selector
-    selectCourseModules, // Selector for modules
-    updateCourse,
-    fetchCourses
-} from '../../../features/courses/CoursesSlice.js';
-// Import category selectors and fetch action
-import {
-    selectAllCategories,
-    selectCategoriesStatus,
-    fetchCategories
-} from '../../../features/categories/categoriesSlice';
+  fetchAdminCourseForEdit,
+  updateAdminCourse,
+  fetchCategoriesForForm,
+  fetchInstructorsForForm,
+  selectCurrentEditingCourseData,
+  selectAdminCourseEditPageStatus,
+  selectAdminCourseEditPageError,
+  selectAdminCourseEditPageSuccessMessage,
+  selectCategoriesForForm,
+  selectInstructorsForForm,
+  selectIsLoadingCategoriesForForm,
+  selectIsLoadingInstructorsForForm,
+  clearEditCourseStatus,
+  clearEditPageSuccessMessage,
+} from '../../../features/admin/adminCoursesSlice.js'; // Adjust path
 
 // Common Components
 import Button from '../../../components/common/Button';
 import Spinner from '../../../components/common/Spinner';
-import Card from '../../../components/common/Card';
+import Card from '../../../components/common/Card'; // Assuming Card is a simple wrapper
 import Input from '../../../components/common/Input';
 import Textarea from '../../../components/common/Textarea';
 import Select from '../../../components/common/Select';
 
-// Icons
-import { FaSave, FaTimes, FaPlus, FaPencilAlt, FaTrash, FaExclamationTriangle } from 'react-icons/fa'; // Added more icons
+import { FaSave, FaTimes, FaPlus, FaTrash, FaArrowUp, FaArrowDown, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
+import './AdminCourseEdit.css'; // Your custom CSS
+import { ContentStatus, Difficulty, LessonType } from '@prisma/client'; // For dropdown options
 
-// CSS
-import './AdminCourseEdit.css'; // Make sure this file includes grid styles
+const generateClientId = () => `client_${Math.random().toString(36).substr(2, 9)}`;
 
 const AdminCourseEdit = () => {
-    const { courseId } = useParams();
-    const navigate = useNavigate();
-    const dispatch = useDispatch();
+  const { courseId } = useParams();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-    // --- State Selection ---
-    const course = useSelector((state) => selectCourseById(state, courseId));
-    const courseModules = useSelector((state) => selectCourseModules(state, courseId)); // Get modules
-    const coursesStatus = useSelector(selectCoursesStatus);
-    const coursesError = useSelector(selectCoursesError);
+  const courseForEdit = useSelector(selectCurrentEditingCourseData);
+  const pageStatus = useSelector(selectAdminCourseEditPageStatus); // 'idle', 'loadingInitial', 'editing', 'saving', 'succeeded', 'failed'
+  const pageError = useSelector(selectAdminCourseEditPageError);
+  const successMessage = useSelector(selectAdminCourseEditPageSuccessMessage);
 
-    // Fetch categories for dropdown
-    const categories = useSelector(selectAllCategories);
-    const categoriesStatus = useSelector(selectCategoriesStatus);
+  const categories = useSelector(selectCategoriesForForm);
+  const instructors = useSelector(selectInstructorsForForm);
+  const isLoadingCategories = useSelector(selectIsLoadingCategoriesForForm);
+  const isLoadingInstructors = useSelector(selectIsLoadingInstructorsForForm);
 
-    // --- Local State ---
-    const [formData, setFormData] = useState({
-        title: '',
-        // Store category ID if using dropdown, otherwise category name string
-        categoryId: '', // Changed from 'category'
-        price: 0,
-        status: 'draft',
-        thumbnail: '',
-        description: ''
-    });
-    const [updateStatus, setUpdateStatus] = useState('idle');
-    const [updateError, setUpdateError] = useState(null);
+  // --- Local Form State ---
+  const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
+  const [description, setDescription] = useState('');
+  const [price, setPrice] = useState(0);
+  const [categoryId, setCategoryId] = useState('');
+  const [instructorId, setInstructorId] = useState('');
+  const [difficulty, setDifficulty] = useState(Difficulty.ALL_LEVELS);
+  const [language, setLanguage] = useState('English');
+  const [status, setStatus] = useState(ContentStatus.DRAFT);
+  const [thumbnailUrl, setThumbnailUrl] = useState('');
+  const [isFeatured, setIsFeatured] = useState(false);
 
-    // --- Effects ---
-    // Fetch initial course and category data
-    useEffect(() => {
-        if (coursesStatus === 'idle') {
-             dispatch(fetchCourses());
-        }
-        if (categoriesStatus === 'idle') {
-            dispatch(fetchCategories());
-        }
-    }, [coursesStatus, categoriesStatus, dispatch]);
+  const [modulesData, setModulesData] = useState([]); // For managing modules and lessons locally
 
-    // Populate form when course data is loaded
-    useEffect(() => {
-        if (coursesStatus === 'succeeded' && course) {
-            setFormData({
-                title: course.title || '',
-                 // Use category ID if your data has it, otherwise adapt
-                categoryId: course.categoryId || course.category || '', // Prefer ID if available
-                price: course.price || 0,
-                status: course.status || 'draft',
-                thumbnail: course.thumbnail || '',
-                description: course.description || '',
-            });
-            setUpdateStatus('idle');
-            setUpdateError(null);
-        }
-        // Do not navigate away here if !course, handle in render
-    }, [course, coursesStatus]); // Re-run if course data changes
-
-
-    // --- Event Handlers ---
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prevData => ({ ...prevData, [name]: value }));
-    };
-
-    const handleBasicInfoSubmit = async (e) => {
-        e.preventDefault();
-        setUpdateStatus('loading');
-        setUpdateError(null);
-
-        if (!formData.title) {
-            setUpdateError('Course title is required.');
-            setUpdateStatus('failed');
-            return;
-        }
-
-        const changes = { ...formData, price: parseFloat(formData.price) || 0 };
-        // If using categoryId, make sure it's sent correctly.
-        // If storing category name, ensure it's trimmed etc.
-
-        try {
-            console.log("Dispatching update course:", { id: courseId, changes });
-            // Assume updateCourse is synchronous for now, or use unwrap if it's a thunk
-            dispatch(updateCourse({ id: courseId, changes }));
-            setUpdateStatus('succeeded');
-            // Remove automatic navigation, let user decide when to leave
-            // setTimeout(() => navigate('/admin/courses'), 1000);
-        } catch (err) {
-             console.error('Failed to update course:', err);
-             setUpdateError(err.message || 'Failed to save changes.');
-             setUpdateStatus('failed');
-        }
-    };
-
-    // --- Placeholder Handlers for Modules/Lessons ---
-    const handleAddModule = () => console.log("TODO: Add Module");
-    const handleEditModule = (moduleId) => console.log("TODO: Edit Module", moduleId);
-    const handleDeleteModule = (moduleId) => console.log("TODO: Delete Module", moduleId);
-    const handleAddLesson = (moduleId) => console.log("TODO: Add Lesson to Module", moduleId);
-    const handleEditLesson = (lessonId) => console.log("TODO: Edit Lesson", lessonId);
-    const handleDeleteLesson = (lessonId) => console.log("TODO: Delete Lesson", lessonId);
-
-
-    // --- Render Logic ---
-
-    // Initial Loading or Course Not Found
-    if (coursesStatus === 'loading' || coursesStatus === 'idle') {
-        return <div className="admin-page-container admin-centered-container"><Spinner label="Loading course data..." /></div>;
+  // --- Fetch initial data ---
+  useEffect(() => {
+    if (courseId) {
+      dispatch(fetchAdminCourseForEdit(courseId));
     }
-    if (coursesStatus === 'succeeded' && !course) {
-        return (
-             <div className="admin-page-container admin-centered-container admin-error-container">
-                <FaExclamationTriangle size={30} className="error-icon"/>
-                <h2 className="error-title">Course Not Found</h2>
-                <p className="error-message">Could not find course with ID: {courseId}</p>
-                <Link to="/admin/courses"><Button variant="secondary">Back to Courses</Button></Link>
-            </div>
-        );
+    dispatch(fetchCategoriesForForm());
+    dispatch(fetchInstructorsForForm());
+
+    return () => { // Cleanup on unmount
+      dispatch(clearEditCourseStatus());
+    };
+  }, [dispatch, courseId]);
+
+  // --- Populate form when courseForEdit data is loaded ---
+  useEffect(() => {
+    if (courseForEdit && pageStatus !== 'loadingInitial') {
+      setTitle(courseForEdit.title || '');
+      setSlug(courseForEdit.slug || '');
+      setDescription(courseForEdit.description || '');
+      setPrice(courseForEdit.price || 0);
+      setCategoryId(courseForEdit.categoryId?.toString() || '');
+      setInstructorId(courseForEdit.instructorId?.toString() || '');
+      setDifficulty(courseForEdit.difficulty || Difficulty.ALL_LEVELS);
+      setLanguage(courseForEdit.language || 'English');
+      setStatus(courseForEdit.status || ContentStatus.DRAFT);
+      setThumbnailUrl(courseForEdit.thumbnailUrl || '');
+      setIsFeatured(courseForEdit.isFeatured || false);
+
+      // Deep copy modules and lessons, adding clientIds if they don't exist (for new ones during edit)
+      setModulesData(
+        (courseForEdit.modules || []).map(mod => ({
+          ...mod,
+          clientId: mod.id || generateClientId(), // Use existing ID or generate client ID
+          lessons: (mod.lessons || []).map(les => ({
+            ...les,
+            clientId: les.id || generateClientId(), // Use existing ID or generate client ID
+            // Ensure all lesson fields are present for the form
+            type: les.type || LessonType.TEXT,
+            content: les.content || '',
+            videoUrl: les.videoUrl || '',
+            videoDuration: les.videoDuration || 0,
+            isFreePreview: typeof les.isFreePreview === 'boolean' ? les.isFreePreview : false,
+          })),
+        }))
+      );
     }
-    // Fetching Error
-     if (coursesStatus === 'failed') {
-        return (
-             <div className="admin-page-container admin-centered-container admin-error-container">
-                 <FaExclamationTriangle size={30} className="error-icon"/>
-                <h2 className="error-title">Error Loading Data</h2>
-                <p className="error-message">{coursesError || 'An unknown error occurred.'}</p>
-                <Button onClick={() => dispatch(fetchCourses())} variant="secondary" className="retry-button">Retry</Button>
-            </div>
-        );
-     }
+  }, [courseForEdit, pageStatus]);
+
+  // --- Success/Error Message Handling & Redirect ---
+   useEffect(() => {
+    if (pageStatus === 'succeeded' && successMessage) {
+      const timer = setTimeout(() => {
+        dispatch(clearEditPageSuccessMessage());
+        // navigate('/admin/courses'); // Optionally redirect or let user stay
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [pageStatus, successMessage, dispatch, navigate]);
 
 
-    // --- Main Content Render ---
+  // --- Module Handlers (similar to AdminCourseCreate) ---
+  const handleAddModule = () => {
+    setModulesData([
+      ...modulesData,
+      { clientId: generateClientId(), title: '', order: modulesData.length, lessons: [], isNew: true }, // Mark as new
+    ]);
+  };
+  const handleModuleChange = (moduleClientId, field, value) => { /* ... */ }; // See AdminCourseCreate
+  const handleRemoveModule = (moduleClientId) => { /* ... */ };
+  const moveModule = (index, direction) => { /* ... */ };
+
+  // --- Lesson Handlers (similar to AdminCourseCreate) ---
+  const handleAddLesson = (moduleClientId) => { /* ... */ };
+  const handleLessonChange = (moduleClientId, lessonClientId, field, value) => { /* ... */ };
+  const handleRemoveLesson = (moduleClientId, lessonClientId) => { /* ... */ };
+  const moveLesson = (moduleClientId, lessonIndex, direction) => { /* ... */ };
+
+    // --- Re-implementing Module/Lesson handlers for brevity in this example ---
+    // (In a real app, you might abstract these into a custom hook if used in both Create and Edit)
+    const reImplementModuleLessonHandlers = () => {
+        // Module Handlers
+        // handleAddModule is above
+        const newHandleModuleChange = (moduleClientId, field, value) => {
+            setModulesData(prevModules => prevModules.map(mod =>
+                mod.clientId === moduleClientId ? { ...mod, [field]: value } : mod
+            ));
+        };
+        const newHandleRemoveModule = (moduleClientId) => {
+            setModulesData(prevModules => prevModules.filter(mod => mod.clientId !== moduleClientId)
+                .map((mod, index) => ({ ...mod, order: index })) // Re-order after removal
+            );
+        };
+        const newMoveModule = (index, direction) => {
+            const newModules = [...modulesData];
+            const modToMove = newModules[index];
+            if (direction === 'up' && index > 0) {
+                newModules.splice(index, 1);
+                newModules.splice(index - 1, 0, modToMove);
+            } else if (direction === 'down' && index < newModules.length - 1) {
+                newModules.splice(index, 1);
+                newModules.splice(index + 1, 0, modToMove);
+            }
+            setModulesData(newModules.map((m, i) => ({ ...m, order: i })));
+        };
+
+        // Lesson Handlers
+        const newHandleAddLesson = (moduleClientId) => {
+            setModulesData(prevModules => prevModules.map(mod => {
+                if (mod.clientId === moduleClientId) {
+                    const newLesson = {
+                        clientId: generateClientId(), title: '', order: mod.lessons.length,
+                        type: LessonType.TEXT, content: '', videoUrl: '', videoDuration: 0, isFreePreview: false, isNew: true
+                    };
+                    return { ...mod, lessons: [...mod.lessons, newLesson] };
+                }
+                return mod;
+            }));
+        };
+        const newHandleLessonChange = (moduleClientId, lessonClientId, field, value) => {
+            setModulesData(prevModules => prevModules.map(mod => {
+                if (mod.clientId === moduleClientId) {
+                    return {
+                        ...mod,
+                        lessons: mod.lessons.map(lesson =>
+                            lesson.clientId === lessonClientId ? { ...lesson, [field]: value } : lesson
+                        )
+                    };
+                }
+                return mod;
+            }));
+        };
+        const newHandleRemoveLesson = (moduleClientId, lessonClientId) => {
+            setModulesData(prevModules => prevModules.map(mod => {
+                if (mod.clientId === moduleClientId) {
+                    return {
+                        ...mod,
+                        lessons: mod.lessons.filter(lesson => lesson.clientId !== lessonClientId)
+                                     .map((l, index) => ({ ...l, order: index })) // Re-order
+                    };
+                }
+                return mod;
+            }));
+        };
+        const newMoveLesson = (moduleClientId, lessonIndex, direction) => {
+            setModulesData(prevModules => prevModules.map(mod => {
+                if (mod.clientId === moduleClientId) {
+                    const newLessons = [...mod.lessons];
+                    const lessonToMove = newLessons[lessonIndex];
+                    if (direction === 'up' && lessonIndex > 0) {
+                        newLessons.splice(lessonIndex, 1);
+                        newLessons.splice(lessonIndex - 1, 0, lessonToMove);
+                    } else if (direction === 'down' && lessonIndex < newLessons.length - 1) {
+                        newLessons.splice(lessonIndex, 1);
+                        newLessons.splice(lessonIndex + 1, 0, lessonToMove);
+                    }
+                    return { ...mod, lessons: newLessons.map((l, i) => ({ ...l, order: i })) };
+                }
+                return mod;
+            }));
+        };
+        // Assign to component scope
+        Object.assign(window, { newHandleModuleChange, newHandleRemoveModule, newMoveModule, newHandleAddLesson, newHandleLessonChange, newHandleRemoveLesson, newMoveLesson });
+    };
+    reImplementModuleLessonHandlers(); // Call to make them available, replace with actual assignments above
+
+
+  // --- Form Submission ---
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    dispatch(clearEditCourseStatus()); // Clear previous errors/success
+
+    const courseDataPayload = {
+      title: title.trim(),
+      slug: slug.trim() || undefined, // Let backend handle slug if empty or based on title change
+      description: description.trim(),
+      price: parseFloat(price) || 0,
+      categoryId: categoryId ? parseInt(categoryId) : null,
+      instructorId: instructorId ? parseInt(instructorId) : null, // Admin can change instructor
+      difficulty,
+      language: language.trim(),
+      status,
+      thumbnailUrl: thumbnailUrl.trim() || null,
+      isFeatured,
+      // For modules and lessons, the backend needs to handle diffing:
+      // - Identify new modules/lessons (those with client_id and no db id)
+      // - Identify updated modules/lessons (those with db id)
+      // - Identify deleted modules/lessons (present in original courseForEdit.modules but not in modulesData)
+      modules: modulesData.map(mod => ({
+        id: typeof mod.id === 'number' ? mod.id : undefined, // Send existing DB ID if it's not new
+        title: mod.title.trim(),
+        order: mod.order,
+        lessons: mod.lessons.map(lesson => ({
+          id: typeof lesson.id === 'number' ? lesson.id : undefined, // Send existing DB ID
+          title: lesson.title.trim(),
+          order: lesson.order,
+          type: lesson.type,
+          content: lesson.type === LessonType.TEXT ? lesson.content : null,
+          videoUrl: lesson.type === LessonType.VIDEO ? lesson.videoUrl : null,
+          videoDuration: lesson.type === LessonType.VIDEO ? (parseInt(lesson.videoDuration) || 0) : null,
+          isFreePreview: lesson.isFreePreview,
+        })),
+      })),
+    };
+    console.log("Submitting Updated Course Data:", courseDataPayload);
+    dispatch(updateAdminCourse({ courseId, courseData: courseDataPayload }));
+  };
+
+
+  // --- Render Logic ---
+  if (pageStatus === 'loadingInitial' || isLoadingCategories || isLoadingInstructors) {
+    return <div className="admin-page-container page-loading-spinner"><Spinner label="Loading course data..." /></div>;
+  }
+
+  if (pageStatus === 'failed' && !courseForEdit) { // Error fetching initial course
     return (
-        <div className="admin-page-container admin-edit-form-container">
-            <div className="admin-page-header">
-                <h1 className="admin-page-title">Edit Course: {formData.title || ''}</h1>
-                 <Link to="/admin/courses">
-                    <Button variant="outline" size="medium">
-                        <FaTimes className="button-icon" aria-hidden="true" /> Cancel
-                    </Button>
-                </Link>
-            </div>
-
-            {/* Card for Basic Information Form */}
-            <Card className="admin-form-card">
-                <form onSubmit={handleBasicInfoSubmit}>
-                    {/* Use a grid for layout */}
-                    <div className="form-grid-container">
-                        {/* Column 1 */}
-                        <div className="form-grid-column">
-                            <Input
-                                label="Course Title" id="title" name="title"
-                                value={formData.title} onChange={handleChange} required
-                                placeholder="e.g., Introduction to React"
-                            />
-                            <Select
-                                label="Category" id="categoryId" name="categoryId" // Changed name to categoryId
-                                value={formData.categoryId} onChange={handleChange} required
-                                options={[
-                                    { value: '', label: '-- Select Category --', disabled: true },
-                                    // Map over fetched categories
-                                    ...(categories || []).map(cat => ({ value: cat.id, label: cat.name })) // Use category ID as value
-                                ]}
-                                // Show loading state for categories if needed
-                                disabled={categoriesStatus === 'loading'}
-                            />
-                             <Input
-                                label="Price (INR)" id="price" name="price" type="number"
-                                min="0" step="any" value={formData.price} onChange={handleChange}
-                                placeholder="e.g., 499 (0 for Free)"
-                            />
-                            <Select
-                                label="Status" id="status" name="status"
-                                value={formData.status} onChange={handleChange} required
-                                options={[
-                                    { value: 'draft', label: 'Draft' },
-                                    { value: 'published', label: 'Published' }
-                                ]}
-                            />
-                             <Input
-                                label="Thumbnail Image URL" id="thumbnail" name="thumbnail" type="url"
-                                value={formData.thumbnail} onChange={handleChange}
-                                placeholder="https://example.com/image.jpg"
-                            />
-                            {formData.thumbnail && (
-                                <div className="thumbnail-preview">
-                                    <p>Preview:</p>
-                                    <img src={formData.thumbnail} alt="Thumbnail preview" onError={(e) => e.target.style.display='none'}/>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Column 2 */}
-                        <div className="form-grid-column">
-                            <Textarea
-                                label="Description" id="description" name="description"
-                                value={formData.description} onChange={handleChange} rows={15} // Increased rows
-                                placeholder="Detailed description of the course content..."
-                            />
-                        </div>
-                    </div> {/* End form-grid-container */}
-
-                    {/* Form Actions */}
-                    <div className="form-actions">
-                         <Button type="submit" variant="primary" size="large" disabled={updateStatus === 'loading'}>
-                            {updateStatus === 'loading' ? <Spinner size="small" /> : <FaSave className="button-icon" />}
-                            Save Basic Info
-                        </Button>
-                    </div>
-
-                    {/* Display Update Status Messages */}
-                    {updateStatus === 'succeeded' && <p className="status-message success">Basic info updated successfully!</p>}
-                    {updateStatus === 'failed' && <p className="status-message error">Error updating info: {updateError || 'Please try again.'}</p>}
-                </form>
-            </Card>
-
-            {/* --- Card for Course Content (Modules/Lessons) --- */}
-            <Card className="admin-content-card">
-                 <div className="content-card-header">
-                     <h2>Course Content</h2>
-                     <Button variant="secondary" onClick={handleAddModule}>
-                         <FaPlus aria-hidden="true"/> Add Module
-                     </Button>
-                 </div>
-
-                 <div className="module-list">
-                    {(courseModules && courseModules.length > 0) ? courseModules.map((module) => (
-                        <div key={module.id} className="module-item">
-                            <div className="module-header">
-                                <h3 className="module-title">{module.title || 'Untitled Module'}</h3>
-                                <div className="module-actions">
-                                     <Button variant="outline" size="small" onClick={() => handleAddLesson(module.id)}>
-                                        <FaPlus aria-hidden="true"/> Add Lesson
-                                    </Button>
-                                     <Button variant="icon" size="small" title="Edit Module" onClick={() => handleEditModule(module.id)}>
-                                        <FaPencilAlt/>
-                                    </Button>
-                                     <Button variant="icon" color="danger" size="small" title="Delete Module" onClick={() => handleDeleteModule(module.id)}>
-                                        <FaTrash/>
-                                    </Button>
-                                </div>
-                            </div>
-                            <ul className="lesson-list">
-                                {(module.lessons && module.lessons.length > 0) ? module.lessons.map(lesson => (
-                                    <li key={lesson.id} className="lesson-item">
-                                        <span className="lesson-title">{lesson.title || 'Untitled Lesson'}</span>
-                                        <div className="lesson-actions">
-                                            <Button variant="icon" size="small" title="Edit Lesson" onClick={() => handleEditLesson(lesson.id)}>
-                                                <FaPencilAlt/>
-                                            </Button>
-                                            <Button variant="icon" color="danger" size="small" title="Delete Lesson" onClick={() => handleDeleteLesson(lesson.id)}>
-                                                 <FaTrash/>
-                                            </Button>
-                                        </div>
-                                    </li>
-                                )) : (
-                                    <li className="no-lessons">No lessons in this module yet.</li>
-                                )}
-                            </ul>
-                        </div>
-                    )) : (
-                        <p className="admin-empty-message">No modules added yet. Click "Add Module" to start building the course content.</p>
-                    )}
-                 </div>
-            </Card>
-
-        </div> // End admin-page-container
+      <div className="admin-page-container admin-form-error-fullpage">
+        <FaExclamationTriangle className="error-icon-fullpage" />
+        <h2>Error Loading Course</h2>
+        <p>{typeof pageError === 'string' ? pageError : JSON.stringify(pageError)}</p>
+        <Link to="/admin/courses" className="button-link">Back to Course List</Link>
+      </div>
     );
+  }
+  if (!courseForEdit && courseId) { // Course ID exists, but not found after loading attempt
+      return (
+          <div className="admin-page-container admin-form-error-fullpage">
+              <FaExclamationTriangle className="error-icon-fullpage" />
+              <h2>Course Not Found</h2>
+              <p>The course with ID "{courseId}" could not be found.</p>
+              <Link to="/admin/courses" className="button-link">Back to Course List</Link>
+          </div>
+      );
+  }
+
+
+  return (
+    <div className="admin-page-container admin-course-edit-page"> {/* Changed class name */}
+      <div className="admin-page-header">
+        <h1 className="admin-page-title">Edit Course: {courseForEdit?.title || 'Loading...'}</h1>
+        <Link to="/admin/courses">
+          <Button variant="outline" size="medium"><FaTimes className="button-icon"/> Cancel</Button>
+        </Link>
+      </div>
+
+      {pageStatus === 'failed' && pageError && ( /* For save errors */
+        <div className="admin-form-error form-level-error">
+          <h4>Failed to Save Course:</h4>
+          {typeof pageError === 'string' ? <p>{pageError}</p> :
+            Array.isArray(pageError) ? (
+              <ul>{pageError.map((err, i) => <li key={i}>{err.field ? `${err.field}: ` : ''}{err.message}</li>)}</ul>
+            ) : <p>An unexpected error occurred.</p>
+          }
+        </div>
+      )}
+      {pageStatus === 'succeeded' && successMessage && (
+        <p className="admin-form-success form-level-success"><FaCheckCircle /> {successMessage}</p>
+      )}
+
+      <form onSubmit={handleSubmit} className="course-edit-form"> {/* Changed class name */}
+        <Card className="form-section-card"> {/* Wrap sections in Cards */}
+          <h3 className="section-title">Basic Information</h3>
+          <Input label="Course Title" id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+          <Input label="Slug (leave empty to auto-generate from title if title changes)" id="slug" value={slug} onChange={(e) => setSlug(e.target.value)} />
+          <Textarea label="Course Description" id="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={4} />
+          <div className="form-row">
+            <Input label="Price (INR)" id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} min="0" step="0.01" />
+            <Input label="Language" id="language" value={language} onChange={(e) => setLanguage(e.target.value)} />
+          </div>
+          <div className="form-row">
+            <Select label="Category" id="categoryId" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}
+              options={[{ value: '', label: 'Select Category' }, ...categories.map(cat => ({ value: cat.id.toString(), label: cat.name }))]}
+            />
+            <Select label="Instructor" id="instructorId" value={instructorId} onChange={(e) => setInstructorId(e.target.value)} required
+              options={[{ value: '', label: 'Select Instructor' }, ...instructors.map(inst => ({ value: inst.id.toString(), label: inst.name }))]}
+            />
+          </div>
+          <div className="form-row">
+            <Select label="Difficulty" id="difficulty" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}
+              options={Object.values(Difficulty).map(d => ({ value: d, label: d.replace('_', ' ') }))}
+            />
+            <Select label="Status" id="status" value={status} onChange={(e) => setStatus(e.target.value)}
+              options={Object.values(ContentStatus).map(s => ({ value: s, label: s.charAt(0) + s.slice(1).toLowerCase() }))}
+            />
+          </div>
+          <Input label="Thumbnail Image URL (optional)" id="thumbnailUrl" type="url" value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)} />
+          <div className="form-group form-group-checkbox">
+            <input type="checkbox" id="isFeatured" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} />
+            <label htmlFor="isFeatured">Feature this course?</label>
+          </div>
+        </Card>
+
+        <Card className="form-section-card">
+          <div className="section-header-action">
+            <h3 className="section-title">Course Content: Modules & Lessons</h3>
+            <Button type="button" onClick={handleAddModule} variant="secondary-outline" size="small"><FaPlus /> Add Module</Button>
+          </div>
+          {modulesData.length === 0 && <p className="empty-section-message">No modules added yet. Click "Add Module" to start.</p>}
+          {modulesData.map((module, moduleIndex) => (
+            <div key={module.clientId} className="module-section">
+              <div className="module-header">
+                <h4 className="module-title-display">Module {module.order + 1}</h4> {/* Use order for display */}
+                <div className="module-actions">
+                    <Button type="button" onClick={() => window.newMoveModule(moduleIndex, 'up')} disabled={moduleIndex === 0} variant="icon-subtle" title="Move Module Up"><FaArrowUp /></Button>
+                    <Button type="button" onClick={() => window.newMoveModule(moduleIndex, 'down')} disabled={moduleIndex === modulesData.length - 1} variant="icon-subtle" title="Move Module Down"><FaArrowDown /></Button>
+                    <Button type="button" onClick={() => window.newHandleRemoveModule(module.clientId)} variant="danger-outline" size="small"><FaTrash /> Remove Module</Button>
+                </div>
+              </div>
+              <Input
+                label={`Module Title`}
+                value={module.title}
+                onChange={(e) => window.newHandleModuleChange(module.clientId, 'title', e.target.value)}
+                required
+                className="module-title-input"
+              />
+              <div className="lessons-section">
+                <div className="section-header-action lessons-header">
+                    <h5 className="lessons-title-display">Lessons</h5>
+                    <Button type="button" onClick={() => window.newHandleAddLesson(module.clientId)} variant="secondary-outline" size="x-small">
+                        <FaPlus /> Add Lesson
+                    </Button>
+                </div>
+                {module.lessons.length === 0 && <p className="empty-section-message small-text">No lessons in this module yet.</p>}
+                {module.lessons.map((lesson, lessonIndex) => (
+                  <div key={lesson.clientId} className="lesson-item">
+                    <p className="lesson-item-title-display">Lesson {lesson.order + 1}</p> {/* Use order for display */}
+                    <Input
+                      label={`Lesson Title`}
+                      value={lesson.title}
+                      onChange={(e) => window.newHandleLessonChange(module.clientId, lesson.clientId, 'title', e.target.value)}
+                      required
+                    />
+                    <Select
+                      label="Lesson Type"
+                      value={lesson.type}
+                      onChange={(e) => window.newHandleLessonChange(module.clientId, lesson.clientId, 'type', e.target.value)}
+                      options={Object.values(LessonType).map(lt => ({ value: lt, label: lt.replace('_', ' ') }))}
+                    />
+                    {lesson.type === LessonType.TEXT && (
+                      <Textarea
+                        label="Content (Text/Markdown)"
+                        value={lesson.content}
+                        onChange={(e) => window.newHandleLessonChange(module.clientId, lesson.clientId, 'content', e.target.value)}
+                        rows={5}
+                      />
+                    )}
+                    {lesson.type === LessonType.VIDEO && (
+                      <>
+                        <Input
+                          label="Video URL"
+                          type="url"
+                          value={lesson.videoUrl}
+                          onChange={(e) => window.newHandleLessonChange(module.clientId, lesson.clientId, 'videoUrl', e.target.value)}
+                        />
+                        <Input
+                          label="Video Duration (seconds)"
+                          type="number"
+                          min="0"
+                          value={lesson.videoDuration}
+                          onChange={(e) => window.newHandleLessonChange(module.clientId, lesson.clientId, 'videoDuration', e.target.value)}
+                        />
+                      </>
+                    )}
+                     {/* Add fields for Quiz ID, DPP ID if LessonType is QUIZ or DPP */}
+                    <div className="lesson-item-controls">
+                        <div className="form-group-checkbox lesson-preview-checkbox">
+                            <input type="checkbox" id={`lesson-${lesson.clientId}-preview`} checked={lesson.isFreePreview} onChange={(e) => window.newHandleLessonChange(module.clientId, lesson.clientId, 'isFreePreview', e.target.checked)} />
+                            <label htmlFor={`lesson-${lesson.clientId}-preview`}>Free Preview?</label>
+                        </div>
+                        <div className="lesson-order-actions">
+                            <Button type="button" onClick={() => window.newMoveLesson(module.clientId, lessonIndex, 'up')} disabled={lessonIndex === 0} variant="icon-subtle" title="Move Lesson Up"><FaArrowUp /></Button>
+                            <Button type="button" onClick={() => window.newMoveLesson(module.clientId, lessonIndex, 'down')} disabled={lessonIndex === module.lessons.length - 1} variant="icon-subtle" title="Move Lesson Down"><FaArrowDown /></Button>
+                            <Button type="button" onClick={() => window.newHandleRemoveLesson(module.clientId, lesson.clientId)} variant="danger-icon" size="small" title="Remove Lesson"><FaTrash /></Button>
+                        </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </Card>
+
+        <div className="form-actions">
+          <Button type="submit" variant="primary" size="large" disabled={pageStatus === 'saving'}>
+            {pageStatus === 'saving' ? <Spinner size="small" /> : <FaSave />} Save All Changes
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
 };
 
 export default AdminCourseEdit;

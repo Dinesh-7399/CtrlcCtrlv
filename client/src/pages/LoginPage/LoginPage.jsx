@@ -1,116 +1,121 @@
 // client/src/pages/LoginPage.jsx
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom'; // Added useLocation
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
+import Spinner from '../../components/common/Spinner'; // For loading state
 import "../AuthForm/AuthForm.css"; // Use shared CSS
-import { useAuth } from '../../context/AuthContext'; // *** IMPORT useAuth ***
+import { useAuth } from '../../context/AuthContext';
+
+// --- Redux Imports ---
+import { useSelector, useDispatch } from 'react-redux';
+import {
+  selectAuthLoading,
+  selectAuthError,
+  clearAuthError // Action to clear auth errors
+} from '../../features/users/UsersSlice'; // Adjust path as necessary
+// loginUser thunk is called by authContext.login, so not directly dispatched here
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login } = useAuth(); // *** GET the login function from context ***
+  const location = useLocation(); // To get the 'from' location for redirect after login
+  const dispatch = useDispatch();
+  const { login, isAuthenticated } = useAuth(); // login function from context
+
+  // --- Redux State ---
+  const isLoading = useSelector(selectAuthLoading);
+  const authError = useSelector(selectAuthError);
+
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
-  const [error, setError] = useState('');
   const { email, password } = formData;
+
+  // Clear auth error when component mounts or form data changes
+  useEffect(() => {
+    dispatch(clearAuthError());
+  }, [dispatch]);
 
   const onChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.id]: e.target.value, // Relies on id prop on Input
+      [e.target.id]: e.target.value,
     });
-    if (error) {
-      setError("");
+    if (authError) { // Clear Redux error if user starts typing
+      dispatch(clearAuthError());
     }
   };
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
+    dispatch(clearAuthError()); // Clear previous errors
+
     if (!email || !password) {
-      setError("Please fill in all fields");
+      // Dispatch an action or set a local error for client-side validation
+      // For simplicity with Redux focus, often backend validation is primary for auth forms.
+      // If using Redux for this: dispatch(setAuthError("Please fill in all fields."));
+      // For now, let the backend handle this or rely on 'required' prop of Input.
+      // Or, set a local error if preferred for immediate feedback:
+      // setLocalValidationError("Please fill in all fields.");
       return;
     }
-    // Note: Password length check might not be needed on login, only register
-    // if (password.length < 6) {
-    //  setError("Password must be at least 6 characters long");
-    //  // Don't clear password on login validation error
-    //  return;
-    // }
 
-    setError(""); // Clear previous errors before trying to log in
-    console.log("Login attempt submitted:", formData);
-
-    // ** Placeholder for Backend API Call **
-    // Replace this section with actual API call later
-    // try {
-    //   // const apiResponse = await authService.login({ email, password });
-    //   // console.log('Login successful:', apiResponse);
-
-    //   // --- If API call is successful ---
-    //   const userDataFromApi = {
-    //      id: apiResponse.user.id,
-    //      name: apiResponse.user.name,
-    //      email: apiResponse.user.email,
-    //      role: apiResponse.user.role
-    //      // token: apiResponse.token // Usually store token separately
-    //   };
-    //   login(userDataFromApi); // *** CALL context login function ***
-    //   navigate('/dashboard'); // Redirect AFTER successful login
-    //   // --- End API Success ---
-
-    // } catch (apiError) {
-    //    console.error('Login failed:', apiError);
-    //    setError(apiError.message || 'Login failed. Please check credentials.');
-    // }
-
-
-    // --- Simulate successful login FOR NOW ---
-    alert("Login submitted (See console for data). Simulating success...");
-    const simulatedUserData = {
-      id: 'user123',
-      name: 'Test User', // You might get the actual name from API later
-      email: formData.email,
-      role: 'student'
-    };
-    login(simulatedUserData); // *** CALL context login function ***
-    navigate('/dashboard'); // Redirect AFTER successful login
-    // --- End Simulation ---
-
-    // Don't clear form here immediately, only after successful API response/navigation
-    // setFormData({ email: "", password: "" });
+    try {
+      await login({ email, password }); // Call the login function from AuthContext
+      // AuthContext and UsersSlice handle setting isAuthenticated and currentUser
+      // Navigation will be handled by PrivateRoute or by checking isAuthenticated below
+    } catch (error) {
+      // The login function from AuthContext (which uses loginUser thunk)
+      // should have already set the error in Redux state.
+      // No need to `setError(apiError.message)` here if authError selector is used.
+      console.error('Login failed from LoginPage:', error);
+    }
   };
+
+  // Redirect if already authenticated or after successful login
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, location.state]);
 
   return (
     <div className="auth-container">
       <form className="auth-form" onSubmit={onSubmit}>
         <h2>Login</h2>
 
-        {/* *** DISPLAY Error Message *** */}
-        {error && <p className="auth-error">{error}</p>}
+        {authError && <p className="auth-error">{typeof authError === 'string' ? authError : "Login failed. Please check your credentials."}</p>}
 
         <Input
           label="Email"
-          id="email" // *** ADD id ***
+          id="email"
           type="email"
           placeholder="Enter your email"
-          value={email} // *** ADD value ***
+          value={email}
           onChange={onChange}
           required
+          disabled={isLoading}
         />
         <Input
           label="Password"
-          id="password" // *** ADD id ***
+          id="password"
           type="password"
           placeholder="Enter your password"
-          value={password} // *** ADD value ***
+          value={password}
           onChange={onChange}
           required
+          disabled={isLoading}
         />
-        <Button type="submit" variant="primary" fullWidth>Login</Button>
+        <Button type="submit" variant="primary" fullWidth disabled={isLoading}>
+          {isLoading ? <Spinner size="small" /> : 'Login'}
+        </Button>
         <p className="auth-switch">
           Don't have an account? <Link to="/register">Sign Up</Link>
+        </p>
+         <p className="auth-switch" style={{marginTop: "var(--spacing-sm)"}}>
+            <Link to="/request-password-reset">Forgot Password?</Link>
         </p>
       </form>
     </div>

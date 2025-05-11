@@ -1,153 +1,248 @@
-// client/src/pages/ArticleDetailPage.jsx
-// Add useRef and useEffect
+// client/src/pages/ArticleDetailPage/ArticleDetailPage.jsx
 import React, { useRef, useEffect } from 'react';
-import { useParams, Link as RouterLink, useNavigate } from 'react-router-dom'; // Renamed Link to avoid conflict
-import { useSelector } from 'react-redux';
+import { useParams, Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import Button from '../../components/common/Button';
 import './ArticleDetailPage.css';
-import { FaArrowLeft, FaRegClock, FaUserEdit, FaExclamationTriangle } from 'react-icons/fa'; // Added error icon
+import { FaArrowLeft, FaRegClock, FaUserEdit, FaExclamationTriangle, FaTags, FaFolderOpen } from 'react-icons/fa';
 import Spinner from '../../components/common/Spinner';
 
-// --- Import selectors from the articles slice ---
-// !! Ensure path/filename/casing is correct !!
 import {
-  selectArticleBySlug, // Assuming you select by slug
-  selectArticlesStatus,
-  // selectArticleById, // Use this instead if selecting by ID
-  // getArticlesError,
-} from '../../features/articles/articlesSlice';
+  fetchArticleBySlug,
+  selectCurrentArticleDetails,
+  selectArticleDetailsStatus,
+  selectArticleDetailsError,
+  clearCurrentArticle,
+} from '../../features/articles/articlesSlice.js';
 
-// --- NEW: KaTeX Imports ---
-import katex from 'katex'; // Core KaTeX library (might not be directly used, but good practice)
-import renderMathInElement from 'katex/dist/contrib/auto-render'; // Auto-render extension
-// IMPORTANT: Ensure KaTeX CSS is imported ONCE globally, e.g., in index.js or App.jsx
+import renderMathInElement from 'katex/dist/contrib/auto-render';
+// IMPORTANT: Ensure KaTeX CSS is imported globally (e.g., in your main.jsx or App.jsx)
 // import 'katex/dist/katex.min.css';
-// --- End KaTeX Imports ---
 
+const katexOptions = {
+  delimiters: [
+    { left: '$$', right: '$$', display: true },
+    { left: '$', right: '$', display: false },
+    { left: '\\(', right: '\\)', display: false },
+    { left: '\\[', right: '\\]', display: true },
+  ],
+  throwOnError: false,
+};
 
 const ArticleDetailPage = () => {
-  const { articleSlug } = useParams(); // Get slug from URL
+  const { articleSlug } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  // --- Get data and status directly from Redux ---
-  // Select article by slug (ensure this selector works with your entities state if changed)
-  const article = useSelector((state) => selectArticleBySlug(state, articleSlug));
-  const articlesStatus = useSelector(selectArticlesStatus);
-  // const articlesError = useSelector(getArticlesError); // Optional
+  // articleDataWrapper will be an object like: { article: { id: ..., title: ..., content: "..." } }
+  // OR null if no article is loaded yet or if an error occurred.
+  const articleDataWrapper = useSelector(selectCurrentArticleDetails);
+  const articleStatus = useSelector(selectArticleDetailsStatus);
+  const error = useSelector(selectArticleDetailsError);
 
-  // --- NEW: Ref for the content container ---
   const contentRef = useRef(null);
-  // --- End Ref ---
+
+  // --- CRITICAL LOG 5: See what the selector returns from Redux ---
+  console.log('ArticleDetailPage: articleDataWrapper from selector (should be { article: {...} } or null):', JSON.stringify(articleDataWrapper, null, 2));
+  console.log('ArticleDetailPage: articleStatus from selector:', articleStatus);
 
 
-  // --- NEW: Effect to render math after content loads/changes ---
+  // Extract the actual article object from the wrapper
+  // This is the main fix: access articleDataWrapper.article
+  const actualArticle = articleDataWrapper ? articleDataWrapper.article : null;
+
+  // --- CRITICAL LOG 6: See the extracted 'actualArticle' object ---
+  // This should be the object containing { id, title, content, ... } or null.
+  console.log('ArticleDetailPage: Extracted actualArticle object:', JSON.stringify(actualArticle, null, 2));
+
+
   useEffect(() => {
-    // Check if the ref is attached to an element and we have article content
-    if (contentRef.current && article?.content) {
+    if (articleSlug) {
+      dispatch(fetchArticleBySlug(articleSlug));
+    }
+    return () => {
+      dispatch(clearCurrentArticle());
+    };
+  }, [dispatch, articleSlug]);
+
+  useEffect(() => {
+    // Use 'actualArticle' here
+    if (contentRef.current && actualArticle?.content) {
       try {
-        // Scan the contentRef element and render math based on delimiters
-        renderMathInElement(contentRef.current, {
-          delimiters: [
-              { left: '$$', right: '$$', display: true },  // For display math $$...$$
-              { left: '$', right: '$', display: false },   // For inline math $...$
-              // Optional common LaTeX delimiters (require escaping backslashes in JS strings)
-              // { left: '\\(', right: '\\)', display: false },
-              // { left: '\\[', right: '\\]', display: true }
-          ],
-          // Prevent errors from stopping the entire page render
-          throwOnError: false
-        });
-      } catch (error) {
-          console.error("KaTeX auto-render error:", error);
+        renderMathInElement(contentRef.current, katexOptions);
+      } catch (e) {
+        console.error("KaTeX auto-render error:", e);
       }
     }
-    // Dependency array: Re-run this effect if the article content changes
-  }, [article?.content]);
-  // --- End Effect ---
+  }, [actualArticle?.content]); // Dependency on the content of the extracted article
 
-
-  // Handler to go back to the article list
   const handleGoBack = () => {
     navigate('/articles');
   };
 
-  // --- Render loading state based on Redux status ---
-  if (articlesStatus === 'loading') {
+  if (articleStatus === 'loading' || articleStatus === 'idle') {
     return (
-      <div className="article-detail-status loading-state">
-        <Spinner label="Loading article..." />
+      <div className="article-detail-status loading-state page-container">
+        <Spinner label="Loading article..." size="large" />
       </div>
     );
   }
 
-  // --- Render error/not found state ---
-  if (!article && (articlesStatus === 'idle' || articlesStatus === 'succeeded')) {
-     return (
-       <div className="article-detail-status article-error">
-         <FaExclamationTriangle size={30} style={{ marginBottom: 'var(--spacing-sm)' }} />
-         <p>Article not found.</p>
-         <p>The requested article with slug "{articleSlug}" could not be found.</p>
-         <Button onClick={handleGoBack} variant="secondary" className="back-button-error">
-             <FaArrowLeft className="button-icon"/> Back to Articles
-         </Button>
-       </div>
-     );
-   }
-
-  // Render not found if article is somehow null after loading
-  if (!article) {
-      return <div className="article-detail-status">Could not load article data.</div>;
+  if (articleStatus === 'failed') {
+    return (
+      <div className="article-detail-status article-error page-container">
+        <FaExclamationTriangle className="error-icon" />
+        <p className="error-title">Error Loading Article</p>
+        <p className="error-message">
+          {typeof error === 'string' ? error : error?.message || 'Could not fetch the article.'}
+        </p>
+        <Button onClick={handleGoBack} variant="secondary" className="back-button-error">
+          <FaArrowLeft className="button-icon" /> Back to Articles
+        </Button>
+      </div>
+    );
   }
 
-  // --- Render the main article content ---
+  // Use 'actualArticle' for "not found" check
+  if (articleStatus === 'succeeded' && !actualArticle) {
+    // This means the API call was successful, Redux state was updated,
+    // but the 'article' object within the wrapper was null or missing.
+    // This could happen if the backend successfully responds but indicates "not found"
+    // in a way that results in articleDataWrapper.article being null.
+    return (
+      <div className="article-detail-status article-not-found page-container">
+        <FaExclamationTriangle className="error-icon" />
+        <p className="error-title">Article Not Found</p>
+        <p className="error-message">
+          The article with slug "{articleSlug}" could not be found or the data structure is unexpected.
+        </p>
+        <Button onClick={handleGoBack} variant="secondary" className="back-button-error">
+          <FaArrowLeft className="button-icon" /> Back to Articles
+        </Button>
+      </div>
+    );
+  }
+
+  // Fallback if 'actualArticle' is still not available after all checks
+  if (!actualArticle) {
+    return (
+      <div className="article-detail-status loading-state page-container">
+        <Spinner label="Preparing article data..." size="large" />
+      </div>
+    );
+  }
+
+  // Destructure from 'actualArticle'
+  const {
+    title,
+    content, // This 'content' should now be correctly sourced
+    thumbnailUrl,
+    category,
+    author: authorObject, // Renamed to avoid conflict if 'author' is used as a prop name
+    authorId: directAuthorIdFromArticle, // If author ID is directly on article object
+    authorName: directAuthorNameFromArticle, // If author name is directly on article object
+    publishedAt,
+    readTime,
+    tags
+  } = actualArticle;
+
+  // --- CRITICAL LOG 7: See the 'content' that will be used for rendering ---
+  console.log('ArticleDetailPage: Destructured content for rendering:', content);
+
+
+  // Consolidate author details extraction using 'authorObject' from 'actualArticle'
+  const authorName = authorObject?.name || directAuthorNameFromArticle || 'Unknown Author';
+  const authorId = authorObject?.id || directAuthorIdFromArticle;
+  const authorAvatarUrl = authorObject?.profile?.avatarUrl || authorObject?.avatarUrl;
+  const authorProfileLinkPath = authorId ? `/profile/${authorId}` : null;
+
   return (
-    <div className="article-detail-container page-container"> {/* Added page-container */}
-      {/* Back Button */}
+    <div className="article-detail-container page-container">
       <Button onClick={handleGoBack} variant="outline" size="small" className="back-button">
-        <FaArrowLeft className="button-icon"/> Back to Articles
+        <FaArrowLeft className="button-icon" /> Back to Articles List
       </Button>
 
       <article className="article-content-main">
-        {/* Article Title */}
-        <h1 className="article-detail-title">{article.title}</h1>
-
-        {/* Article Metadata */}
-        <div className="article-detail-meta">
-          <span><FaUserEdit /> By {article.author}</span>
-          <span>
-            <FaRegClock /> Published on {new Date(article.publishDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
-          </span>
-          {article.readTime && (
-             <span className="read-time"> ({article.readTime} min read)</span>
+        <header className="article-header">
+          {category?.name && category?.slug && (
+            <RouterLink to={`/articles/category/${category.slug}`} className="article-category-link">
+              <FaFolderOpen /> {category.name}
+            </RouterLink>
           )}
-        </div>
+          <h1 className="article-detail-title">{title}</h1>
+          <div className="article-detail-meta">
+            {(authorObject || directAuthorIdFromArticle) && (
+              <span className="meta-item author-meta">
+                {authorProfileLinkPath ? (
+                  <RouterLink to={authorProfileLinkPath} className="author-profile-link has-avatar">
+                    {authorAvatarUrl ? (
+                      <img src={authorAvatarUrl} alt={`${authorName}'s avatar`} className="author-avatar-meta" />
+                    ) : (
+                      <FaUserEdit className="author-icon-meta" />
+                    )}
+                    <span className="author-name-meta">{authorName}</span>
+                  </RouterLink>
+                ) : (
+                  <>
+                    {authorAvatarUrl ? (
+                      <img src={authorAvatarUrl} alt={`${authorName}'s avatar`} className="author-avatar-meta" />
+                    ) : (
+                      <FaUserEdit className="author-icon-meta" />
+                    )}
+                    <span className="author-name-meta">{authorName}</span>
+                  </>
+                )}
+              </span>
+            )}
 
-        {/* Optional Banner Image */}
-        {article.imageUrl && (
+            {publishedAt && (
+              <span className="meta-item date-meta">
+                <FaRegClock /> Published on {new Date(publishedAt).toLocaleDateString('en-IN', {
+                  year: 'numeric', month: 'long', day: 'numeric',
+                })}
+              </span>
+            )}
+            {readTime && (
+              <span className="meta-item read-time"> ({readTime} min read)</span>
+            )}
+          </div>
+          {tags && tags.length > 0 && (
+            <div className="article-tags-meta">
+              <FaTags className="tags-icon" />
+              {tags.map(tag => (
+                <RouterLink
+                  key={typeof tag === 'string' ? tag : tag.id || tag.name}
+                  to={`/articles/tag/${(typeof tag === 'string' ? tag : tag.name).toLowerCase().replace(/\s+/g, '-')}`}
+                  className="tag-link"
+                >
+                  {typeof tag === 'string' ? tag : tag.name}
+                </RouterLink>
+              ))}
+            </div>
+          )}
+        </header>
+
+        {thumbnailUrl && (
           <img
-            src={article.imageUrl}
-            alt={`${article.title} banner`}
+            src={thumbnailUrl}
+            alt={`${title} banner`}
             className="article-detail-banner"
-            onError={(e) => { e.target.onerror = null; e.target.style.display='none'; }}
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
             loading="lazy"
           />
         )}
 
-        {/* Article Body Content */}
-        {article.content ? (
-           <div
-             ref={contentRef} // <-- Attach the ref here
-             className="article-body"
-             // Render the raw HTML from your Tiptap editor/data source
-             dangerouslySetInnerHTML={{ __html: article.content }}
-           />
-         ) : (
-           <p className="article-body-missing">Article content is not available.</p>
-         )}
+        {/* This conditional rendering should now work correctly with the extracted 'content' */}
+        {content ? (
+          <div
+            ref={contentRef}
+            className="article-body prose-styles"
+            dangerouslySetInnerHTML={{ __html: content }}
+          />
+        ) : (
+          <p className="article-body-missing">Article content is not available.</p>
+        )}
       </article>
-
-       {/* Optional: Add related articles or comments section later */}
-
     </div>
   );
 };

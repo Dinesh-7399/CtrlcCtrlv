@@ -1,334 +1,353 @@
-/* ============================
-   General Layout & Title
-   ============================ */
-   .article-list-container {
-    max-width: 1200px; /* Adjust as needed */
-    margin: var(--spacing-xl) auto; /* Use variable */
-    padding: 0 var(--spacing-lg);  /* Use variable */
-    min-height: 70vh;
-  }
-  
-  .article-list-title {
-    font-size: 2.5rem; /* Or use a variable like --font-size-h1 */
-    font-weight: 700; /* Or use --font-weight-bold */
-    color: var(--color-text-primary); /* Use variable */
-    text-align: center;
-    margin-bottom: var(--spacing-xl); /* Use variable */
-    position: relative;
-  }
-  
-  .article-list-title::after {
-    content: '';
-    display: block;
-    width: 80px;
-    height: 4px;
-    background-color: var(--color-primary); /* Use variable */
-    margin: var(--spacing-sm) auto 0;      /* Use variable */
-    border-radius: 2px;                    /* Or use --border-radius-sm */
-  }
-  
-  /* ============================
-     Spinner & Status Messages
-     ============================ */
-  .article-list-status {
-    text-align: center;
-    padding: var(--spacing-xl) var(--spacing-md); /* Use variables */
-    font-size: 1.2rem;
-    color: var(--color-text-secondary); /* Use variable */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .article-list-status.loading-state {
-    gap: var(--spacing-md); /* Use variable */
-  }
-  
-  .article-list-status.error {
-    color: var(--color-error); /* Use variable */
-    font-weight: 500;
-  }
-  
-  /* Assuming .spinner defined globally in index.css using variables */
-  /* If not, update this spinner definition too: */
-   .spinner {
-     width: 40px;
-     height: 40px;
-     border: 4px solid var(--color-border); /* Use variable */
-     border-left-color: var(--color-primary); /* Use variable */
-     border-radius: 50%;
-     animation: spin 1s linear infinite;
-   }
-  
-   @keyframes spin {
-     0% { transform: rotate(0deg); }
-     100% { transform: rotate(360deg); }
-   }
-  
-  /* ============================
-     Articles Grid
-     ============================ */
-  .articles-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: var(--spacing-lg); /* Use variable */
-  }
-  
-  /* ============================
-     Article Card Styles
-     ============================ */
-  .article-card-link {
-    text-decoration: none;
-    color: inherit;
-    display: block;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border-radius: var(--border-radius); /* Use variable */
-    overflow: hidden;
-    box-shadow: var(--box-shadow-sm); /* Use variable */
-    background-color: var(--color-surface); /* Ensure background for link area */
-  }
-  
-  .article-card-link:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--box-shadow-md); /* Use variable */
-  }
-  
-  .article-card {
-    background-color: var(--color-surface); /* Use variable */
-    border-radius: var(--border-radius); /* Use variable */
-    border: 1px solid var(--color-border); /* Use variable */
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden; /* Added to ensure consistency */
-  }
-  
-  .article-card-image {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    display: block;
-    /* Optional: border-bottom: 1px solid var(--color-border); */
-  }
-  
-  .article-card-content {
-    padding: var(--spacing-md); /* Use variable */
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .article-card-title {
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: var(--color-text-primary); /* Use variable */
-    margin-bottom: var(--spacing-sm); /* Use variable */
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  .article-card-meta {
-    font-size: 0.85rem;
-    color: var(--color-text-secondary); /* Use variable */
+/* client/src/pages/ArticleListPage/ArticleListPage.css */
+
+/* --- General Page & Container --- */
+.page-container {
+  /* This class is assumed to be global or in Layout.css */
+  /* It likely handles consistent horizontal padding for pages */
+  /* For example:
+  padding-left: var(--spacing-md);
+  padding-right: var(--spacing-md);
+  */
+}
+
+.article-list-container {
+  max-width: var(--container-max-width, 1200px); /* Define --container-max-width in :root or use a fixed value */
+  margin: var(--spacing-lg) auto;
+  padding: var(--spacing-md); /* Inner padding for the list content */
+  box-sizing: border-box;
+}
+
+/* --- Page Header --- */
+.article-list-header {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border); /* Uses theme-agnostic border */
+}
+
+.article-list-main-title {
+  font-size: clamp(1.8rem, 5vw, var(--font-size-xxl, 2.2rem)); /* Define --font-size-xxl or use a fixed value */
+  font-weight: var(--font-weight-bold, 700); /* Define --font-weight-bold or use a fixed value */
+  color: var(--color-text-primary); /* Uses theme-agnostic text color */
+  margin: 0 0 var(--spacing-sm) 0;
+  line-height: 1.2;
+}
+
+.article-list-subtitle {
+  font-size: var(--font-size-md, 1.1rem); /* Define --font-size-md or use fixed */
+  color: var(--color-text-secondary); /* Uses theme-agnostic secondary text */
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* --- Status Messages (Loading, Error, Empty) --- */
+.article-list-status {
+  text-align: center;
+  padding: var(--spacing-xl) var(--spacing-md);
+  color: var(--color-text-secondary);
+  font-size: 1.1rem;
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+}
+
+.article-list-status .status-icon {
+  font-size: 2.5rem;
+  margin-bottom: var(--spacing-sm);
+}
+
+.article-list-status.error .status-icon {
+  color: var(--color-error); /* Uses utility color */
+}
+
+.article-list-status.empty .status-icon {
+  color: var(--color-info, #3498db); /* Define --color-info or use a fixed value if not themed */
+}
+
+/* --- Articles Grid --- */
+.articles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); /* Updated minmax */
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+/* --- Article Card Link & Card Styling --- */
+.article-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  height: 100%;
+  border-radius: var(--border-radius); /* Use your defined border-radius */
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.article-card-link:hover .article-card.hover-effect,
+.article-card-link:focus-visible .article-card.hover-effect {
+  transform: translateY(-5px);
+  box-shadow: var(--box-shadow-md); /* Uses theme-agnostic shadow */
+}
+
+.article-card-link:focus-visible {
+    outline: 2px solid var(--color-primary); /* Uses theme-agnostic primary */
+    outline-offset: 2px;
+}
+
+.article-card.hover-effect {
+  background-color: var(--color-surface); /* Themed surface */
+  border: 1px solid var(--color-border); /* Themed border */
+  border-radius: var(--border-radius); /* Your defined border-radius */
+  box-shadow: var(--box-shadow-sm); /* Themed shadow */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: inherit; /* Inherit transitions from link for smoothness */
+}
+
+.article-card-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background-color: var(--color-secondary-creamy); /* Themed placeholder bg */
+  /* border-bottom: 1px solid var(--color-border); No need if card has border */
+}
+
+.article-card-content {
+  padding: var(--spacing-md);
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.article-card-title {
+  font-size: var(--font-size-lg, 1.2rem); /* Define --font-size-lg or use fixed */
+  font-weight: var(--font-weight-semibold, 600); /* Define or use fixed */
+  color: var(--color-text-primary); /* Themed */
+  margin: 0 0 var(--spacing-sm) 0;
+  line-height: 1.3;
+}
+
+.article-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-xs, 0.75rem); /* Define --font-size-xs or use fixed */
+  color: var(--color-text-secondary); /* Themed */
+  margin-bottom: var(--spacing-sm);
+}
+
+.article-card-meta .meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+.article-card-meta .meta-item svg {
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.article-card-excerpt {
+  font-size: var(--font-size-sm, 0.875rem); /* Define --font-size-sm or use fixed */
+  color: var(--color-text-secondary); /* Themed */
+  line-height: 1.5;
+  margin-bottom: var(--spacing-md);
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.article-card-tags-preview {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--spacing-sm) var(--spacing-md); /* Use variables */
-    margin-bottom: var(--spacing-md); /* Use variable */
+    gap: var(--spacing-xs);
     align-items: center;
-  }
-  
-  .article-card-meta span {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-xs); /* Use variable */
-  }
-  
-  .article-card-meta svg {
-    font-size: 0.9em;
-  }
-  
-  .article-card-excerpt {
-    font-size: 0.95rem;
-    color: var(--color-text-primary); /* Use variable */
-    line-height: 1.6;
-    margin-bottom: var(--spacing-md); /* Use variable */
-    flex-grow: 1;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  .read-more-link {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--color-primary); /* Use variable */
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-xs); /* Use variable */
-    transition: color 0.3s ease, gap 0.3s ease;
-    margin-top: auto;
-  }
-  
-  .read-more-link:hover {
-    color: var(--color-primary-dark-variant); /* Use variable */
-    gap: var(--spacing-sm); /* Use variable */
-    text-decoration: underline;
-  }
-  
-  /* =========================================
-     Load More Button & Status (MODIFIED)
-     ========================================= */
-  .load-more-container {
-    text-align: center;
-    margin-top: var(--spacing-xl); /* Use variable */
-    padding-bottom: var(--spacing-lg); /* Use variable */
-  }
-  
-  /* --- Modern Load More Button --- */
-  .load-more-button {
-    /* Base styles using variables */
-    background-color: var(--color-primary);
-    color: var(--color-text-on-primary);
-    border: 1px solid transparent;
-    padding: var(--spacing-sm) var(--spacing-lg); /* Use variables */
-    font-size: 1rem;
-    font-weight: 500;
-    border-radius: 50px; /* Pill shape */
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease, opacity 0.3s ease, box-shadow 0.3s ease;
-    display: inline-flex; /* Use flexbox for alignment */
-    align-items: center;
-    justify-content: center; /* Center content */
-    gap: var(--spacing-sm); /* Space between text and icon */
-    min-width: 150px; /* Ensure minimum width */
-    min-height: 42px; /* Ensure minimum height */
-    text-decoration: none;
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-xs, 0.75rem); /* Define --font-size-xs or use fixed */
+}
+.article-card-tags-preview .tags-preview-icon {
+    color: var(--color-text-secondary); /* Themed */
+    margin-right: var(--spacing-xs); /* Adjusted from xxs */
+    flex-shrink: 0;
+}
+.article-card-tag-preview {
+    background-color: var(--color-secondary-creamy); /* Themed */
+    color: var(--color-text-secondary); /* Themed */
+    padding: calc(var(--spacing-xs) / 2) var(--spacing-xs); /* Smaller padding */
+    border-radius: var(--border-radius); /* Consistent radius */
     white-space: nowrap;
-    position: relative; /* Needed for positioning pseudo-elements if used later */
-    overflow: hidden; /* Hide overflow if needed */
-  }
-  
-  .load-more-button:hover:not(:disabled) {
-    background-color: var(--color-primary-dark-variant); /* Use dark variant from variables */
-    transform: translateY(-2px);
-    box-shadow: var(--box-shadow-sm); /* Add subtle shadow on hover */
-  }
-  
-  .load-more-button:active:not(:disabled) {
-    transform: translateY(0);
-    box-shadow: none;
-  }
-  
-  /* --- Loading State for Button --- */
-  .load-more-button:disabled {
-    opacity: 0.7; /* Slightly dim when disabled */
-    cursor: wait; /* Indicate waiting */
-    /* Optional: Keep background consistent or change slightly */
-    background-color: var(--color-primary-dark-variant);
-    transform: none; /* Reset transforms */
-    box-shadow: none; /* Reset shadow */
-  }
-  
-  /* Hide icon and original text span when loading */
-  .load-more-button.loading > span:not(.loading-dots), /* Target direct span children */
-  .load-more-button.loading > svg {                 /* Target direct svg children */
-    display: none;
-  }
-  
-  /* --- Loading Dots Animation --- */
-  .loading-dots {
-    display: flex; /* Align dots horizontally */
-    align-items: center;
-    justify-content: center;
-    /* Ensure it takes up space */
-    min-height: 1.2em; /* Match approx line height */
-  }
-  
-  /* Individual dots */
-  .loading-dots span {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: var(--color-text-on-primary); /* Use text color on primary */
-    margin: 0 var(--spacing-xs); /* Space between dots */
-    animation: dots-bounce 1.4s infinite ease-in-out both; /* Apply animation */
-  }
-  
-  /* Stagger the animation delay for each dot */
-  .loading-dots span:nth-child(1) {
-    animation-delay: -0.32s;
-  }
-  .loading-dots span:nth-child(2) {
-    animation-delay: -0.16s;
-  }
-  /* nth-child(3) has no delay (implicitly 0s) */
-  
-  /* Keyframes for the dots animation */
-  @keyframes dots-bounce {
-    0%, 80%, 100% {
-      transform: scale(0);
-    }
-    40% {
-      transform: scale(1.0);
-    }
-  }
-  
-  /* --- Article Count Status --- */
-  .article-count-status {
-    margin-top: var(--spacing-md); /* Use variable */
-    font-size: 0.9rem;
-    color: var(--color-text-secondary); /* Use variable */
-  }
-  
-  .article-count-status.all-loaded {
+}
+.article-card-tag-preview.more {
     font-style: italic;
-  }
-  
-  
-  /* ============================
-     Responsiveness (Kept existing rules)
-     ============================ */
-  @media (max-width: 768px) {
-    .article-list-title {
-      font-size: 2rem;
-    }
+    background-color: transparent;
+    color: var(--color-text-secondary); /* Themed */
+}
+
+.read-more-link {
+  font-size: var(--font-size-sm, 0.875rem); /* Define or use fixed */
+  color: var(--color-primary); /* Themed */
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold, 600); /* Define or use fixed */
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs); /* Adjusted from xxs */
+  margin-top: auto;
+  padding-top: var(--spacing-xs);
+  transition: color 0.2s ease;
+}
+.read-more-link:hover,
+.read-more-link:focus-visible {
+  color: var(--color-primary-dark-variant); /* Themed dark variant */
+  text-decoration: underline;
+}
+.read-more-link svg {
+  transition: transform 0.2s ease;
+}
+.read-more-link:hover svg,
+.read-more-link:focus-visible svg {
+  transform: translateX(var(--spacing-xs)); /* Use variable for transform */
+}
+
+/* --- Load More Button Area --- */
+.load-more-container {
+  text-align: center;
+  margin-top: var(--spacing-xl);
+  margin-bottom: var(--spacing-md);
+}
+
+.load-more-button {
+  background-color: var(--color-primary); /* Themed */
+  color: var(--color-text-on-primary); /* Themed text on primary */
+  border: 1px solid transparent;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-size-md, 1rem); /* Define or use fixed */
+  font-weight: var(--font-weight-medium, 500); /* Define or use fixed */
+  border-radius: var(--border-radius); /* Consistent radius */
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease-out, box-shadow 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+}
+.load-more-button:hover:not(:disabled) {
+  background-color: var(--color-primary-dark-variant); /* Themed */
+  transform: translateY(-2px);
+  box-shadow: var(--box-shadow-sm); /* Use theme-agnostic shadow */
+}
+.load-more-button:focus-visible {
+    outline: 2px solid var(--color-primary); /* Use theme-agnostic primary */
+    outline-offset: 2px;
+}
+.load-more-button:disabled {
+  background-color: var(--color-secondary-creamy); /* Themed accent for disabled */
+  color: var(--color-text-secondary); /* Themed secondary text for disabled */
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.load-more-button.loading .loading-dots {
+  display: inline-block;
+}
+.load-more-button.loading .loading-dots span {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-text-on-primary); /* Match button text color */
+  border-radius: 50%;
+  margin: 0 2px;
+  animation: loadingDotsAnimation 1.4s infinite ease-in-out both;
+}
+.load-more-button.loading .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+.load-more-button.loading .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes loadingDotsAnimation {
+  0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+  40% { transform: scale(1.0); opacity: 1; }
+}
+
+.article-count-status {
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-sm, 0.875rem); /* Define or use fixed */
+  color: var(--color-text-secondary); /* Themed */
+}
+.article-count-status.all-loaded {
+  font-style: italic;
+  margin-top: var(--spacing-md);
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 992px) { /* Larger tablets / Small desktops */
     .articles-grid {
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: var(--spacing-md); /* Use variable */
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); /* Slightly smaller min for more items */
+        gap: var(--spacing-md); /* Reduce gap slightly */
     }
-    .article-card-content {
-      padding: var(--spacing-md); /* Use variable */
-    }
-    .article-card-title {
-       font-size: 1.15rem;
-    }
-     .article-card-excerpt {
-       font-size: 0.9rem;
-     }
+}
+
+@media (max-width: 768px) { /* Tablet */
+  .article-list-container {
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm); /* Your value */
   }
-  
-  @media (max-width: 480px) {
-    .article-list-container {
-      padding: 0 var(--spacing-md); /* Use variable */
-    }
-    .articles-grid {
-      grid-template-columns: 1fr;
-      gap: var(--spacing-md); /* Use variable */
-    }
-     .article-list-title {
-      font-size: 1.8rem;
-     }
-     .load-more-button {
-       padding: var(--spacing-sm) var(--spacing-md); /* Use variables */
-       font-size: 0.95rem;
-       min-width: 120px; /* Adjust min-width for smaller screens */
-     }
+  /* .articles-grid adjustments already handled well by auto-fill with minmax */
+  .article-list-main-title {
+    font-size: var(--font-size-xl, 1.8rem); /* Define or use fixed */
   }
+  .article-list-subtitle {
+    font-size: var(--font-size-sm, 0.9rem); /* Define or use fixed */
+    max-width: 90%;
+  }
+  .article-card-title {
+    font-size: var(--font-size-md, 1.1rem); /* Define or use fixed */
+  }
+  .article-card-excerpt {
+    -webkit-line-clamp: 2;
+  }
+}
+
+@media (max-width: 480px) { /* Mobile */
+  .article-list-container {
+    padding: var(--spacing-xs); /* Further reduce padding */
+  }
+  .articles-grid {
+    grid-template-columns: 1fr; /* Single column */
+    gap: var(--spacing-md);
+  }
+  .article-list-header {
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+  }
+  .article-list-main-title {
+    font-size: var(--font-size-lg, 1.5rem); /* Define --font-size-lg-alt or use --font-size-lg */
+  }
+  .article-list-subtitle {
+    font-size: var(--font-size-sm, 0.85rem); /* Define or use fixed */
+  }
+  .article-card-title {
+    font-size: var(--font-size-base, 1rem); /* Define or use fixed */
+  }
+  .article-card-excerpt {
+    font-size: var(--font-size-xs, 0.8rem); /* Define or use fixed */
+    -webkit-line-clamp: 3;
+  }
+  .load-more-button {
+    width: 100%;
+    padding: var(--spacing-md);
+    font-size: var(--font-size-sm, 0.9rem); /* Define or use fixed */
+  }
+  .article-card-tags-preview {
+    font-size: calc(var(--font-size-xs, 0.75rem) * 0.9);
+  }
+  .article-card-tag-preview {
+    padding: 0.1rem var(--spacing-xs);
+  }
+}

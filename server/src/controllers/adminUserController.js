@@ -1,209 +1,320 @@
 // server/src/controllers/adminUserController.js
-
-import prisma from '../config/db.js'; // <-- Verify this path is correct!
+import prisma from '../config/db.js';
+import ApiError from '../utils/apiError.js';
+import ApiResponse from '../utils/apiResponse.js';
 import { validationResult } from 'express-validator';
-// import bcrypt from 'bcrypt'; // Needed only if implementing adminCreateUser with password
+// import { hashPassword } from '../utils/passwordHelper.js'; // Only if admin can reset/set passwords
+
+const ADMIN_USERS_PER_PAGE = 15;
 
 /**
- * @description Get ALL users for Admin view
- * @route GET /api/admin/users
- * @access Private (Admin)
+ * @desc    Get all users for admin view (with filtering and pagination)
+ * @route   GET /api/admin/users
+ * @access  Private (Admin)
  */
-export const adminGetAllUsers = async (req, res, next) => {
-    // Pagination
-    const page = parseInt(req.query.page || '1', 10);
-    const limit = parseInt(req.query.limit || '15', 10); // Adjust default limit
+export const getAllUsersForAdmin = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || ADMIN_USERS_PER_PAGE;
     const skip = (page - 1) * limit;
 
-    // Filtering (example: filter by role or status)
-    const where = {};
-    if (req.query.role && ['STUDENT', 'INSTRUCTOR', 'ADMIN'].includes(req.query.role.toUpperCase())) {
-        where.role = req.query.role.toUpperCase();
-    }
-    if (req.query.status && ['ACTIVE', 'SUSPENDED'].includes(req.query.status.toUpperCase())) {
-        where.status = req.query.status.toUpperCase();
-    }
-    // TODO: Add search term filtering later
+    const { role, status, searchTerm, sortBy = 'createdAt_desc' } = req.query;
 
-    // Sorting (example: sort by name or createdAt)
-    const orderBy = {};
-    if (req.query.sortBy === 'name') {
-        orderBy.name = req.query.sortOrder === 'desc' ? 'desc' : 'asc';
-    } else { // Default sort
-        orderBy.createdAt = req.query.sortOrder === 'asc' ? 'asc' : 'desc';
+    let whereClause = {};
+    if (role) whereClause.role = role.toUpperCase();
+    if (status) whereClause.status = status.toUpperCase();
+
+    if (searchTerm) {
+      whereClause.OR = [
+        { name: { contains: searchTerm, mode: 'insensitive' } },
+        { email: { contains: searchTerm, mode: 'insensitive' } },
+        { id: { equals: !isNaN(parseInt(searchTerm)) ? parseInt(searchTerm) : undefined } }, // Search by ID if numeric
+      ];
     }
 
+    let orderByClause = {};
+    switch (sortBy) {
+      case 'createdAt_asc': orderByClause = { createdAt: 'asc' }; break;
+      case 'name_asc': orderByClause = { name: 'asc' }; break;
+      case 'name_desc': orderByClause = { name: 'desc' }; break;
+      case 'email_asc': orderByClause = { email: 'asc' }; break;
+      case 'email_desc': orderByClause = { email: 'desc' }; break;
+      case 'role_asc': orderByClause = { role: 'asc' }; break;
+      case 'role_desc': orderByClause = { role: 'desc' }; break;
+      case 'createdAt_desc':
+      default: orderByClause = { createdAt: 'desc' }; break;
+    }
 
-    try {
-        const [users, totalCount] = await prisma.$transaction([
-            prisma.user.findMany({
-                where,
-                skip,
-                take: limit,
-                select: { // Select fields needed for admin list (NO password)
-                    id: true,
-                    name: true,
-                    email: true,
-                    role: true,
-                    status: true, // Include new status field
-                    createdAt: true,
-                    emailVerified: true,
-                    _count: { select: { enrollments: true }} // Example count
+    const users = await prisma.user.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        emailVerified: true, // Useful for admin to see
+        profile: {
+          select: { avatarUrl: true }
+        },
+        _count: { // Count related items for context
+          select: {
+            enrollments: true,
+            coursesTeaching: true, // If instructor
+            articlesAuthored: true,
+          }
+        }
+      },
+      orderBy: orderByClause,
+      skip: skip,
+      take: limit,
+    });
+
+    const totalUsers = await prisma.user.count({ where: whereClause });
+    const totalPages = Math.ceil(totalUsers / limit);
+
+    const formattedUsers = users.map(user => ({
+      ...user,
+      avatarUrl: user.profile?.avatarUrl || null,
+      enrollmentCount: user._count?.enrollments || 0,
+      coursesTeachingCount: user._count?.coursesTeaching || 0,
+      articlesAuthoredCount: user._count?.articlesAuthored || 0,
+      profile: undefined, // Remove nested profile object after extracting avatar
+      _count: undefined,  // Remove count object
+    }));
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        { users: formattedUsers, currentPage: page, totalPages, totalUsers },
+        'Admin: Users fetched successfully.'
+      )
+    );
+  } catch (error) {
+    console.error('Error fetching users for admin:', error);
+    next(new ApiError(500, 'Failed to fetch users for admin.', [error.message]));
+  }
+};
+
+/**
+ * @desc    Get a single user by ID (for admin view/editing)
+ * @route   GET /api/admin/users/:userId
+ * @access  Private (Admin)
+ */
+export const getUserByIdForAdmin = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const numericUserId = parseInt(userId, 10);
+
+    if (isNaN(numericUserId)) {
+      return next(new ApiError(400, 'Invalid User ID format.'));
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: numericUserId },
+      include: { // Include all details admin might need to see/edit
+        profile: true,
+        // Optionally include counts or brief summaries of related data
+        _count: {
+          select: {
+            enrollments: true,
+            coursesTeaching: true,
+            articlesAuthored: true,
+            doubtsPosted: true,
+            reviews: true
+          }
+        }
+      },
+    });
+
+    if (!user) {
+      return next(new ApiError(404, `User with ID ${numericUserId} not found.`));
+    }
+
+    // Exclude password from the response
+    const { password, ...userWithoutPassword } = user;
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { user: userWithoutPassword }, 'User details fetched for admin.'));
+  } catch (error) {
+    console.error(`Error fetching user ID '${req.params.userId}' for admin:`, error);
+    next(new ApiError(500, 'Failed to fetch user details for admin.', [error.message]));
+  }
+};
+
+/**
+ * @desc    Admin: Update a user's details (role, status, name, email)
+ * @route   PUT /api/admin/users/:userId
+ * @access  Private (Admin)
+ * @body    { name?: string, email?: string, role?: Role, status?: UserStatus, profileData?: object }
+ */
+export const updateUserByAdmin = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new ApiError(400, 'Validation failed', errors.array().map(e => e.msg)));
+  }
+
+  const { userId } = req.params;
+  const numericUserId = parseInt(userId, 10);
+  const adminUserId = req.user.userId; // Admin performing the action
+
+  const {
+    name,
+    email,
+    role, // STUDENT, INSTRUCTOR, ADMIN
+    status, // ACTIVE, SUSPENDED
+    profileData, // Object for UserProfile fields e.g., { bio, headline, avatarUrl, ... }
+  } = req.body;
+
+  if (isNaN(numericUserId)) {
+    return next(new ApiError(400, 'Invalid User ID format.'));
+  }
+
+  // Prevent an admin from changing their own role or status through this endpoint
+  if (numericUserId === adminUserId && (role || status)) {
+      if (role && role !== req.user.role) {
+        return next(new ApiError(403, 'Admins cannot change their own role via this endpoint.'));
+      }
+      // Add similar check for status if needed, though an admin might suspend their own account accidentally.
+  }
+
+
+  try {
+    const existingUser = await prisma.user.findUnique({ where: { id: numericUserId } });
+    if (!existingUser) {
+      return next(new ApiError(404, `User with ID ${numericUserId} not found.`));
+    }
+
+    // Prevent changing the role of the last admin to non-admin
+    if (role && role !== 'ADMIN' && existingUser.role === 'ADMIN') {
+        const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
+        if (adminCount <= 1) {
+            return next(new ApiError(400, 'Cannot change the role of the last admin.'));
+        }
+    }
+
+
+    const userDataToUpdate = {};
+    if (name !== undefined && name.trim() !== '') userDataToUpdate.name = name.trim();
+    if (email !== undefined && email.trim() !== '' && email !== existingUser.email) {
+      // Check if new email is already taken
+      const emailExists = await prisma.user.findUnique({ where: { email: email.trim() } });
+      if (emailExists && emailExists.id !== numericUserId) {
+        return next(new ApiError(409, `Email '${email.trim()}' is already in use.`));
+      }
+      userDataToUpdate.email = email.trim();
+    }
+    if (role && Object.values(prisma.Role).includes(role.toUpperCase())) userDataToUpdate.role = role.toUpperCase();
+    if (status && Object.values(prisma.UserStatus).includes(status.toUpperCase())) userDataToUpdate.status = status.toUpperCase();
+
+    const profileDataToUpdate = {};
+    if (profileData && typeof profileData === 'object') {
+        if (profileData.bio !== undefined) profileDataToUpdate.bio = profileData.bio;
+        if (profileData.avatarUrl !== undefined) profileDataToUpdate.avatarUrl = profileData.avatarUrl;
+        if (profileData.headline !== undefined) profileDataToUpdate.headline = profileData.headline;
+        if (profileData.websiteUrl !== undefined) profileDataToUpdate.websiteUrl = profileData.websiteUrl;
+        if (profileData.socialLinks !== undefined) profileDataToUpdate.socialLinks = profileData.socialLinks; // Expects JSON
+        // Add experience, education, projects if admin can edit these
+    }
+
+    const updatedUser = await prisma.$transaction(async (tx) => {
+        let userResult;
+        if (Object.keys(userDataToUpdate).length > 0) {
+            userResult = await tx.user.update({
+                where: { id: numericUserId },
+                data: userDataToUpdate,
+            });
+        } else {
+            userResult = existingUser; // No changes to user model itself
+        }
+
+        if (Object.keys(profileDataToUpdate).length > 0) {
+            await tx.userProfile.upsert({
+                where: { userId: numericUserId },
+                update: profileDataToUpdate,
+                create: {
+                    userId: numericUserId,
+                    ...profileDataToUpdate,
                 },
-                orderBy,
-            }),
-            prisma.user.count({ where }) // Count based on filter
-        ]);
+            });
+        }
+        // Re-fetch the user with profile to return the full updated entity
+        return tx.user.findUnique({
+            where: { id: numericUserId },
+            include: { profile: true }
+        });
+    });
+    
+    const { password, ...userWithoutPassword } = updatedUser;
 
-        res.status(200).json({
-             message: 'Admin: Users retrieved successfully.',
-             data: users,
-             pagination: {
-                 currentPage: page,
-                 totalPages: Math.ceil(totalCount / limit),
-                 totalUsers: totalCount,
-                 pageSize: limit
-             }
-         });
-    } catch (error) {
-        console.error("Admin Error fetching all users:", error);
-        next(error);
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { user: userWithoutPassword }, 'User details updated successfully by admin.'));
+
+  } catch (error) {
+    console.error(`Error updating user ID '${userId}' by admin:`, error);
+    if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
+        return next(new ApiError(409, `Email '${email}' is already in use.`));
     }
+    if (error.code === 'P2025') { // Record to update not found
+        return next(new ApiError(404, `User with ID ${userId} not found.`));
+    }
+    next(new ApiError(500, 'Failed to update user details.', [error.message]));
+  }
 };
 
 /**
- * @description Get details for a specific user by ID
- * @route GET /api/admin/users/:userId
- * @access Private (Admin)
+ * @desc    Admin: Delete a user
+ * @route   DELETE /api/admin/users/:userId
+ * @access  Private (Admin)
  */
-export const adminGetUserById = async (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) { return res.status(400).json({ errors: errors.array() }); }
+export const deleteUserByAdmin = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const numericUserId = parseInt(userId, 10);
+    const adminUserId = req.user.userId;
 
-    const userId = parseInt(req.params.userId, 10);
-
-    try {
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { // Select all relevant fields EXCEPT password
-                id: true, name: true, email: true, role: true, status: true, emailVerified: true, createdAt: true, updatedAt: true,
-                profile: { select: { bio: true, avatarUrl: true, headline: true, websiteUrl: true, socialLinks: true, experience: true, education: true, projects: true } },
-                enrollments: { select: { courseId: true, enrolledAt: true, course: { select: { id: true, title: true } } } }, // Include enrollments maybe
-                coursesTeaching: { select: { id: true, title: true } } // Include courses taught if instructor
-            }
-        });
-
-        if (!user) {
-            return res.status(404).json({ message: `User with ID ${userId} not found.` });
-        }
-
-        res.status(200).json(user);
-
-    } catch (error) {
-        console.error(`Admin Error fetching user ${userId}:`, error);
-        next(error);
+    if (isNaN(numericUserId)) {
+      return next(new ApiError(400, 'Invalid User ID format.'));
     }
+
+    // Prevent admin from deleting themselves
+    if (numericUserId === adminUserId) {
+      return next(new ApiError(403, 'Administrators cannot delete their own account.'));
+    }
+
+    const userToDelete = await prisma.user.findUnique({ where: { id: numericUserId } });
+    if (!userToDelete) {
+      return next(new ApiError(404, `User with ID ${numericUserId} not found.`));
+    }
+
+    // Prevent deletion of the last admin account
+    if (userToDelete.role === 'ADMIN') {
+      const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
+      if (adminCount <= 1) {
+        return next(new ApiError(400, 'Cannot delete the last administrator account.'));
+      }
+    }
+
+    // Prisma's onDelete: Cascade on UserProfile, Enrollment, etc., will handle related data.
+    // If not using cascade, you'd need to manually delete or handle related records.
+    await prisma.user.delete({
+      where: { id: numericUserId },
+    });
+
+    return res
+      .status(200) // Or 204 No Content
+      .json(new ApiResponse(200, null, `User (ID: ${numericUserId}) deleted successfully.`));
+  } catch (error) {
+    console.error(`Error deleting user ID '${req.params.userId}' by admin:`, error);
+    if (error.code === 'P2025') { // Record to delete not found
+        return next(new ApiError(404, `User with ID '${req.params.userId}' not found.`));
+    }
+    // P2003 can happen if related records prevent deletion and cascade isn't set up correctly
+    next(new ApiError(500, 'Failed to delete user.', [error.message]));
+  }
 };
-
-/**
- * @description Update user details (role, status, name, email) by Admin
- * @route PUT /api/admin/users/:userId
- * @access Private (Admin)
- */
-export const adminUpdateUser = async (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) { return res.status(400).json({ errors: errors.array() }); }
-
-    const userId = parseInt(req.params.userId, 10);
-    const { name, email, role, status } = req.body; // Get fields allowed for admin update
-
-    const dataToUpdate = {};
-    if (name !== undefined) dataToUpdate.name = name;
-    if (email !== undefined) dataToUpdate.email = email; // Admins can change email
-    if (role !== undefined) dataToUpdate.role = role;   // Admins can change role
-    if (status !== undefined) dataToUpdate.status = status; // Admins can change status
-
-    if (Object.keys(dataToUpdate).length === 0) {
-        return res.status(400).json({ message: 'No valid fields provided for update.' });
-    }
-
-    // Prevent admin from removing the last admin role? Requires more logic
-    // Example check (simplified):
-    // if (dataToUpdate.role && dataToUpdate.role !== 'ADMIN') {
-    //    const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
-    //    const targetUser = await prisma.user.findUnique({ where: { id: userId }, select: { role: true }});
-    //    if (adminCount <= 1 && targetUser?.role === 'ADMIN') {
-    //        return res.status(400).json({ message: "Cannot remove the last admin role." });
-    //    }
-    // }
-
-    try {
-        const updatedUser = await prisma.user.update({
-            where: { id: userId },
-            data: dataToUpdate,
-            select: { // Return updated user data (no password)
-                id: true, name: true, email: true, role: true, status: true, emailVerified: true, createdAt: true, updatedAt: true
-            }
-        });
-
-        res.status(200).json({ message: 'User updated successfully.', user: updatedUser });
-
-    } catch (error) {
-        console.error(`Admin Error updating user ${userId}:`, error);
-        if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
-             return res.status(409).json({ message: 'Conflict: This email is already in use.' });
-        }
-        if (error.code === 'P2025') { // Record to update not found
-            return res.status(404).json({ message: `User with ID ${userId} not found.` });
-        }
-        next(error);
-    }
-};
-
-
-/**
- * @description Delete a user by Admin
- * @route DELETE /api/admin/users/:userId
- * @access Private (Admin)
- */
-export const adminDeleteUser = async (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) { return res.status(400).json({ errors: errors.array() }); }
-
-    const userId = parseInt(req.params.userId, 10);
-    const adminUserId = req.user.id; // ID of the admin performing the action
-
-    // --- CRITICAL: Prevent admin from deleting themselves ---
-    if (userId === adminUserId) {
-         return res.status(403).json({ message: 'Forbidden: Admins cannot delete their own account.' });
-    }
-
-    try {
-        console.log(`Admin ${adminUserId} attempting to delete user ${userId}...`);
-
-        // Prisma handles related data based on schema 'onDelete' actions (e.g., Cascade)
-        await prisma.user.delete({
-            where: { id: userId },
-        });
-
-        console.log(`User ${userId} deleted successfully by admin ${adminUserId}.`);
-        res.status(200).json({ message: `User with ID ${userId} deleted successfully.` });
-        // Or use res.status(204).send();
-
-    } catch (error) {
-        console.error(`Admin Error deleting user ${userId}:`, error);
-        if (error.code === 'P2025') { // Record to delete not found
-            return res.status(404).json({ message: `User with ID ${userId} not found.` });
-        }
-         // Handle potential foreign key constraints if onDelete isn't set correctly everywhere
-         if (error.code === 'P2003') {
-            console.error("Foreign key constraint failed during user deletion. Check related data.", error.meta);
-            return res.status(409).json({ message: `Conflict: Cannot delete user because they are still linked to other records (e.g., courses, articles). Please reassign or delete related content first.` });
-        }
-        next(error);
-    }
-};
-
-
-// Optional: Implement adminCreateUser if needed (requires password hashing)
-// export const adminCreateUser = async (req, res, next) => { ... };

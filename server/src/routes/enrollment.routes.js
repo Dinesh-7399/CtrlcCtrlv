@@ -1,29 +1,54 @@
 // server/src/routes/enrollment.routes.js
+import express from 'express';
+import { body } from 'express-validator';
+import {
+  createEnrollment,
+  getMyEnrolledCourses,
+} from '../controllers/enrollmentController.js';
+import { authMiddleware } from '../middlewares/authMiddleware.js';
+import { handleValidationErrors } from '../middlewares/validationResultHandler.js';
 
-import { Router } from 'express';
-import { param } from 'express-validator';
-import { requireAuth } from '../middlewares/auth.middleware.js'; // Adjust the import path as needed
-import { enrollInCourse , getMyEnrollments } from '../controllers/enrollmentController.js'; // We'll create this
+const router = express.Router();
 
-const router = Router();
+// All routes in this file are for authenticated users
+router.use(authMiddleware);
 
-const courseIdParamValidation = [
-    param('courseId')
-        .isInt({ gt: 0 }).withMessage('Course ID must be a positive integer.')
-        .toInt()
+// --- Validation Rules ---
+
+const createEnrollmentValidation = [
+  body('courseId')
+    .notEmpty().withMessage('Course ID is required.')
+    .isInt({ gt: 0 }).withMessage('Course ID must be a positive integer.'),
 ];
 
-// POST /api/enrollments/course/:courseId - Enroll logged-in user in a course
+// --- Route Definitions ---
+
+/**
+ * @route   POST /api/enrollments
+ * @desc    Enroll the current user in a course
+ * @access  Private (Authenticated Users)
+ * @body    { courseId: number }
+ */
 router.post(
-    '/course/:courseId',
-    requireAuth,
-    courseIdParamValidation,
-    enrollInCourse
+  '/',
+  createEnrollmentValidation,
+  handleValidationErrors,
+  createEnrollment
 );
 
-// Optional: GET /api/enrollments/my-courses (Alternative to /api/users/me/enrollments if you prefer a dedicated router)
-// For now, we'll keep using the one in user.routes.js, but you could move it here.
-router.get('/my-courses', requireAuth, getMyEnrollments);
+/**
+ * @route   GET /api/enrollments/my-courses
+ * @desc    Get all courses the current user is enrolled in
+ * @access  Private (Authenticated Users)
+ */
+router.get(
+  '/my-courses',
+  // No specific validation needed for this GET request beyond auth
+  getMyEnrolledCourses
+);
 
+// Future:
+// GET /api/enrollments/:enrollmentId - Get details of a specific enrollment (if needed)
+// DELETE /api/enrollments/:enrollmentId - Unenroll from a course (if allowed by policy)
 
 export default router;

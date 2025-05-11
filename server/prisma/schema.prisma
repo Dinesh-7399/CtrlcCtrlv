@@ -2,7 +2,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  // output   = "../src/generated/prisma" // Using default path node_modules/.prisma/client is often easier
+  output   = "../node_modules/.prisma/client" // Explicitly set to the default location
 }
 
 datasource db {
@@ -23,7 +23,7 @@ enum LessonType {
   TEXT
   QUIZ
   DPP
-  ASSIGNMENT
+  ASSIGNMENT // Keep if distinct from DPP
   EXTERNAL_LINK
 }
 
@@ -47,85 +47,101 @@ enum DoubtStatus {
   CLOSED
 }
 
-// ADDED UserStatus based on previous step
 enum UserStatus {
   ACTIVE
   SUSPENDED
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum LiveSessionStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+  CANCELLED
 }
 
 // ========= MODELS =========
 
 // --- User and Profile ---
 model User {
-  id                 Int            @id @default(autoincrement())
-  email              String         @unique
-  name               String?
-  password           String         // Hashed password
-  role               Role           @default(STUDENT)
-  status             UserStatus     @default(ACTIVE) // ADDED
-  emailVerified      DateTime?
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
+  id                Int      @id @default(autoincrement())
+  email             String   @unique
+  name              String?
+  password          String // Hashed password
+  role              Role     @default(STUDENT)
+  status            UserStatus @default(ACTIVE)
+  emailVerified     DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  // --- RELATIONS ---
-  profile            UserProfile?
-  coursesTeaching    Course[]       @relation("InstructorCourses")
-  enrollments        Enrollment[]
-  articlesAuthored   Article[]      @relation("AuthorArticles")
-  reviews            Review[]
-  quizSubmissions    QuizSubmission[]
-  dppSubmissions     DPPSubmission[]
-  doubtsPosted       Doubt[]        @relation("StudentDoubts")
-  doubtsAssigned     Doubt[]        @relation("InstructorAssignments")
-  doubtMessagesSent  DoubtMessage[] @relation("SenderMessages")
-  orders             Order[]
-  notifications      Notification[]
-  progress           UserProgress[]
+  profile           UserProfile?
+  coursesTeaching   Course[]          @relation("InstructorCourses")
+  enrollments       Enrollment[]
+  articlesAuthored  Article[]         @relation("AuthorArticles")
+  reviews           Review[]
+  quizSubmissions   QuizSubmission[]
+  dppSubmissions    DPPSubmission[]
+  doubtsPosted      Doubt[]           @relation("StudentDoubts")
+  doubtsAssigned    Doubt[]           @relation("InstructorAssignments")
+  doubtMessagesSent DoubtMessage[]    @relation("SenderMessages")
+  orders            Order[]
+  notifications     Notification[]    @relation("UserNotifications")
+  progress          UserProgress[]
+  liveSessionsHosted LiveSession[]    @relation("InstructorLiveSessions")
+  qnaItems          Qna[]
 
   @@map("users")
 }
 
 model UserProfile {
-  id          Int      @id @default(autoincrement())
-  userId      Int      @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bio         String?  @db.Text
-  avatarUrl   String?
-  headline    String?
-  websiteUrl  String?
-  socialLinks Json?    // { "linkedin": "url", "github": "url", "twitter": "url" }
-  experience  Json?    // Array of objects: [{ "role": "...", "company": "...", "duration": "..." }]
-  education   Json?    // Array of objects: [{ "degree": "...", "institution": "...", "year": "..." }]
-  projects    Json?    // Array of objects: [{ "name": "...", "description": "...", "link": "..." }]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  userId       Int      @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio          String?  @db.Text
+  avatarUrl    String?
+  headline     String?
+  websiteUrl   String?
+  socialLinks  Json?
+  experience   Json?
+  education    Json?
+  projects     Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@map("user_profiles")
 }
 
-
 // --- Courses, Modules, Lessons ---
 model Course {
-  id             Int            @id @default(autoincrement())
-  title          String
-  slug           String         @unique
-  description    String         @db.Text
-  thumbnailUrl   String?
-  price          Float          @default(0.0)
-  instructorId   Int
-  instructor     User           @relation("InstructorCourses", fields: [instructorId], references: [id])
-  categoryId     Int?
-  category       Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  published      Boolean        @default(false)
-  difficulty     Difficulty     @default(ALL_LEVELS)
-  language       String         @default("English")
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  modules        Module[]
-  enrollments    Enrollment[]
-  reviews        Review[]
-  orders         Order[]
-  doubts         Doubt[]        @relation("CourseDoubts")
+  id            Int           @id @default(autoincrement())
+  title         String
+  slug          String        @unique
+  description   String        @db.Text
+  thumbnailUrl  String?
+  price         Float         @default(0.0)
+  instructorId  Int
+  instructor    User          @relation("InstructorCourses", fields: [instructorId], references: [id])
+  categoryId    Int?
+  category      Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  status        ContentStatus @default(DRAFT)
+  difficulty    Difficulty    @default(ALL_LEVELS)
+  language      String        @default("English")
+  isFeatured    Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  modules       Module[]
+  enrollments   Enrollment[]
+  reviews       Review[]
+  orders        Order[]
+  doubts        Doubt[]       @relation("CourseDoubts")
+  liveSessions  LiveSession[] @relation("CourseLiveSessions")
+  qnaItems      Qna[]
 
   @@index([instructorId])
   @@index([categoryId])
@@ -137,21 +153,22 @@ model Category {
   name        String    @unique
   slug        String    @unique
   description String?   @db.Text
+  icon        String?
   courses     Course[]
-  articles    Article[]
+  articles    Article[] @relation("ArticleCategory") // This relation is for Category -> Article
 
   @@map("categories")
 }
 
 model Module {
-  id          Int      @id @default(autoincrement())
-  title       String
-  order       Int
-  courseId    Int
-  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  lessons     Lesson[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  title     String
+  order     Int
+  courseId  Int
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons   Lesson[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([courseId, order])
   @@index([courseId])
@@ -159,101 +176,107 @@ model Module {
 }
 
 model Lesson {
-  id               Int            @id @default(autoincrement())
-  title            String
-  slug             String?        @unique
-  content          String?        @db.Text
-  videoUrl         String?
-  videoDuration    Int?
-  type             LessonType     @default(TEXT)
-  order            Int
-  moduleId         Int
-  module           Module         @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  isFreePreview    Boolean        @default(false)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  quiz             Quiz?
-  dpp              DPP?
-  attachments      Attachment[]
-  userProgress     UserProgress[]
-  doubts           Doubt[]        @relation("LessonDoubts")
+  id              Int        @id @default(autoincrement())
+  title           String
+  slug            String?    @unique
+  content         String?    @db.Text
+  videoUrl        String?
+  videoDuration   Int?
+  type            LessonType @default(TEXT)
+  order           Int
+  moduleId        Int
+  module          Module     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  isFreePreview   Boolean    @default(false)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  quiz            Quiz?
+  dpp             DPP?
+  attachments     Attachment[]
+  userProgress    UserProgress[]
+  doubts          Doubt[]    @relation("LessonDoubts")
+  qnaItems        Qna[]
 
   @@unique([moduleId, order])
   @@index([moduleId])
   @@map("lessons")
 }
 
-
-// --- Learning Content Details ---
 model Quiz {
-  id              Int            @id @default(autoincrement())
-  title           String
-  lessonId        Int            @unique
-  lesson          Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  passingScore    Float?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  questions       Question[]
-  submissions     QuizSubmission[]
+  id           Int        @id @default(autoincrement())
+  title        String
+  lessonId     Int        @unique
+  lesson       Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  passingScore Float?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  questions    Question[] @relation("QuizQuestions")
+  submissions  QuizSubmission[]
 
   @@map("quizzes")
 }
 
 model Question {
-  id            Int            @id @default(autoincrement())
-  text          String         @db.Text
+  id            Int      @id @default(autoincrement())
+  text          String   @db.Text
   type          String
   options       Json?
   correctAnswer Json
-  explanation   String?        @db.Text
+  explanation   String?  @db.Text
   quizId        Int
-  quiz          Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  quiz          Quiz     @relation("QuizQuestions", fields: [quizId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([quizId])
-  @@map("questions")
+  @@map("quiz_questions")
 }
 
 model QuizSubmission {
-  id          Int       @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   userId      Int
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   quizId      Int
-  quiz        Quiz      @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
   answers     Json
   score       Float?
   passed      Boolean?
-  submittedAt DateTime  @default(now())
+  submittedAt DateTime @default(now())
 
+  @@unique([userId, quizId])
   @@index([userId])
   @@index([quizId])
   @@map("quiz_submissions")
 }
 
 model DPP {
-  id          Int            @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   title       String
-  description String?        @db.Text
-  content     String?        @db.Text
-  lessonId    Int            @unique
-  lesson      Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  description String?   @db.Text
+  content     String?   @db.Text
+  lessonId    Int       @unique
+  lesson      Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
   submissions DPPSubmission[]
 
   @@map("dpps")
 }
 
 model DPPSubmission {
-  id               Int       @id @default(autoincrement())
+  id               Int      @id @default(autoincrement())
   userId           Int
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   dppId            Int
-  dpp              DPP       @relation(fields: [dppId], references: [id], onDelete: Cascade)
-  submittedContent String?   @db.Text
-  submittedAt      DateTime  @default(now())
-  feedback         String?   @db.Text
+  dpp              DPP      @relation(fields: [dppId], references: [id], onDelete: Cascade)
+  submittedContent String?  @db.Text
+  fileUrl          String?
+  originalFileName String?
+  submittedAt      DateTime @default(now())
+  feedback         String?  @db.Text
   grade            Float?
 
   @@index([userId])
@@ -266,6 +289,7 @@ model Attachment {
   name      String
   fileUrl   String
   fileType  String?
+  fileSize  Int?
   lessonId  Int
   lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
@@ -274,15 +298,14 @@ model Attachment {
   @@map("attachments")
 }
 
-// --- User Activity & Engagement ---
 model Enrollment {
-  id              Int            @id @default(autoincrement())
-  userId          Int
-  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  courseId        Int
-  course          Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  enrolledAt      DateTime       @default(now())
-  completedAt     DateTime?
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    Int
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrolledAt  DateTime  @default(now())
+  completedAt DateTime?
 
   @@unique([userId, courseId])
   @@index([userId])
@@ -291,12 +314,12 @@ model Enrollment {
 }
 
 model UserProgress {
-  id          Int       @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   userId      Int
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   lessonId    Int
-  lesson      Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  completed   Boolean   @default(false)
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completed   Boolean  @default(false)
   completedAt DateTime?
 
   @@unique([userId, lessonId])
@@ -322,45 +345,58 @@ model Review {
   @@map("reviews")
 }
 
-
 // --- Articles ---
 model Article {
-  id          Int       @id @default(autoincrement())
-  title       String
-  slug        String    @unique
-  content     String    @db.Text
-  excerpt     String?   @db.Text
-  thumbnailUrl String?
-  authorId    Int
-  author      User      @relation("AuthorArticles", fields: [authorId], references: [id])
-  categoryId  Int?
-  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  published   Boolean   @default(false)
-  publishedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id             Int           @id @default(autoincrement())
+  title          String
+  slug           String        @unique
+  content        String        @db.Text
+  excerpt        String?       @db.Text
+  thumbnailUrl   String?
+  authorId       Int
+  author         User          @relation("AuthorArticles", fields: [authorId], references: [id])
+  categoryId     Int?
+  category       Category?     @relation("ArticleCategory", fields: [categoryId], references: [id], onDelete: SetNull)
+  status         ContentStatus @default(DRAFT)
+  publishedAt    DateTime?
+  readTime       Int?
+  isFeatured     Boolean       @default(false)
+  viewCount      Int           @default(0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // ========= CHANGES FOR STEP 1 (Temporary Schema) START =========
+  // This field maps to your EXISTING 'tags' column in the database which holds String[] data.
+  // Ensure 'String[]?' matches the type and nullability of your existing column.
+  old_tags_data  String[]      @map("tags")
+
+  // This is the NEW relation to the Tag model, using a TEMPORARY name for the field and relation.
+  new_tags_relation Tag[]        @relation("ArticleTags_NewRelation")
+  // ========= CHANGES FOR STEP 1 (Temporary Schema) END ===========
 
   @@index([authorId])
   @@index([categoryId])
   @@map("articles")
 }
 
-// --- Doubts & Communication ---
 model Doubt {
-  id                   Int            @id @default(autoincrement())
+  id                   Int         @id @default(autoincrement())
   title                String
-  description          String         @db.Text
+  description          String      @db.Text
   userId               Int
-  user                 User           @relation("StudentDoubts", fields: [userId], references: [id], onDelete: Cascade)
+  user                 User        @relation("StudentDoubts", fields: [userId], references: [id], onDelete: Cascade)
   courseId             Int?
-  course               Course?        @relation("CourseDoubts", fields: [courseId], references: [id], onDelete: SetNull)
+  course               Course?     @relation("CourseDoubts", fields: [courseId], references: [id], onDelete: SetNull)
   lessonId             Int?
-  lesson               Lesson?        @relation("LessonDoubts", fields: [lessonId], references: [id], onDelete: SetNull)
-  status               DoubtStatus    @default(OPEN)
+  lesson               Lesson?     @relation("LessonDoubts", fields: [lessonId], references: [id], onDelete: SetNull)
+  status               DoubtStatus @default(OPEN)
   assignedInstructorId Int?
-  assignedInstructor   User?          @relation("InstructorAssignments", fields: [assignedInstructorId], references: [id], onDelete: SetNull)
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
+  assignedInstructor   User?       @relation("InstructorAssignments", fields: [assignedInstructorId], references: [id], onDelete: SetNull)
+  tags                 String[]    @default([]) // This is for Doubt tags, separate from Article tags.
+  isResolvedByAI       Boolean     @default(false)
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
   messages             DoubtMessage[]
 
   @@index([userId])
@@ -371,32 +407,34 @@ model Doubt {
 }
 
 model DoubtMessage {
-  id        Int      @id @default(autoincrement())
-  doubtId   Int
-  doubt     Doubt    @relation(fields: [doubtId], references: [id], onDelete: Cascade)
-  userId    Int
-  user      User     @relation("SenderMessages", fields: [userId], references: [id])
-  content   String   @db.Text
-  sentAt    DateTime @default(now())
+  id      Int      @id @default(autoincrement())
+  doubtId Int
+  doubt   Doubt    @relation(fields: [doubtId], references: [id], onDelete: Cascade)
+  userId  Int
+  user    User     @relation("SenderMessages", fields: [userId], references: [id])
+  content String   @db.Text
+  sentAt  DateTime @default(now())
+  isBot   Boolean  @default(false)
 
   @@index([doubtId])
   @@index([userId])
   @@map("doubt_messages")
 }
 
-
-// --- Payments & Orders ---
 model Order {
   id                Int         @id @default(autoincrement())
   userId            Int
   user              User        @relation(fields: [userId], references: [id])
-  courseId          Int
-  course            Course      @relation(fields: [courseId], references: [id])
+  courseId          Int?
+  course            Course?     @relation(fields: [courseId], references: [id])
   amount            Float
+  currency          String      @default("INR")
   status            OrderStatus @default(PENDING)
   paymentGateway    String?
-  paymentIntentId   String?     @unique
-  paymentMethod     String?
+  transactionId     String?     @unique
+  razorpayOrderId   String?     @unique
+  razorpayPaymentId String?     @unique
+  razorpaySignature String?
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
@@ -405,13 +443,11 @@ model Order {
   @@map("orders")
 }
 
-
-// --- Site Features ---
 model Notification {
   id        Int      @id @default(autoincrement())
   userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  content   String
+  user      User     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  content   String   @db.Text
   link      String?
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -419,3 +455,85 @@ model Notification {
   @@index([userId])
   @@map("notifications")
 }
+
+model Testimonial {
+  id          Int      @id @default(autoincrement())
+  quote       String   @db.Text
+  authorName  String
+  authorTitle String?
+  avatarUrl   String?
+  courseId    Int?
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@map("testimonials")
+}
+
+model PlatformSetting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String   @db.Text
+  isPublic  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("platform_settings")
+}
+
+model LiveSession {
+  id           Int               @id @default(autoincrement())
+  title        String
+  description  String?           @db.Text
+  courseId     Int?
+  course       Course?           @relation("CourseLiveSessions", fields: [courseId], references: [id], onDelete: SetNull)
+  instructorId Int
+  instructor   User              @relation("InstructorLiveSessions", fields: [instructorId], references: [id])
+  startTime    DateTime
+  endTime      DateTime?
+  streamUrl    String?
+  status       LiveSessionStatus @default(SCHEDULED)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([courseId])
+  @@index([instructorId])
+  @@map("live_sessions")
+}
+
+model Qna {
+  id        Int     @id @default(autoincrement())
+  text      String  @db.Text
+  userId    Int
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId  Int
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessonId  Int?
+  lesson    Lesson? @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+
+  parentId  Int?
+  parent    Qna?    @relation("QnaReplies", fields: [parentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  replies   Qna[]   @relation("QnaReplies")
+
+  isMarkedAsAnswer Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([courseId, createdAt(sort: Desc)])
+  @@index([lessonId, createdAt(sort: Desc)])
+  @@index([parentId])
+  @@map("qna_items")
+}
+
+// ========= NEW Tag MODEL AND CHANGES FOR STEP 1 (Temporary Schema) START =========
+model Tag {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  slug      String    @unique
+  // This is the back-relation using the TEMPORARY relation name
+  articles  Article[] @relation("ArticleTags_NewRelation")
+  createdAt DateTime  @default(now())
+  @@map("tags") // Ensures the new table is named 'tags'
+}
+// ========= NEW Tag MODEL AND CHANGES FOR STEP 1 (Temporary Schema) END ===========

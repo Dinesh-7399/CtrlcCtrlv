@@ -1,23 +1,33 @@
 // server/src/config/db.js
 import { PrismaClient } from '@prisma/client';
 
-// Instantiate Prisma Client
-const prisma = new PrismaClient({
-  // Optional: Add logging based on environment
-  log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
-});
+// PrismaClient is either an instance that's already been created and stored on the global object,
+// or a new instance if one doesn't exist yet. This prevents creating too many instances
+// of PrismaClient in development due to hot reloading. In production, it will just be a single instance.
 
-// --- Optional: Graceful shutdown logic ---
-// This ensures Prisma disconnects nicely when your app exits (already included in your server.js via process listeners)
-// async function gracefulShutdown() {
-//   console.log('Disconnecting Prisma Client (from db.js)...');
-//   await prisma.$disconnect();
-//   console.log('Prisma Client disconnected (from db.js).');
-// }
-// process.on('SIGINT', gracefulShutdown);
-// process.on('SIGTERM', gracefulShutdown);
-// --- End Optional Shutdown Logic (often handled globally in server.js) ---
+// Add prisma to the NodeJS global type.
+// This is purely for TypeScript type safety and can be omitted in JavaScript,
+// but it's good practice to be aware of if you ever migrate to TS.
+// globalThis.prisma = globalThis.prisma || new PrismaClient();
 
+let prisma;
 
-// Export the singleton instance using ES Module syntax
+if (process.env.NODE_ENV === 'production') {
+  prisma = new PrismaClient({
+    // Optional: Add logging configuration for production if needed
+    // log: ['query', 'info', 'warn', 'error'],
+  });
+  console.log("Prisma Client initialized for production.");
+} else {
+  // In development, ensure a single instance is used across hot reloads.
+  if (!global.__prisma) {
+    global.__prisma = new PrismaClient({
+      log: ['query', 'info', 'warn', 'error'], // More verbose logging in development
+    });
+    console.log("Prisma Client initialized for development (new instance).");
+  }
+  prisma = global.__prisma;
+  console.log("Prisma Client retrieved for development (cached or new).");
+}
+
 export default prisma;

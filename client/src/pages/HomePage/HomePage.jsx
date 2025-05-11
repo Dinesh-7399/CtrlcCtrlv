@@ -9,11 +9,10 @@ import Card from '../../components/common/Card';
 import AnimatedNumber from '../../components/common/AnimatedNumber';
 import Spinner from '../../components/common/Spinner';
 import SkeletonLoader from '../../components/common/SkeletonLoader';
-// --- Import Feature-Specific Components (ASSUMING THESE ARE NOW IMPLEMENTED IN SEPARATE FILES) ---
-import CoursePreviewCard from '../../components/common/CoursePreviewCard.jsx'; // Example path
-import ArticlePreview from '../../components/common/ArticlePreview.jsx'; // Example path
-import CategoryLink from '../../components/common/CategoryLink'; // Example path
-import TestimonialCard from '../../components/common/TestimonialCard'; // Example path
+import CoursePreviewCard from '../../components/common/CoursePreviewCard.jsx';
+import ArticlePreview from '../../components/common/ArticlePreview.jsx';
+import CategoryLink from '../../components/common/CategoryLink';
+import TestimonialCard from '../../components/common/TestimonialCard';
 
 // --- Import Icons ---
 import {
@@ -25,17 +24,26 @@ import {
 
 // --- Import Redux Selectors & Actions ---
 import {
-    selectAllCourses, selectCoursesStatus, selectCoursesError, fetchCourses
+    selectAllCourses , selectCoursesStatus, selectCoursesError, fetchCourses
 } from '../../features/courses/CoursesSlice.js';
 import {
     selectAllArticles, selectArticlesStatus, selectArticlesError, fetchArticles
 } from '../../features/articles/articlesSlice.js';
 import {
-    selectAllTestimonials, selectTestimonialsStatus, selectTestimonialsError, fetchTestimonials
-} from '../../features/testimonials/testimonialsSlice';
+    selectAllTestimonials, selectTestimonialsStatus, selectTestimonialsError, fetchVisibleTestimonials
+} from '../../features/testimonials/testimonialsSlice.js';
 import {
-    selectAllCategories, selectCategoriesStatus, selectCategoriesError, fetchCategories
-} from '../../features/categories/categoriesSlice';
+    selectAllCategories, // Assuming this selector is correctly named in your slice
+    selectCategoriesStatus,
+    selectCategoriesError,
+    fetchAllCategories as fetchCategories // Correctly import and alias fetchAllCategories
+} from '../../features/categories/categoriesSlice.js';
+import {
+    fetchPublicStats,
+    selectPlatformStats,
+    selectPlatformStatsStatus
+    // selectPlatformStatsError // Can be used if specific error display is needed for stats
+} from '../../features/platform/platformSlice.js'; // Assuming you created this slice
 
 import './HomePage.css';
 
@@ -43,38 +51,21 @@ import './HomePage.css';
 const NUM_FEATURED_ITEMS = 3;
 const STATS_ANIMATION_DURATION = 1500;
 
-// --- Helper Components Definitions (Moved Outside HomePage component scope) ---
-// Ideally, these would also be in src/components/common/
-
+// --- Helper Components Definitions ---
 const LoadingErrorPlaceholder = ({ status, error, loadingComponent, errorComponent, children }) => {
-     // Only render children if status is 'succeeded'
-     if (status === 'succeeded') {
-        return children;
-     }
-     // Show loading state for idle or loading
-     if (status === 'loading' || status === 'idle') {
-         return loadingComponent;
-     }
-     // Show error state for failed
-     if (status === 'failed') {
-         console.error("Data loading error in section:", error); // Log error
-         return errorComponent;
-     }
-     // Fallback case (shouldn't normally be reached with defined statuses)
+     if (status === 'succeeded') return children;
+     if (status === 'loading' || status === 'idle') return loadingComponent;
+     if (status === 'failed') { console.error("Data loading error in section:", error); return errorComponent; }
      return null;
 };
-
 const SectionLoadingSpinner = () => <div className="section-loading"><Spinner /></div>;
-
 const SectionErrorDisplay = ({ message = "Could not load data." }) => (
     <div className="section-error"><FaExclamationTriangle aria-hidden="true" /> {message}</div>
 );
-
 const EmptyStateDisplay = ({ message }) => (
     <div className="section-empty"><FaInfoCircle aria-hidden="true" /> {message}</div>
 );
-
-// --- Main HomePage Component ---
+// --- End Helper Components ---
 
 const HomePage = () => {
     const dispatch = useDispatch();
@@ -92,51 +83,36 @@ const HomePage = () => {
     const testimonialsStatus = useSelector(selectTestimonialsStatus);
     const testimonialsError = useSelector(selectTestimonialsError);
 
-    const categories = useSelector(selectAllCategories);
+    const categories = useSelector(selectAllCategories); // Make sure this selector name is correct in categoriesSlice.js
     const categoriesStatus = useSelector(selectCategoriesStatus);
     const categoriesError = useSelector(selectCategoriesError);
 
+    const platformStats = useSelector(selectPlatformStats);
+    const platformStatsStatus = useSelector(selectPlatformStatsStatus);
+
     // --- Trigger Data Fetching ---
     useEffect(() => {
-        // console.log("HomePage useEffect triggered. Statuses:", { coursesStatus, articlesStatus, categoriesStatus, testimonialsStatus }); // Keep for debugging if needed
-        if (coursesStatus === 'idle') {
-            dispatch(fetchCourses());
-        }
-        if (articlesStatus === 'idle') {
-            dispatch(fetchArticles());
-        }
-         if (categoriesStatus === 'idle') {
-            dispatch(fetchCategories());
-        }
-         if (testimonialsStatus === 'idle') {
-            dispatch(fetchTestimonials());
-        }
-    }, [dispatch, coursesStatus, articlesStatus, categoriesStatus, testimonialsStatus]);
-
+        if (coursesStatus === 'idle') dispatch(fetchCourses({ limit: NUM_FEATURED_ITEMS, featured: true })); // Example: add a featured param
+        if (articlesStatus === 'idle') dispatch(fetchArticles({ limit: NUM_FEATURED_ITEMS, sortBy: 'publishedAt_desc' }));
+        if (categoriesStatus === 'idle') dispatch(fetchCategories({ limit: 6 })); // Dispatch corrected thunk name
+        if (testimonialsStatus === 'idle') dispatch(fetchVisibleTestimonials({ limit: 10 }));
+        if (platformStatsStatus === 'idle') dispatch(fetchPublicStats());
+    }, [dispatch, coursesStatus, articlesStatus, categoriesStatus, testimonialsStatus, platformStatsStatus]);
 
     // --- Process Data for Display ---
-    // Use optional chaining just in case data is unexpectedly null/undefined even on success
     const featuredCourses = coursesStatus === 'succeeded' ? (courses || []).slice(0, NUM_FEATURED_ITEMS) : [];
     const featuredArticles = articlesStatus === 'succeeded' ? (articles || []).slice(0, NUM_FEATURED_ITEMS) : [];
     const displayCategories = categoriesStatus === 'succeeded' ? (categories || []) : [];
     const displayTestimonials = testimonialsStatus === 'succeeded' ? (testimonials || []) : [];
 
-    // --- Stats Calculation ---
-    // Note: These counts reflect only the data fetched (potentially limited), not necessarily the total in DB.
-    const totalCourseCount = coursesStatus === 'succeeded' ? (courses || []).length : 0;
-    const totalUserCount = 5000; // Placeholder
-    const totalInstructorCount = 20; // Placeholder
-    const totalCategoryCount = categoriesStatus === 'succeeded' ? (categories || []).length : 0;
-    // const totalArticleCount = articlesStatus === 'succeeded' ? (articles || []).length : 0;
-    // const totalTestimonialCount = testimonialsStatus === 'succeeded' ? (testimonials || []).length : 0;
+    // --- Use dynamic stats from Redux store ---
+    const totalCourseCount = platformStatsStatus === 'succeeded' && platformStats.totalCourses !== undefined ? platformStats.totalCourses : (coursesStatus === 'succeeded' ? (courses || []).length : 0);
+    const totalUserCount = platformStatsStatus === 'succeeded' && platformStats.totalUsers !== undefined ? platformStats.totalUsers : 0;
+    const totalInstructorCount = platformStatsStatus === 'succeeded' && platformStats.totalInstructors !== undefined ? platformStats.totalInstructors : 0;
+    const totalCategoryCount = platformStatsStatus === 'succeeded' && platformStats.totalCategories !== undefined ? platformStats.totalCategories : (categoriesStatus === 'succeeded' ? (categories || []).length : 0);
 
-
-    // --- Render Component ---
     return (
-        // Using CSS Module or specific class name might be better than global page-container if needed elsewhere
         <div className="homepage-container page-container">
-
-            {/* --- Static Sections --- */}
             <section className="hero-section">
                  <div className="hero-content">
                      <h1 className="hero-headline">Unlock Your Potential with LMS Platform</h1>
@@ -169,13 +145,10 @@ const HomePage = () => {
                  </div>
              </section>
 
-
-            {/* --- Dynamic Sections --- */}
-
             <section className="categories-section">
                 <h2 className="section-heading">Explore Popular Categories</h2>
                 <LoadingErrorPlaceholder
-                    status={categoriesStatus}
+                    status={categoriesStatus} // Use the status from categoriesSlice
                     error={categoriesError}
                     loadingComponent={
                         <div className="categories-grid">
@@ -187,8 +160,7 @@ const HomePage = () => {
                     {displayCategories.length > 0 ? (
                         <div className="categories-grid">
                             {displayCategories.map((category) => (
-                                // Assumes CategoryLink component is implemented and imported
-                                <CategoryLink category={category} key={category.id} />
+                                <CategoryLink category={category} key={category.id || category.name} /> // Ensure key is unique
                             ))}
                         </div>
                     ) : (
@@ -200,7 +172,7 @@ const HomePage = () => {
             <section className="featured-courses-section">
                 <h2 className="section-heading">Featured Courses</h2>
                  <LoadingErrorPlaceholder
-                    status={coursesStatus}
+                    status={coursesStatus} // Use status from coursesSlice
                     error={coursesError}
                     loadingComponent={
                         <div className="courses-grid">
@@ -212,15 +184,14 @@ const HomePage = () => {
                     {featuredCourses.length > 0 ? (
                         <div className="courses-grid">
                             {featuredCourses.map((course) => (
-                                // Assumes CoursePreviewCard component is implemented and imported
                                <CoursePreviewCard course={course} key={course.id} />
                             ))}
                         </div>
-                    ) : (
-                         <EmptyStateDisplay message="No featured courses available yet." />
+                     ) : (
+                        <EmptyStateDisplay message="No featured courses available yet." />
                     )}
                </LoadingErrorPlaceholder>
-                {(coursesStatus === 'succeeded' || coursesStatus === 'failed') && (
+                { (coursesStatus === 'succeeded' && (courses && courses.length > NUM_FEATURED_ITEMS)) && (
                  <div className="view-all-courses-link">
                     <Link to="/courses"><Button variant="secondary">View All Courses</Button></Link>
                 </div>
@@ -232,7 +203,7 @@ const HomePage = () => {
                  <h2 className="section-heading">Free Premium Tech Articles</h2>
                  <p className="section-subheading">Stay updated with the latest trends, tutorials, and insights.</p>
                 <LoadingErrorPlaceholder
-                    status={articlesStatus}
+                    status={articlesStatus} // Use status from articlesSlice
                     error={articlesError}
                     loadingComponent={
                          <div className="articles-preview-grid">
@@ -244,15 +215,14 @@ const HomePage = () => {
                     {featuredArticles.length > 0 ? (
                         <div className="articles-preview-grid">
                             {featuredArticles.map((article) => (
-                                // Assumes ArticlePreview component is implemented and imported
-                                <ArticlePreview article={article} key={article._id} />
+                                <ArticlePreview article={article} key={article._id || article.id} /> // Ensure key is unique
                              ))}
                         </div>
                      ) : (
                          <EmptyStateDisplay message="No articles available at the moment." />
                     )}
                 </LoadingErrorPlaceholder>
-                 {(articlesStatus === 'succeeded' || articlesStatus === 'failed') && (
+                 {(articlesStatus === 'succeeded' && (articles && articles.length > NUM_FEATURED_ITEMS)) && (
                      <div className="view-all-articles-link">
                          <Link to="/articles"><Button variant="secondary">Explore All Articles</Button></Link>
                      </div>
@@ -287,21 +257,17 @@ const HomePage = () => {
             <section className="testimonials-section">
                 <h2 className="section-heading">What Our Students Say</h2>
                  <LoadingErrorPlaceholder
-                    status={testimonialsStatus}
+                    status={testimonialsStatus} // Use status from testimonialsSlice
                     error={testimonialsError}
-                    loadingComponent={
-                        // Using spinner for testimonials, could use skeleton instead
-                        <SectionLoadingSpinner />
-                        // Example: <SkeletonLoader type="testimonialCardList" count={3} />
-                    }
+                    loadingComponent={<SectionLoadingSpinner />}
                     errorComponent={<SectionErrorDisplay message="Could not load testimonials." />}
                 >
                     {displayTestimonials.length > 0 ? (
                         <div className="testimonials-loop-container">
                              <div className="testimonials-loop-track">
+                                 {/* Duplicate for looping animation */}
                                  {[...displayTestimonials, ...displayTestimonials].map((testimonial, index) => (
-                                     // Assumes TestimonialCard component is implemented and imported
-                                     <TestimonialCard testimonial={testimonial} key={`${testimonial.id}-${index}`} />
+                                     <TestimonialCard testimonial={testimonial} key={`${testimonial.id || index}-${index}`} /> // Ensure key is unique
                                  ))}
                              </div>
                          </div>
@@ -311,13 +277,11 @@ const HomePage = () => {
                 </LoadingErrorPlaceholder>
             </section>
 
-            {/* --- Final Static Section --- */}
             <section className="final-cta-section">
                 <h2 className="section-heading">Ready to Start Learning?</h2>
                 <p>Join thousands of learners and take the next step.</p>
                 <Link to="/register"><Button variant="primary" size="large">Get Started Today</Button></Link>
             </section>
-
         </div>
     );
 };

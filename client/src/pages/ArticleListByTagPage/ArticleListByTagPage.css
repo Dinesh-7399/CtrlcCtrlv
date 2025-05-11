@@ -1,0 +1,277 @@
+/* client/src/pages/YourTagListPage/ArticleListByTagPage.css */
+
+/* --- Main Page Container & Header --- */
+.article-list-by-tag-container {
+  max-width: 1100px;
+  margin: var(--spacing-lg) auto; /* Uses variables from index.css */
+  padding: var(--spacing-md);
+}
+
+.article-list-header {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.article-list-main-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+}
+
+.article-list-main-title .title-icon { /* Class for FaTag */
+  color: var(--color-primary);
+  font-size: 0.9em;
+  margin-right: var(--spacing-xs); /* Small space after icon */
+}
+
+.tag-highlight {
+  color: var(--color-primary-dark-variant); /* Use your theme's dark primary variant */
+  font-weight: 600;
+}
+
+.article-list-main-content {
+    margin-top: var(--spacing-lg);
+}
+
+/* --- Status Messages (Loading, Error, Empty) --- */
+.article-list-status {
+  text-align: center;
+  padding: var(--spacing-xl) var(--spacing-md);
+  margin: var(--spacing-lg) 0;
+  color: var(--color-text-secondary);
+  font-size: 1.1rem;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  background-color: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--border-radius);
+}
+
+.article-list-status .status-icon {
+  font-size: 2.8rem;
+  margin-bottom: var(--spacing-sm);
+}
+
+.article-list-status .status-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+.article-list-status .status-message {
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+}
+
+
+.article-list-status.loading {
+  border-style: solid;
+}
+
+.article-list-status.error {
+  border-color: var(--color-error);
+  background-color: rgba(220, 53, 69, 0.03); /* Very light error bg using RGB of var(--color-error) */
+}
+.article-list-status.error .status-icon {
+  color: var(--color-error);
+}
+.article-list-status.error .status-title {
+  color: var(--color-error);
+}
+
+.status-retry-button { /* Basic styling for the retry button */
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: 500;
+}
+.status-retry-button:hover {
+  background-color: var(--color-primary-dark-variant);
+}
+
+
+.article-list-status.empty .status-icon {
+  color: var(--color-primary); /* Or a more neutral info color */
+}
+.article-list-status.empty .status-title {
+  color: var(--color-text-primary);
+}
+
+
+.article-list-status.subsequent-load {
+  min-height: auto;
+  padding: var(--spacing-md);
+  border: none;
+  background-color: transparent;
+  margin-top: var(--spacing-md);
+}
+
+/* --- Articles Grid --- */
+.articles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+/* --- Article Card --- */
+.article-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--border-radius);
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.article-card-link:hover .article-card,
+.article-card-link:focus-visible .article-card {
+  transform: translateY(-5px);
+  box-shadow: var(--box-shadow-md);
+}
+
+.article-card-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+.article-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Important for consistent card heights in a grid row */
+}
+
+.article-card-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.article-card-content {
+  padding: var(--spacing-md);
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.article-card-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-sm) 0;
+  line-height: 1.3;
+}
+
+.article-card-excerpt {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  /* margin-bottom: var(--spacing-md); /* Only if not last element before footer */
+  flex-grow: 1; /* Allows excerpt to push other content down or take space */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+/* --- Pagination Controls --- */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg); /* Space at the bottom of the page */
+}
+
+.pagination-controls ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  gap: var(--spacing-xs); /* Smaller gap between pagination buttons */
+}
+
+.pagination-button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-primary);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  min-width: 36px; /* Ensure numbers don't make buttons too small */
+  text-align: center;
+}
+
+.pagination-button:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background-color: var(--color-secondary-creamy); /* Or a light primary transparent */
+  color: var(--color-primary-dark-variant);
+}
+
+.pagination-button.active-page {
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+  border-color: var(--color-primary);
+  font-weight: 700;
+}
+
+.pagination-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--color-border); /* More subtle disabled state */
+  color: var(--color-text-secondary);
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+  .article-list-main-title {
+    font-size: 1.75rem;
+  }
+  .articles-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--spacing-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .article-list-main-title {
+    font-size: 1.5rem;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  .articles-grid {
+    grid-template-columns: 1fr; /* Single column on small mobile */
+  }
+  .article-card-content {
+    padding: var(--spacing-sm);
+  }
+  .article-card-title {
+    font-size: 1.1rem;
+  }
+  .pagination-controls .pagination-button {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 0.85rem;
+  }
+}

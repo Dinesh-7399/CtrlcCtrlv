@@ -1,321 +1,330 @@
 /* client/src/pages/LearningPage/LearningPage.css */
 
-/* --- Main Container --- */
 .learning-page-container {
   display: flex;
-  /* Mobile First: Stack sidebar and content */
-  flex-direction: column;
-  min-height: calc(100vh - var(--header-height, 60px)); /* Full height minus header */
+  min-height: calc(100vh - var(--navbar-height, 60px)); /* Full height minus navbar */
   background-color: var(--color-background);
-  transition: background-color 0.3s ease;
+  color: var(--color-text-primary);
 }
 
 /* --- Sidebar --- */
 .learning-sidebar {
-  background-color: var(--color-surface);
-  border-bottom: 1px solid var(--color-border); /* Separator on mobile */
-  padding: var(--spacing-md);
-  width: 100%; /* Full width on mobile */
-  flex-shrink: 0;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
-  max-height: 40vh; /* Limit height on mobile */
-  overflow-y: auto; /* Allow sidebar scroll on mobile if needed */
+  width: 300px; /* Fixed width for sidebar */
+  background-color: var(--color-surface); /* Slightly different from page bg */
+  border-right: 1px solid var(--color-border);
+  padding: var(--spacing-lg);
+  overflow-y: auto; /* Scroll for long module lists */
+  height: calc(100vh - var(--navbar-height, 60px)); /* Match page height */
+  position: sticky; /* Keep sidebar visible on scroll */
+  top: var(--navbar-height, 60px); /* Position below navbar */
+  flex-shrink: 0; /* Prevent sidebar from shrinking */
 }
 
 .sidebar-course-title-link {
   text-decoration: none;
-  color: inherit;
+  color: var(--color-text-primary);
 }
 
 .sidebar-course-title {
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-lg) 0;
-  padding-bottom: var(--spacing-md);
-  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--spacing-lg);
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  transition: color 0.3s ease, border-color 0.3s ease;
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
 }
-.sidebar-course-title-link:hover .sidebar-course-title {
-    color: var(--color-primary);
-}
-
 .sidebar-title-icon {
   color: var(--color-primary);
-  opacity: 0.8;
-  flex-shrink: 0;
+  font-size: 0.9em;
 }
 
 .sidebar-nav {
-  /* Nav container */
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
 }
 
 .sidebar-module {
-  margin-bottom: var(--spacing-lg);
+  /* No specific styles needed if using default block layout */
 }
 
 .sidebar-module-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0 0 var(--spacing-sm) 0;
-  padding: var(--spacing-xs);
+  font-size: 1rem;
+  font-weight: 500; /* Semibold */
+  color: var(--color-text-secondary); /* Slightly muted title */
+  margin-bottom: var(--spacing-sm);
+  padding: var(--spacing-xs) 0;
+  /* text-transform: uppercase; */
+  /* letter-spacing: 0.5px; */
 }
 
 .sidebar-lesson-list {
   list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.sidebar-lesson-list li {
-  margin-bottom: var(--spacing-xs);
+  padding-left: var(--spacing-sm); /* Indent lessons under module */
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
 }
 
 .sidebar-lesson-link {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-md);
-  font-size: 0.9rem;
-  color: var(--color-text-secondary);
   text-decoration: none;
+  color: var(--color-text-primary);
   border-radius: var(--border-radius);
+  font-size: 0.9rem;
   transition: background-color 0.2s ease, color 0.2s ease;
-  border-left: 3px solid transparent; /* Space for active indicator */
-  margin-left: -3px; /* Compensate for border */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  gap: var(--spacing-sm);
 }
 
 .sidebar-lesson-link:hover {
-  background-color: var(--color-secondary-creamy);
-  color: var(--color-text-primary);
+  background-color: var(--color-secondary-creamy); /* Use your accent color */
+  color: var(--color-primary);
 }
 
 .sidebar-lesson-link.active {
-  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
-  color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
   font-weight: 500;
-  border-left-color: var(--color-primary);
-}
-
-.lesson-status-icon {
-  flex-shrink: 0;
-  opacity: 0.6;
-  /* Add styles for completed status later */
 }
 .sidebar-lesson-link.active .lesson-status-icon {
-    opacity: 1;
-    color: var(--color-primary);
+  color: var(--color-text-on-primary); /* Or a contrasting color */
 }
+
+
+.lesson-status-icon { /* For FaCircle */
+  font-size: 0.7em; /* Small status indicator */
+  color: var(--color-text-secondary); /* Default to incomplete or generic */
+  opacity: 0.7;
+  /* Add more classes for completed/in-progress status if needed */
+}
+.sidebar-lesson-link.active .lesson-status-icon {
+  color: var(--color-text-on-primary); /* Or white/contrasting */
+  opacity: 1;
+}
+
 
 .sidebar-no-lessons {
-    font-size: 0.85rem;
-    color: var(--color-text-secondary);
-    font-style: italic;
-    padding-left: var(--spacing-md);
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  padding-left: var(--spacing-md);
+  font-style: italic;
 }
 
-/* --- Main Content --- */
+
+/* --- Main Content Area --- */
 .learning-main-content {
   flex-grow: 1;
   padding: var(--spacing-lg);
-  overflow-y: auto; /* Allow main content to scroll independently */
-  min-width: 0; /* Prevent flexbox overflow */
+  overflow-y: auto; /* If content exceeds viewport height */
+  /* max-height: calc(100vh - var(--navbar-height, 60px)); */ /* If sidebar doesn't scroll independently */
 }
 
-.main-back-button {
-    margin-bottom: var(--spacing-lg);
-    display: inline-flex; /* Keep inline-flex */
-    align-self: flex-start; /* Align button left */
+.main-back-button-wrapper {
+    margin-bottom: var(--spacing-md);
+    display: inline-block; /* So motion div doesn't take full width */
 }
+.main-back-button {
+  /* Styles from Button component variant="outline" */
+  margin-bottom: var(--spacing-lg);
+  display: inline-flex; /* If not handled by Button component */
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+.main-back-button .button-icon {
+  margin-right: var(--spacing-xs);
+}
+
 
 .lesson-title {
-  font-size: 1.8rem;
-  font-weight: 600;
+  font-size: 1.8rem; /* Example */
+  font-weight: 700;
   color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-lg) 0;
-  line-height: 1.3;
+  margin-bottom: var(--spacing-lg);
 }
 
-/* Video Player */
 .video-player-wrapper {
   position: relative;
-  padding-top: 56.25%; /* 16:9 aspect ratio */
-  background-color: #000; /* Black background */
-  margin-bottom: var(--spacing-xl);
+  padding-top: 56.25%; /* 16:9 Aspect Ratio */
+  background-color: #000; /* Black background for player */
   border-radius: var(--border-radius);
-  overflow: hidden; /* Ensures player fits radius */
+  overflow: hidden; /* Ensures ReactPlayer respects border-radius */
+  margin-bottom: var(--spacing-lg);
   box-shadow: var(--box-shadow-md);
 }
 
-.react-player { /* Targets wrapper div of ReactPlayer */
+.react-player { /* Class applied by ReactPlayer to its wrapper */
   position: absolute;
   top: 0;
   left: 0;
-  width: 100% !important; /* Override potential inline styles */
-  height: 100% !important;
 }
 
 .video-unavailable {
-  aspect-ratio: 16 / 9; /* Match video aspect ratio */
   background-color: var(--color-surface);
   border: 1px dashed var(--color-border);
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--color-text-secondary);
   border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-lg);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-xl);
-  padding: var(--spacing-lg);
-  text-align: center;
+  min-height: 300px; /* Give some height */
+}
+.video-unavailable svg {
+    font-size: 2.5rem;
+    margin-bottom: var(--spacing-md);
+    opacity: 0.7;
 }
 
-/* Lesson Content & Notes Sections */
-.course-section { /* Reusing class from CourseDetail for consistency */
-  margin-bottom: var(--spacing-xl);
-}
 
-.course-section h2, /* Targeting h2 directly */
-.section-title { /* Or use a specific class */
+/* Reusing .course-section and .section-title from CourseDetailPage.css if applicable,
+   or define them here if they need to be different for LearningPage */
+.course-section { /* Common styling for content sections */
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-md);
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+}
+.section-title {
   font-size: 1.4rem;
   font-weight: 600;
   color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-lg) 0;
-  padding-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
   border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
 }
-.course-section h2 .section-title-icon,
-.section-title .section-title-icon {
-    color: var(--color-primary);
-    font-size: 1.1em;
-    margin-top: -2px;
-    flex-shrink: 0;
+.section-title-icon { /* For FaDownload etc. */
+  color: var(--color-primary);
 }
 
-.lesson-content p {
-  color: var(--color-text-primary);
+.lesson-content-description div,
+.lesson-content-description p {
   line-height: 1.7;
-  margin-bottom: var(--spacing-md);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-sm); /* For paragraphs inside dangerouslySetInnerHTML */
 }
-.lesson-notes-section {
-    /* Container for NotesSection component */
+.lesson-content-description h1, .lesson-content-description h2, .lesson-content-description h3,
+.lesson-content-description h4, .lesson-content-description h5, .lesson-content-description h6 {
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text-primary);
+    font-weight: 600;
 }
+
 
 /* --- Lesson Navigation --- */
 .lesson-navigation {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-top: var(--spacing-xl);
   padding-top: var(--spacing-lg);
   border-top: 1px solid var(--color-border);
-  flex-wrap: wrap; /* Allow buttons to wrap on small screens */
-  gap: var(--spacing-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.lesson-navigation button {
+  /* Base styling from Button component variants */
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+.lesson-navigation .button-icon-right {
+  margin-left: var(--spacing-sm);
+  margin-right: 0;
 }
 
-.lesson-navigation .button { /* Target Button component */
-   display: inline-flex;
-   align-items: center;
-   gap: var(--spacing-sm);
-}
-.lesson-navigation .button-icon { margin: 0; } /* Reset margin if needed */
-.lesson-navigation .button-icon-right { margin-left: var(--spacing-sm); }
 
-/* --- Status/Error States --- */
-.learning-status {
-  min-height: 60vh;
+/* --- Loading & Error States (Full page) --- */
+.learning-status.loading-state,
+.learning-status.learning-error {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
+  min-height: 80vh;
   padding: var(--spacing-xl);
+  gap: var(--spacing-md);
 }
-.learning-error h1 { color: var(--color-error); margin-bottom: var(--spacing-sm); }
-.learning-error p { color: var(--color-text-secondary); margin-bottom: var(--spacing-lg); }
-.learning-error .button svg { margin-right: var(--spacing-xs); }
+.learning-status.learning-error h1 {
+  font-size: 1.8rem;
+  color: var(--color-error);
+  margin-bottom: var(--spacing-xs);
+}
+.learning-status.learning-error p {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-lg);
+  max-width: 500px;
+}
+.learning-status.learning-error button svg.button-icon {
+    margin-right: var(--spacing-xs);
+}
 
 
-/* --- Responsive Desktop Layout --- */
-/* Adjust breakpoint as needed (e.g., 992px or 1024px) */
-@media (min-width: 992px) {
+/* --- Responsive Adjustments --- */
+@media (max-width: 992px) { /* Medium devices - tablets */
   .learning-page-container {
-    flex-direction: row; /* Side-by-side layout */
+    flex-direction: column;
   }
-
   .learning-sidebar {
-    width: 300px; /* Fixed sidebar width */
-    height: calc(100vh - var(--header-height, 60px)); /* Full height minus header */
-    position: sticky; /* Make sidebar sticky */
-    top: var(--header-height, 60px); /* Position below header */
-    border-bottom: none; /* Remove bottom border */
-    border-right: 1px solid var(--color-border); /* Add right border */
-    padding: var(--spacing-lg); /* Adjust padding */
-    max-height: none; /* Remove max-height */
-    overflow-y: auto; /* Ensure scrolling */
+    width: 100%;
+    height: auto; /* Allow natural height */
+    max-height: 40vh; /* Limit height and make it scrollable if too much content */
+    position: relative; /* Change from sticky */
+    top: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: var(--spacing-lg);
   }
-
   .learning-main-content {
-    /* flex-grow: 1 is already set */
-    height: calc(100vh - var(--header-height, 60px)); /* Full height minus header */
-    overflow-y: auto; /* Scroll main content independently */
-    padding: var(--spacing-xl); /* More padding on desktop */
+    /* Main content takes remaining space */
   }
-
-  .main-back-button {
-    display: none; /* Hide back button in main content if sidebar is visible */
-  }
-
-   .lesson-title {
-     font-size: 2rem; /* Larger title */
-   }
 }
 
-/* Smaller screen adjustments if needed beyond mobile-first */
-@media (max-width: 480px) {
-    .learning-page-container {
-        min-height: calc(100vh - var(--header-height, 50px)); /* Adjust for potentially smaller mobile header */
-    }
-    .learning-sidebar {
-        padding: var(--spacing-md);
-        max-height: 35vh; /* Slightly less height */
-    }
-     .sidebar-course-title {
-        font-size: 1rem;
-     }
-     .sidebar-module-title {
-        font-size: 0.8rem;
-     }
-     .sidebar-lesson-link {
-        padding: var(--spacing-xs) var(--spacing-sm);
-        font-size: 0.85rem;
-     }
+@media (max-width: 768px) { /* Small devices - tablets */
+  .lesson-title {
+    font-size: 1.5rem;
+  }
+  .section-title {
+    font-size: 1.25rem;
+  }
+  .learning-sidebar {
+    padding: var(--spacing-md);
+  }
+  .learning-main-content {
+    padding: var(--spacing-md);
+  }
+}
 
-    .learning-main-content {
-        padding: var(--spacing-md);
-    }
-    .lesson-title {
-        font-size: 1.5rem;
-    }
-    .course-section h2, .section-title {
-        font-size: 1.2rem;
-    }
-     .lesson-navigation {
-        flex-direction: column; /* Stack buttons */
-        align-items: stretch; /* Make buttons full width */
-     }
-     .lesson-navigation .button {
-        justify-content: center; /* Center button text/icon */
-     }
+@media (max-width: 480px) { /* Extra small devices - phones */
+  .sidebar-course-title {
+    font-size: 1.1rem;
+  }
+  .sidebar-module-title {
+    font-size: 0.95rem;
+  }
+  .sidebar-lesson-link {
+    font-size: 0.85rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  .lesson-title {
+    font-size: 1.3rem;
+  }
+  .lesson-navigation {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  .lesson-navigation button {
+    width: 100%; /* Stack navigation buttons */
+    justify-content: center;
+  }
 }
