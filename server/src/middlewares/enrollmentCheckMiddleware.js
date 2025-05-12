@@ -14,10 +14,9 @@ import ApiError from '../utils/apiError.js';
 export const enrollmentCheckMiddleware = async (req, res, next) => {
   try {
     const { courseId } = req.params;
-    const userId = req.user?.userId; // From authMiddleware
+    const userId = req.user?.id; // CORRECTED: Was req.user?.userId
 
     if (!userId) {
-      // This should ideally be caught by authMiddleware, but as a safeguard:
       return next(new ApiError(401, 'Authentication required. User not identified.'));
     }
 
@@ -25,7 +24,6 @@ export const enrollmentCheckMiddleware = async (req, res, next) => {
       return next(new ApiError(400, 'Course ID is missing in request parameters.'));
     }
 
-    // Convert courseId to integer if it's coming as a string from params
     const numericCourseId = parseInt(courseId, 10);
     if (isNaN(numericCourseId)) {
         return next(new ApiError(400, 'Invalid Course ID format.'));
@@ -33,8 +31,6 @@ export const enrollmentCheckMiddleware = async (req, res, next) => {
 
     const enrollment = await prisma.enrollment.findUnique({
       where: {
-        // Prisma's unique constraint name is @@unique([userId, courseId])
-        // So, the field name for the compound unique index is userId_courseId
         userId_courseId: {
           userId: userId,
           courseId: numericCourseId,
@@ -50,10 +46,6 @@ export const enrollmentCheckMiddleware = async (req, res, next) => {
         )
       );
     }
-
-    // User is enrolled, proceed to the next handler
-    // Optionally, attach enrollment details to req if needed by subsequent handlers
-    // req.enrollment = enrollment;
     next();
 
   } catch (error) {

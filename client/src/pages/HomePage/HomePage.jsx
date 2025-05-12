@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 
 // --- Import Common Components ---
 import Button from '../../components/common/Button';
-import Card from '../../components/common/Card';
+// import Card from '../../components/common/Card'; // Card is not used directly, CoursePreviewCard and ArticlePreview are
 import AnimatedNumber from '../../components/common/AnimatedNumber';
 import Spinner from '../../components/common/Spinner';
 import SkeletonLoader from '../../components/common/SkeletonLoader';
@@ -18,7 +18,7 @@ import TestimonialCard from '../../components/common/TestimonialCard';
 import {
   FaLaptopCode, FaUsers, FaCheckCircle, FaArrowRight, FaUserPlus,
   FaChalkboardTeacher, FaQuoteLeft, FaTag, FaChartBar, FaSearch,
-  FaNewspaper, FaServer, FaPalette, FaCode, FaDatabase, FaCloudUploadAlt,
+  FaNewspaper, /*FaServer, FaPalette, FaCode, FaDatabase, FaCloudUploadAlt,*/ // Removed unused icons
   FaExclamationTriangle, FaInfoCircle
 } from "react-icons/fa";
 
@@ -27,23 +27,23 @@ import {
     selectAllCourses , selectCoursesStatus, selectCoursesError, fetchCourses
 } from '../../features/courses/CoursesSlice.js';
 import {
-    selectAllArticles, selectArticlesStatus, selectArticlesError, fetchArticles
+    selectAllArticles, selectArticlesStatus, selectArticlesError, fetchArticles // fetchArticles is used
 } from '../../features/articles/articlesSlice.js';
 import {
     selectAllTestimonials, selectTestimonialsStatus, selectTestimonialsError, fetchVisibleTestimonials
 } from '../../features/testimonials/testimonialsSlice.js';
 import {
-    selectAllCategories, // Assuming this selector is correctly named in your slice
+    selectAllCategories,
     selectCategoriesStatus,
     selectCategoriesError,
-    fetchAllCategories as fetchCategories // Correctly import and alias fetchAllCategories
+    fetchAllCategories as fetchCategories
 } from '../../features/categories/categoriesSlice.js';
 import {
     fetchPublicStats,
     selectPlatformStats,
     selectPlatformStatsStatus
-    // selectPlatformStatsError // Can be used if specific error display is needed for stats
-} from '../../features/platform/platformSlice.js'; // Assuming you created this slice
+    // selectPlatformStatsError
+} from '../../features/platform/platformSlice.js';
 
 import './HomePage.css';
 
@@ -52,18 +52,45 @@ const NUM_FEATURED_ITEMS = 3;
 const STATS_ANIMATION_DURATION = 1500;
 
 // --- Helper Components Definitions ---
-const LoadingErrorPlaceholder = ({ status, error, loadingComponent, errorComponent, children }) => {
+const LoadingErrorPlaceholder = ({ status, error, loadingComponent, children, sectionName = "Data" }) => {
      if (status === 'succeeded') return children;
      if (status === 'loading' || status === 'idle') return loadingComponent;
-     if (status === 'failed') { console.error("Data loading error in section:", error); return errorComponent; }
+     if (status === 'failed') {
+        // error object might have { message, details }
+        const errorMessage = error?.message || "An unknown error occurred.";
+        // console.error(`Data loading error in ${sectionName} section:`, errorMessage, error?.details || '');
+        // For user display, just the main message is often enough, details are for console.
+        return <SectionErrorDisplay sectionName={sectionName} message={errorMessage} details={error?.details} />;
+     }
      return null;
 };
-const SectionLoadingSpinner = () => <div className="section-loading"><Spinner /></div>;
-const SectionErrorDisplay = ({ message = "Could not load data." }) => (
-    <div className="section-error"><FaExclamationTriangle aria-hidden="true" /> {message}</div>
+
+const SectionLoadingSpinner = ({sectionName}) => (
+    <div className="section-loading">
+        <Spinner label={`Loading ${sectionName}...`} />
+    </div>
 );
-const EmptyStateDisplay = ({ message }) => (
-    <div className="section-empty"><FaInfoCircle aria-hidden="true" /> {message}</div>
+
+const SectionErrorDisplay = ({ sectionName, message = "Could not load data.", details }) => {
+    // Log the detailed error for developers
+    if (details) {
+        console.error(`Detailed error for ${sectionName}:`, details);
+    }
+    return (
+        <div className="section-error">
+            <FaExclamationTriangle aria-hidden="true" />
+            <p><strong>Error loading {sectionName}:</strong> {message}</p>
+            {details && details.status && <p><small>Status: {details.status}</small></p>}
+            {/* Optionally, provide a retry button or more specific user guidance here */}
+            <p><small>Please try refreshing the page. If the problem persists, contact support.</small></p>
+        </div>
+    );
+};
+
+const EmptyStateDisplay = ({ message, sectionName }) => (
+    <div className="section-empty">
+        <FaInfoCircle aria-hidden="true" /> {message || `No ${sectionName} found.`}
+    </div>
 );
 // --- End Helper Components ---
 
@@ -77,13 +104,13 @@ const HomePage = () => {
 
     const articles = useSelector(selectAllArticles);
     const articlesStatus = useSelector(selectArticlesStatus);
-    const articlesError = useSelector(selectArticlesError);
+    const articlesError = useSelector(selectArticlesError); // This will be { message, details? }
 
     const testimonials = useSelector(selectAllTestimonials);
     const testimonialsStatus = useSelector(selectTestimonialsStatus);
     const testimonialsError = useSelector(selectTestimonialsError);
 
-    const categories = useSelector(selectAllCategories); // Make sure this selector name is correct in categoriesSlice.js
+    const categories = useSelector(selectAllCategories);
     const categoriesStatus = useSelector(selectCategoriesStatus);
     const categoriesError = useSelector(selectCategoriesError);
 
@@ -92,9 +119,14 @@ const HomePage = () => {
 
     // --- Trigger Data Fetching ---
     useEffect(() => {
-        if (coursesStatus === 'idle') dispatch(fetchCourses({ limit: NUM_FEATURED_ITEMS, featured: true })); // Example: add a featured param
-        if (articlesStatus === 'idle') dispatch(fetchArticles({ limit: NUM_FEATURED_ITEMS, sortBy: 'publishedAt_desc' }));
-        if (categoriesStatus === 'idle') dispatch(fetchCategories({ limit: 6 })); // Dispatch corrected thunk name
+        if (coursesStatus === 'idle') dispatch(fetchCourses({ limit: NUM_FEATURED_ITEMS, featured: true }));
+        // The error message "Failed to fetch articles" comes from articlesStatus being 'failed'
+        // and articlesError containing the message.
+        if (articlesStatus === 'idle') {
+            console.log("HomePage: Dispatching fetchArticles"); // Added log
+            dispatch(fetchArticles({ limit: NUM_FEATURED_ITEMS, sortBy: 'publishedAt_desc' }));
+        }
+        if (categoriesStatus === 'idle') dispatch(fetchCategories({ limit: 6 }));
         if (testimonialsStatus === 'idle') dispatch(fetchVisibleTestimonials({ limit: 10 }));
         if (platformStatsStatus === 'idle') dispatch(fetchPublicStats());
     }, [dispatch, coursesStatus, articlesStatus, categoriesStatus, testimonialsStatus, platformStatsStatus]);
@@ -105,7 +137,6 @@ const HomePage = () => {
     const displayCategories = categoriesStatus === 'succeeded' ? (categories || []) : [];
     const displayTestimonials = testimonialsStatus === 'succeeded' ? (testimonials || []) : [];
 
-    // --- Use dynamic stats from Redux store ---
     const totalCourseCount = platformStatsStatus === 'succeeded' && platformStats.totalCourses !== undefined ? platformStats.totalCourses : (coursesStatus === 'succeeded' ? (courses || []).length : 0);
     const totalUserCount = platformStatsStatus === 'succeeded' && platformStats.totalUsers !== undefined ? platformStats.totalUsers : 0;
     const totalInstructorCount = platformStatsStatus === 'succeeded' && platformStats.totalInstructors !== undefined ? platformStats.totalInstructors : 0;
@@ -148,23 +179,23 @@ const HomePage = () => {
             <section className="categories-section">
                 <h2 className="section-heading">Explore Popular Categories</h2>
                 <LoadingErrorPlaceholder
-                    status={categoriesStatus} // Use the status from categoriesSlice
+                    sectionName="Categories"
+                    status={categoriesStatus}
                     error={categoriesError}
                     loadingComponent={
                         <div className="categories-grid">
                             {[...Array(6)].map((_, i) => <SkeletonLoader key={i} type="listItem" />)}
                         </div>
                     }
-                    errorComponent={<SectionErrorDisplay message="Could not load categories." />}
                 >
                     {displayCategories.length > 0 ? (
                         <div className="categories-grid">
                             {displayCategories.map((category) => (
-                                <CategoryLink category={category} key={category.id || category.name} /> // Ensure key is unique
+                                <CategoryLink category={category} key={category.id || category.name} />
                             ))}
                         </div>
                     ) : (
-                        <EmptyStateDisplay message="No categories found." />
+                        <EmptyStateDisplay sectionName="Categories" message="No categories found at the moment." />
                     )}
                 </LoadingErrorPlaceholder>
             </section>
@@ -172,14 +203,14 @@ const HomePage = () => {
             <section className="featured-courses-section">
                 <h2 className="section-heading">Featured Courses</h2>
                  <LoadingErrorPlaceholder
-                    status={coursesStatus} // Use status from coursesSlice
+                    sectionName="Featured Courses"
+                    status={coursesStatus}
                     error={coursesError}
                     loadingComponent={
                         <div className="courses-grid">
                             {[...Array(NUM_FEATURED_ITEMS)].map((_, i) => <SkeletonLoader key={i} type="courseCard" />)}
                         </div>
                     }
-                    errorComponent={<SectionErrorDisplay message="Could not load featured courses." />}
                 >
                     {featuredCourses.length > 0 ? (
                         <div className="courses-grid">
@@ -188,7 +219,7 @@ const HomePage = () => {
                             ))}
                         </div>
                      ) : (
-                        <EmptyStateDisplay message="No featured courses available yet." />
+                        <EmptyStateDisplay sectionName="Featured Courses" message="No featured courses available yet." />
                     )}
                </LoadingErrorPlaceholder>
                 { (coursesStatus === 'succeeded' && (courses && courses.length > NUM_FEATURED_ITEMS)) && (
@@ -203,23 +234,23 @@ const HomePage = () => {
                  <h2 className="section-heading">Free Premium Tech Articles</h2>
                  <p className="section-subheading">Stay updated with the latest trends, tutorials, and insights.</p>
                 <LoadingErrorPlaceholder
-                    status={articlesStatus} // Use status from articlesSlice
-                    error={articlesError}
+                    sectionName="Articles" // This section corresponds to the error log
+                    status={articlesStatus}
+                    error={articlesError} // Pass the error object here
                     loadingComponent={
                          <div className="articles-preview-grid">
                              {[...Array(NUM_FEATURED_ITEMS)].map((_, i) => <SkeletonLoader key={i} type="articlePreview" />)}
                          </div>
                     }
-                    errorComponent={<SectionErrorDisplay message="Could not load articles." />}
                 >
                     {featuredArticles.length > 0 ? (
                         <div className="articles-preview-grid">
                             {featuredArticles.map((article) => (
-                                <ArticlePreview article={article} key={article._id || article.id} /> // Ensure key is unique
+                                <ArticlePreview article={article} key={article._id || article.id} />
                              ))}
                         </div>
                      ) : (
-                         <EmptyStateDisplay message="No articles available at the moment." />
+                         <EmptyStateDisplay sectionName="Articles" message="No articles available at the moment." />
                     )}
                 </LoadingErrorPlaceholder>
                  {(articlesStatus === 'succeeded' && (articles && articles.length > NUM_FEATURED_ITEMS)) && (
@@ -257,22 +288,21 @@ const HomePage = () => {
             <section className="testimonials-section">
                 <h2 className="section-heading">What Our Students Say</h2>
                  <LoadingErrorPlaceholder
-                    status={testimonialsStatus} // Use status from testimonialsSlice
+                    sectionName="Testimonials"
+                    status={testimonialsStatus}
                     error={testimonialsError}
-                    loadingComponent={<SectionLoadingSpinner />}
-                    errorComponent={<SectionErrorDisplay message="Could not load testimonials." />}
+                    loadingComponent={<SectionLoadingSpinner sectionName="Testimonials" />}
                 >
                     {displayTestimonials.length > 0 ? (
                         <div className="testimonials-loop-container">
                              <div className="testimonials-loop-track">
-                                 {/* Duplicate for looping animation */}
                                  {[...displayTestimonials, ...displayTestimonials].map((testimonial, index) => (
-                                     <TestimonialCard testimonial={testimonial} key={`${testimonial.id || index}-${index}`} /> // Ensure key is unique
+                                     <TestimonialCard testimonial={testimonial} key={`${testimonial.id || testimonial.name}-${index}`} />
                                  ))}
                              </div>
                          </div>
                      ) : (
-                         <EmptyStateDisplay message="No testimonials yet. Be the first to share your experience!" />
+                         <EmptyStateDisplay sectionName="Testimonials" message="No testimonials yet. Be the first to share your experience!" />
                      )}
                 </LoadingErrorPlaceholder>
             </section>

@@ -2,17 +2,117 @@
 import prisma from '../config/db.js';
 import ApiError from '../utils/apiError.js';
 import ApiResponse from '../utils/apiResponse.js';
-import { validationResult } from 'express-validator';
+import { validationResult } from 'express-validator'; // Only if you were to use it directly here, typically handled by middleware
 
-const REVIEWS_PER_PAGE = 10;
+// Import enums if needed directly in this controller, though for getCourseReviews it's not strictly necessary
+// import { ContentStatus } from '@prisma/client';
+
+const REVIEWS_PER_PAGE = 10; // Default from your file
+
+/**
+ * @desc    Get all reviews for a specific course with pagination
+ * @route   GET /api/courses/:courseId/reviews
+ * @access  Public
+ */
+export const getCourseReviews = async (req, res, next) => {
+  try {
+    // courseId is already an integer due to .toInt() in router's validation
+    const courseId = req.params.courseId;
+    // page and limit are also integers or defaults due to router's validation
+    const page = req.query.page || 1;
+    const limit = req.query.limit || REVIEWS_PER_PAGE;
+    const skip = (page - 1) * limit;
+
+    // 1. Check if the course exists and is published
+    //    Ensuring ContentStatus.PUBLISHED matches your enum definition.
+    const course = await prisma.course.findUnique({
+      where: {
+        id: courseId,
+        status: 'PUBLISHED', // Directly use the string value if ContentStatus enum is correctly set up
+      },
+    });
+
+    if (!course) {
+      return next(new ApiError(404, `Published course with ID '${courseId}' not found.`));
+    }
+
+    // 2. Fetch reviews for the course
+    const reviews = await prisma.review.findMany({
+      where: {
+        courseId: courseId,
+      },
+      include: {
+        user: { // This will fetch the related user
+          select: { // Specify which fields of the user and their profile to fetch
+            id: true,
+            name: true,
+            profile: { // Nested select for the related profile
+              select: {
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip: skip,
+      take: limit,
+    });
+
+    const totalReviews = await prisma.review.count({
+      where: { courseId: courseId },
+    });
+    const totalPages = Math.ceil(totalReviews / limit);
+
+    // 3. Format reviews robustly
+    const formattedReviews = reviews.map(review => {
+      // Schema `Review.userId` is NOT NULL & FK with CASCADE. `User.profile` is 1-to-1 & created on user registration.
+      // So, review.user and review.user.profile should theoretically always exist.
+      // Optional chaining `?.` is used for an extra layer of safety.
+      return {
+        id: review.id,
+        rating: review.rating,
+        comment: review.comment,
+        createdAt: review.createdAt,
+        updatedAt: review.updatedAt,
+        courseId: review.courseId,
+        userId: review.userId,
+        user: {
+          id: review.user?.id,
+          name: review.user?.name || 'Anonymous User', // Fallback name
+          profile: { // Ensure profile object always exists in response
+            avatarUrl: review.user?.profile?.avatarUrl || null,
+          },
+        },
+      };
+    });
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          reviews: formattedReviews,
+          currentPage: page,
+          totalPages,
+          totalReviews,
+          courseId: courseId, // Pass back the courseId for context
+        },
+        'Course reviews fetched successfully.'
+      )
+    );
+  } catch (error) {
+    // This console.error is CRUCIAL for debugging 500 errors on your server.
+    console.error(`Error in getCourseReviews for course ID '${req.params.courseId}':`, error.name, error.message, error.stack);
+    next(new ApiError(500, 'Failed to fetch course reviews.', [error.message]));
+  }
+};
 
 /**
  * @desc    Create or Update a review for a course by the current user
  * @route   POST /api/courses/:courseId/reviews
  * @access  Private (Authenticated and Enrolled Users)
- * @body    { rating: number, comment?: string }
- * @notes   Uses upsert to allow a user to create a new review or update their existing one.
- * Assumes enrollmentCheckMiddleware has verified the user is enrolled in :courseId.
  */
 export const upsertCourseReview = async (req, res, next) => {
   const errors = validationResult(req);
@@ -20,74 +120,48 @@ export const upsertCourseReview = async (req, res, next) => {
     return next(new ApiError(400, 'Validation failed', errors.array().map(e => e.msg)));
   }
 
-  const { courseId } = req.params;
-  const numericCourseId = parseInt(courseId, 10);
-  const userId = req.user.userId; // From authMiddleware
+  const courseId = req.params.courseId; // Already an integer from route validation
+  const userId = req.user.userId;
   const { rating, comment } = req.body;
 
-  if (isNaN(numericCourseId)) {
-    return next(new ApiError(400, 'Invalid Course ID format.'));
-  }
-
-  // Rating is typically 1-5
-  if (typeof rating !== 'number' || rating < 1 || rating > 5) {
-    return next(new ApiError(400, 'Rating must be a number between 1 and 5.'));
-  }
-  if (comment && typeof comment !== 'string') {
-    return next(new ApiError(400, 'Comment must be a string.'));
-  }
+  // Basic validation already done by express-validator, but can re-check if needed
+  // if (typeof rating !== 'number' || rating < 1 || rating > 5) ...
 
   try {
-    // enrollmentCheckMiddleware should have already verified enrollment.
-    // As an additional check, ensure the course exists.
     const courseExists = await prisma.course.findUnique({
-        where: { id: numericCourseId, status: 'PUBLISHED' } // Users can only review published courses
+        where: { id: courseId, status: 'PUBLISHED' }
     });
     if (!courseExists) {
-        return next(new ApiError(404, `Published course with ID ${numericCourseId} not found.`));
+        return next(new ApiError(404, `Published course with ID ${courseId} not found for review.`));
     }
 
+    // enrollmentCheckMiddleware should have been called in the route for this
+
     const review = await prisma.review.upsert({
-      where: {
-        userId_courseId: { // Using the compound unique key
-          userId: userId,
-          courseId: numericCourseId,
-        },
-      },
-      update: {
-        rating: rating,
-        comment: comment || null, // Allow empty string or null for comment
-      },
-      create: {
-        userId: userId,
-        courseId: numericCourseId,
-        rating: rating,
-        comment: comment || null,
-      },
-      include: { // Include user details in the response
+      where: { userId_courseId: { userId: userId, courseId: courseId } },
+      update: { rating: rating, comment: comment || null },
+      create: { userId: userId, courseId: courseId, rating: rating, comment: comment || null },
+      include: {
         user: {
           select: { id: true, name: true, profile: { select: { avatarUrl: true } } },
         },
       },
     });
-    
+
     const formattedReview = {
         ...review,
         user: {
-            id: review.user.id,
-            name: review.user.name,
-            avatarUrl: review.user.profile?.avatarUrl || null,
+            id: review.user?.id,
+            name: review.user?.name || 'Anonymous User',
+            profile: {
+                avatarUrl: review.user?.profile?.avatarUrl || null,
+            }
         }
     };
 
-    // Determine if it was a create (201) or update (200)
-    // Prisma's upsert doesn't directly tell us if it created or updated in the return value easily
-    // We can check timestamps, or assume 200 for simplicity if the frontend doesn't strictly need to know.
-    // For this example, we'll check if createdAt and updatedAt are very close.
-    const wasCreated = Math.abs(review.createdAt.getTime() - review.updatedAt.getTime()) < 1000; // within 1 second
+    const wasCreated = Math.abs(review.createdAt.getTime() - review.updatedAt.getTime()) < 1000;
 
-    // TODO: After a review is submitted/updated, recalculate the course's average rating.
-    // This could be done here, or via a database trigger, or a background job.
+    // TODO: Recalculate course average rating (could be a post-save trigger or async job)
 
     return res
       .status(wasCreated ? 201 : 200)
@@ -100,89 +174,10 @@ export const upsertCourseReview = async (req, res, next) => {
       );
   } catch (error) {
     console.error(`Error upserting review for course ID '${courseId}':`, error);
-    if (error.code === 'P2003') { // Foreign key constraint (e.g. courseId or userId invalid)
+    if (error.code === 'P2003') {
         return next(new ApiError(404, 'Invalid course or user ID for review.'));
     }
     next(new ApiError(500, 'Failed to save review.', [error.message]));
-  }
-};
-
-/**
- * @desc    Get all reviews for a specific course with pagination
- * @route   GET /api/courses/:courseId/reviews
- * @access  Public
- */
-export const getCourseReviews = async (req, res, next) => {
-  try {
-    const { courseId } = req.params;
-    const numericCourseId = parseInt(courseId, 10);
-
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || REVIEWS_PER_PAGE;
-    const skip = (page - 1) * limit;
-
-    // Optional: Add sorting (e.g., newest, highest_rating, lowest_rating)
-    // const { sortBy = 'newest' } = req.query;
-    // let orderByClause = { createdAt: 'desc' };
-    // if (sortBy === 'highest_rating') orderByClause = { rating: 'desc' };
-    // else if (sortBy === 'lowest_rating') orderByClause = { rating: 'asc' };
-
-    if (isNaN(numericCourseId)) {
-      return next(new ApiError(400, 'Invalid Course ID format.'));
-    }
-
-    const reviews = await prisma.review.findMany({
-      where: {
-        courseId: numericCourseId,
-        // Optional: Filter for reviews that have a comment, or are approved by admin if moderation is added
-        // comment: { not: null }
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            profile: { select: { avatarUrl: true } },
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc', // Default to newest reviews first
-        // orderBy: orderByClause,
-      },
-      skip: skip,
-      take: limit,
-    });
-
-    const totalReviews = await prisma.review.count({
-      where: { courseId: numericCourseId /*, comment: { not: null } */ },
-    });
-    const totalPages = Math.ceil(totalReviews / limit);
-
-    const formattedReviews = reviews.map(review => ({
-        ...review,
-        user: {
-            id: review.user.id,
-            name: review.user.name,
-            avatarUrl: review.user.profile?.avatarUrl || null,
-        }
-    }));
-
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        {
-          reviews: formattedReviews,
-          currentPage: page,
-          totalPages,
-          totalReviews,
-        },
-        'Course reviews fetched successfully.'
-      )
-    );
-  } catch (error) {
-    console.error(`Error fetching reviews for course ID '${req.params.courseId}':`, error);
-    next(new ApiError(500, 'Failed to fetch course reviews.', [error.message]));
   }
 };
 
@@ -193,43 +188,34 @@ export const getCourseReviews = async (req, res, next) => {
  */
 export const deleteReview = async (req, res, next) => {
     try {
-        const { reviewId } = req.params;
-        const numericReviewId = parseInt(reviewId, 10);
+        const reviewId = req.params.reviewId; // Already an integer from route validation
         const userId = req.user.userId;
         const userRole = req.user.role;
 
-        if (isNaN(numericReviewId)) {
-            return next(new ApiError(400, 'Invalid Review ID format.'));
-        }
-
         const review = await prisma.review.findUnique({
-            where: { id: numericReviewId },
-            select: { userId: true, courseId: true } // Need courseId for recalculating average rating
+            where: { id: reviewId },
+            select: { userId: true, courseId: true }
         });
 
         if (!review) {
             return next(new ApiError(404, 'Review not found.'));
         }
 
-        // Authorization: User can delete their own review, or an admin can delete any review
         if (review.userId !== userId && userRole !== 'ADMIN') {
             return next(new ApiError(403, 'You are not authorized to delete this review.'));
         }
 
         await prisma.review.delete({
-            where: { id: numericReviewId },
+            where: { id: reviewId },
         });
 
-        // TODO: After a review is deleted, recalculate the course's average rating.
-        // This would involve fetching all remaining reviews for review.courseId and averaging.
+        // TODO: Recalculate course average rating for review.courseId
 
         return res.status(200).json(new ApiResponse(200, null, 'Review deleted successfully.'));
-        // Or return 204 No Content: return res.status(204).send();
-
     } catch (error) {
         console.error(`Error deleting review ID '${req.params.reviewId}':`, error);
         if (error.code === 'P2025') { // Record to delete not found
-            return next(new ApiError(404, 'Review not found.'));
+            return next(new ApiError(404, 'Review not found to delete.'));
         }
         next(new ApiError(500, 'Failed to delete review.', [error.message]));
     }

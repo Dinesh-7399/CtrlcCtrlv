@@ -6,7 +6,7 @@ import PropTypes from 'prop-types'; // Good practice for defining expected props
 import { Link } from 'react-router-dom';
 import Card from './Card'; // Assuming Card is in the same 'common' folder, adjust path if needed
 import { FaChalkboardTeacher } from "react-icons/fa"; // Make sure to import used icons
-
+import image from '../../assets/images/generic-broken-image.png'; // Adjust path as needed
 // Define the component as a function that accepts props
 const CoursePreviewCard = (props) => {
     // Destructure the course object from props
@@ -26,11 +26,11 @@ const CoursePreviewCard = (props) => {
         <Link to={`/courses/${course.id}`} className="course-card-link">
             <Card className="course-list-card hover-effect">
                 <img
-                    src={course.thumbnail || "https://via.placeholder.com/300x170/cccccc/ffffff?text=Course"}
+                    src={course.thumbnail || ""}
                     alt={`${course.title} thumbnail`}
                     className="course-card-thumbnail"
                     loading="lazy"
-                    onError={(e) => { e.target.onerror = null; e.target.src="https://via.placeholder.com/300x170/cccccc/ffffff?text=Error"; }}
+                    onError={(e) => { e.target.onerror = null; e.target.src=""; }}
                 />
                 <div className="course-list-card-content">
                     <h3 className="course-list-card-title">{course.title}</h3>

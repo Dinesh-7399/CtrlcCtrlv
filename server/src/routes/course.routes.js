@@ -1,122 +1,114 @@
 // server/src/routes/course.routes.js
 import express from 'express';
 import { param, query } from 'express-validator';
+import { Difficulty } from '@prisma/client'; // Assuming Difficulty is directly under @prisma/client
 import {
   getAllPublishedCourses,
   getCourseBySlugOrId,
+  getCourseReviews, // Import the new controller
 } from '../controllers/courseController.js';
 import { getLessonDetails } from '../controllers/lessonController.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { handleValidationErrors } from '../middlewares/validationResultHandler.js';
-import { Prisma } from '@prisma/client';
 
 const router = express.Router();
 
 // --- Validation Rules ---
-// (Validation arrays are kept as they were, assuming they are correct)
 const getAllCoursesQueryValidation = [
-  query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer.').toInt(),
-  query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be between 1 and 50.').toInt(),
-  query('category').optional().isString().trim().isSlug().withMessage('Category slug contains invalid characters.'),
-  query('searchTerm').optional().isString().trim(),
+  query('page').optional().isInt({ min: 1 }).toInt().withMessage('Page must be a positive integer.'),
+  query('limit').optional().isInt({ min: 1, max: 100 }).toInt().withMessage('Limit must be an integer between 1 and 100.'),
+  query('category').optional().isString().trim().escape(),
+  query('searchTerm').optional().isString().trim(), // No escape on searchTerm for broader matching
+  query('language').optional().isString().trim().escape(),
+  query('sortBy').optional().isString().trim().escape()
+    .custom(value => {
+      const allowedSorts = [
+        'createdAt_asc', 'createdAt_desc',
+        'price_asc', 'price_desc',
+        'title_asc', 'title_desc', // Ensure your controller handles case-insensitive for title sort
+        'updatedAt_asc', 'updatedAt_desc',
+        'rating_desc' // Controller warns if not fully implemented
+      ];
+      if (!allowedSorts.includes(value)) {
+        throw new Error(`Invalid sortBy value. Allowed: ${allowedSorts.join(', ')}`);
+      }
+      return true;
+    }),
   query('difficulty').optional().toUpperCase().custom((value) => {
-    if (value === undefined || value === null || value === '') return true;
-    if (!Prisma.Difficulty || typeof Prisma.Difficulty !== 'object') {
-        console.error("DEBUG: Prisma.Difficulty enum is not available (course.routes.js getAllCoursesQueryValidation)");
-        throw new Error('Server configuration error: Difficulty levels unavailable.');
+    if (value === undefined || value === null || value === '') return true; // Allow empty value to mean no filter
+    // Ensure Difficulty enum is loaded and is an object
+    if (!Difficulty || typeof Difficulty !== 'object' || Object.keys(Difficulty).length === 0) {
+        // This console log helps during development if the enum isn't loading as expected
+        console.error("RUNTIME VALIDATION CHECK: Difficulty enum is not available or empty.");
+        throw new Error('Server configuration error: Difficulty levels are currently unavailable for validation.');
     }
-    const validDifficulties = Object.values(Prisma.Difficulty);
-    if (!validDifficulties.includes(value)) throw new Error(`Invalid difficulty. Must be one of: ${validDifficulties.join(', ')}`);
+    const validDifficulties = Object.values(Difficulty);
+    if (!validDifficulties.includes(value)) {
+        throw new Error(`Invalid difficulty level. Must be one of: ${validDifficulties.join(', ')}`);
+    }
     return true;
   }),
-  query('language').optional().isString().trim(),
-  query('sortBy').optional().isString().trim().isIn(['newest', 'price_asc', 'price_desc', 'title_asc', 'rating_desc'])
-    .withMessage('Invalid sort option.'),
 ];
 
 const getCourseByIdentifierValidation = [
-  param('identifier')
-    .notEmpty().withMessage('Course slug or ID is required.')
-    .isString()
-    .custom((value) => {
-      const isSlug = /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
-      const isNumericId = /^\d+$/.test(value) && parseInt(value, 10) > 0;
-      if (isSlug || isNumericId) return true;
-      throw new Error('Identifier must be a valid slug or a positive numeric ID.');
-    }),
+  param('identifier').isString().trim().notEmpty().withMessage('Course identifier is required.'),
+  // Consider adding length or regex validation if your slugs/IDs have a pattern
 ];
 
 const getLessonAccessValidation = [
-  param('courseIdentifier').isString().notEmpty().withMessage('Course identifier is required.'),
-  param('lessonIdentifier').isString().notEmpty().withMessage('Lesson identifier is required.'),
+  param('courseIdentifier').isString().trim().notEmpty().withMessage('Course identifier is required.'),
+  param('lessonIdentifier').isString().trim().notEmpty().withMessage('Lesson identifier is required.'),
 ];
 
-// --- Route Definitions ---
+// Validation for the new Get Course Reviews route
+const getCourseReviewsValidation = [
+  param('courseId')
+    .trim()
+    .notEmpty().withMessage('Course ID parameter is required.')
+    .isNumeric().withMessage('Course ID must be a numeric value.')
+    .toInt(), // Converts to integer, important for Prisma if ID is Int
+  query('page')
+    .optional()
+    .isInt({ min: 1 }).withMessage('Page number must be a positive integer.')
+    .toInt(),
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 50 }).withMessage('Limit must be an integer between 1 and 50.') // Max 50 reviews per page
+    .toInt(),
+];
 
-console.log("--- DEBUGGING Route: GET / ---");
-console.log("1. typeof getAllCoursesQueryValidation (is array):", Array.isArray(getAllCoursesQueryValidation));
-if(Array.isArray(getAllCoursesQueryValidation)) {
-  getAllCoursesQueryValidation.forEach((v, i) => console.log(`   - typeof getAllCoursesQueryValidation[${i}]:`, typeof v));
-}
-console.log("2. typeof handleValidationErrors:", typeof handleValidationErrors);
-console.log("3. typeof getAllPublishedCourses:", typeof getAllPublishedCourses);
+
+// --- Route Definitions ---
 router.get(
   '/',
-  ...getAllCoursesQueryValidation,
+  getAllCoursesQueryValidation, // Pass the array of validation middlewares
   handleValidationErrors,
   getAllPublishedCourses
 );
-console.log("--- FINISHED DEBUGGING Route: GET / ---");
-
-
-console.log("\n--- DEBUGGING Route: GET /:identifier ---");
-const route_identifier_arg1_auth = authMiddleware(true);
-console.log("1. typeof authMiddleware(true):", typeof route_identifier_arg1_auth);
-
-const route_identifier_arg2_validation = getCourseByIdentifierValidation;
-console.log("2. typeof getCourseByIdentifierValidation (is array):", Array.isArray(route_identifier_arg2_validation));
-if(Array.isArray(route_identifier_arg2_validation)) {
-  route_identifier_arg2_validation.forEach((v, i) => console.log(`   - typeof getCourseByIdentifierValidation[${i}]:`, typeof v));
-}
-
-const route_identifier_arg3_handleErrors = handleValidationErrors;
-console.log("3. typeof handleValidationErrors:", typeof route_identifier_arg3_handleErrors);
-
-const route_identifier_arg4_controller = getCourseBySlugOrId;
-console.log("4. typeof getCourseBySlugOrId:", typeof route_identifier_arg4_controller);
 
 router.get(
   '/:identifier',
-  route_identifier_arg1_auth,
-  ...(Array.isArray(route_identifier_arg2_validation) ? route_identifier_arg2_validation : []), // Spread only if it's an array
-  route_identifier_arg3_handleErrors,
-  route_identifier_arg4_controller
+  authMiddleware(true), // Optional authentication
+  getCourseByIdentifierValidation, // Pass the array of validation middlewares
+  handleValidationErrors,
+  getCourseBySlugOrId
 );
-console.log("--- FINISHED DEBUGGING Route: GET /:identifier ---");
 
-
-console.log("\n--- DEBUGGING Route: GET /:courseIdentifier/lessons/:lessonIdentifier ---");
-const route_lesson_arg1_auth = authMiddleware(true);
-console.log("1. typeof authMiddleware(true) for lesson route:", typeof route_lesson_arg1_auth);
-
-const route_lesson_arg2_validation = getLessonAccessValidation;
-console.log("2. typeof getLessonAccessValidation (is array):", Array.isArray(route_lesson_arg2_validation));
-if(Array.isArray(route_lesson_arg2_validation)) {
-  route_lesson_arg2_validation.forEach((v, i) => console.log(`   - typeof getLessonAccessValidation[${i}]:`, typeof v));
-}
-const route_lesson_arg3_handleErrors = handleValidationErrors;
-console.log("3. typeof handleValidationErrors for lesson route:", typeof route_lesson_arg3_handleErrors);
-
-const route_lesson_arg4_controller = getLessonDetails;
-console.log("4. typeof getLessonDetails:", typeof route_lesson_arg4_controller);
+// --- NEW ROUTE FOR COURSE REVIEWS ---
+router.get(
+  '/:courseId/reviews',
+  getCourseReviewsValidation,   // Pass the array of validation middlewares
+  handleValidationErrors,
+  getCourseReviews
+);
+// Note: Reviews are typically public. If auth is needed for some reason, add authMiddleware(true).
 
 router.get(
   '/:courseIdentifier/lessons/:lessonIdentifier',
-  route_lesson_arg1_auth,
-  ...(Array.isArray(route_lesson_arg2_validation) ? route_lesson_arg2_validation : []), // Spread only if it's an array
-  route_lesson_arg3_handleErrors,
-  route_lesson_arg4_controller
+  authMiddleware(true), // Requires authentication
+  getLessonAccessValidation, // Pass the array of validation middlewares
+  handleValidationErrors,
+  getLessonDetails
 );
-console.log("--- FINISHED DEBUGGING Route: GET /:courseIdentifier/lessons/:lessonIdentifier ---");
 
 export default router;

@@ -1,10 +1,7 @@
 // client/src/pages/admin/AdminCourseCreate/AdminCourseCreate.jsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { useEditor, EditorContent } from '@tiptap/react'; // For lesson content if using Tiptap
-import StarterKit from '@tiptap/starter-kit';
-import Placeholder from '@tiptap/extension-placeholder';
 
 import {
   createAdminCourse,
@@ -18,19 +15,38 @@ import {
   selectIsLoadingCategoriesForForm,
   selectIsLoadingInstructorsForForm,
   clearCreateCourseStatus,
-} from '../../../features/admin/adminCoursesSlice.js'; // Adjust path
+} from '../../../features/admin/adminCoursesSlice.js';
 
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 import Textarea from '../../../components/common/Textarea';
 import Select from '../../../components/common/Select';
 import Spinner from '../../../components/common/Spinner';
-import './AdminCourseCreate.css'; // We'll create this
+import './AdminCourseCreate.css';
 import { FaPlus, FaTrash, FaSave, FaTimes, FaCheckCircle, FaArrowUp, FaArrowDown } from 'react-icons/fa';
-import { ContentStatus, Difficulty, LessonType } from '@prisma/client'; // For dropdown options - ensure this import works
 
-// Helper to generate unique IDs for new modules/lessons on client-side before saving
-const generateClientId = () => `client_${Math.random().toString(36).substr(2, 9)}`;
+// Frontend equivalent of Prisma enums for dropdowns
+const ContentStatusOptions = [
+  { value: 'DRAFT', label: 'Draft' },
+  { value: 'PUBLISHED', label: 'Published' },
+  { value: 'ARCHIVED', label: 'Archived' },
+];
+const DifficultyOptions = [
+  { value: 'BEGINNER', label: 'Beginner' },
+  { value: 'INTERMEDIATE', label: 'Intermediate' },
+  { value: 'ADVANCED', label: 'Advanced' },
+  { value: 'ALL_LEVELS', label: 'All Levels' },
+];
+const LessonTypeOptions = [
+  { value: 'TEXT', label: 'Text' }, // Made TEXT default for simplicity
+  { value: 'VIDEO', label: 'Video' },
+  { value: 'QUIZ', label: 'Quiz' },
+  { value: 'DPP', label: 'DPP' },
+  { value: 'ASSIGNMENT', label: 'Assignment' },
+  { value: 'EXTERNAL_LINK', label: 'External Link' },
+];
+
+const generateClientId = () => `client_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
 
 const AdminCourseCreate = () => {
   const navigate = useNavigate();
@@ -44,92 +60,82 @@ const AdminCourseCreate = () => {
   const isLoadingCategories = useSelector(selectIsLoadingCategoriesForForm);
   const isLoadingInstructors = useSelector(selectIsLoadingInstructorsForForm);
 
-  // --- Form State ---
   const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState(0);
   const [categoryId, setCategoryId] = useState('');
   const [instructorId, setInstructorId] = useState('');
-  const [difficulty, setDifficulty] = useState(Difficulty.ALL_LEVELS);
+  const [difficulty, setDifficulty] = useState(DifficultyOptions[3].value);
   const [language, setLanguage] = useState('English');
-  const [status, setStatus] = useState(ContentStatus.DRAFT);
+  const [status, setStatus] = useState(ContentStatusOptions[0].value);
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [isFeatured, setIsFeatured] = useState(false);
+  const [modules, setModules] = useState([]);
 
-  const [modules, setModules] = useState([
-    // { clientId: generateClientId(), title: '', order: 0, lessons: [{ clientId: generateClientId(), title: '', order: 0, type: LessonType.TEXT, content: '' }] }
-  ]);
-
-  // --- Fetch data for dropdowns ---
   useEffect(() => {
     dispatch(fetchCategoriesForForm());
     dispatch(fetchInstructorsForForm());
-    return () => { // Cleanup on unmount
+    return () => {
         dispatch(clearCreateCourseStatus());
     }
   }, [dispatch]);
 
-  // --- Success/Error Handling & Redirect ---
   useEffect(() => {
     if (createStatus === 'succeeded' && successMessage) {
       const timer = setTimeout(() => {
-        dispatch(clearCreateCourseStatus()); // Clear message
+        dispatch(clearCreateCourseStatus());
         navigate('/admin/courses');
       }, 2000);
       return () => clearTimeout(timer);
     }
   }, [createStatus, successMessage, dispatch, navigate]);
 
-
-  // --- Module Handlers ---
   const handleAddModule = () => {
-    setModules([
-      ...modules,
-      { clientId: generateClientId(), title: '', order: modules.length, lessons: [] },
+    setModules(prevModules => [
+      ...prevModules,
+      { clientId: generateClientId(), title: '', order: prevModules.length, lessons: [] },
     ]);
   };
 
   const handleModuleChange = (moduleClientId, field, value) => {
-    setModules(
-      modules.map((mod) =>
+    setModules(prevModules =>
+      prevModules.map(mod =>
         mod.clientId === moduleClientId ? { ...mod, [field]: value } : mod
       )
     );
   };
 
   const handleRemoveModule = (moduleClientId) => {
-    setModules(modules.filter((mod) => mod.clientId !== moduleClientId));
+    setModules(prevModules => 
+        prevModules.filter(mod => mod.clientId !== moduleClientId)
+                   .map((mod, index) => ({ ...mod, order: index }))
+    );
   };
-
+  
   const moveModule = (index, direction) => {
-    const newModules = [...modules];
-    const mod = newModules[index];
-    if (direction === 'up' && index > 0) {
-        newModules.splice(index, 1);
-        newModules.splice(index - 1, 0, mod);
-    } else if (direction === 'down' && index < newModules.length - 1) {
-        newModules.splice(index, 1);
-        newModules.splice(index + 1, 0, mod);
-    }
-    // Re-assign order based on new position
-    setModules(newModules.map((m, i) => ({ ...m, order: i })));
+    setModules(prevModules => {
+        const newModules = [...prevModules];
+        const mod = newModules[index];
+        if (direction === 'up' && index > 0) {
+            newModules.splice(index, 1);
+            newModules.splice(index - 1, 0, mod);
+        } else if (direction === 'down' && index < newModules.length - 1) {
+            newModules.splice(index, 1);
+            newModules.splice(index + 1, 0, mod);
+        }
+        return newModules.map((m, i) => ({ ...m, order: i }));
+    });
   };
 
-
-  // --- Lesson Handlers ---
   const handleAddLesson = (moduleClientId) => {
-    setModules(
-      modules.map((mod) => {
+    setModules(prevModules =>
+      prevModules.map(mod => {
         if (mod.clientId === moduleClientId) {
           const newLesson = {
-            clientId: generateClientId(),
-            title: '',
-            order: mod.lessons.length,
-            type: LessonType.TEXT,
-            content: '', // For TEXT type
-            videoUrl: '', // For VIDEO type
-            videoDuration: 0, // For VIDEO type
-            isFreePreview: false,
+            clientId: generateClientId(), title: '', order: mod.lessons.length,
+            type: LessonTypeOptions[0].value, // Default to TEXT
+            content: '', videoUrl: '', videoDuration: 0, isFreePreview: false,
           };
           return { ...mod, lessons: [...mod.lessons, newLesson] };
         }
@@ -139,12 +145,12 @@ const AdminCourseCreate = () => {
   };
 
   const handleLessonChange = (moduleClientId, lessonClientId, field, value) => {
-    setModules(
-      modules.map((mod) => {
+    setModules(prevModules =>
+      prevModules.map(mod => {
         if (mod.clientId === moduleClientId) {
           return {
             ...mod,
-            lessons: mod.lessons.map((lesson) =>
+            lessons: mod.lessons.map(lesson =>
               lesson.clientId === lessonClientId ? { ...lesson, [field]: value } : lesson
             ),
           };
@@ -155,12 +161,13 @@ const AdminCourseCreate = () => {
   };
 
   const handleRemoveLesson = (moduleClientId, lessonClientId) => {
-    setModules(
-      modules.map((mod) => {
+    setModules(prevModules =>
+      prevModules.map(mod => {
         if (mod.clientId === moduleClientId) {
           return {
             ...mod,
-            lessons: mod.lessons.filter((lesson) => lesson.clientId !== lessonClientId),
+            lessons: mod.lessons.filter(lesson => lesson.clientId !== lessonClientId)
+                                 .map((l, index) => ({ ...l, order: index })),
           };
         }
         return mod;
@@ -168,59 +175,48 @@ const AdminCourseCreate = () => {
     );
   };
 
-    const moveLesson = (moduleClientId, lessonIndex, direction) => {
-        setModules(modules.map(mod => {
-            if (mod.clientId === moduleClientId) {
-                const newLessons = [...mod.lessons];
-                const lesson = newLessons[lessonIndex];
-                if (direction === 'up' && lessonIndex > 0) {
-                    newLessons.splice(lessonIndex, 1);
-                    newLessons.splice(lessonIndex - 1, 0, lesson);
-                } else if (direction === 'down' && lessonIndex < newLessons.length - 1) {
-                    newLessons.splice(lessonIndex, 1);
-                    newLessons.splice(lessonIndex + 1, 0, lesson);
-                }
-                return { ...mod, lessons: newLessons.map((l, i) => ({ ...l, order: i })) };
+  const moveLesson = (moduleClientId, lessonIndex, direction) => {
+    setModules(prevModules => prevModules.map(mod => {
+        if (mod.clientId === moduleClientId) {
+            const newLessons = [...mod.lessons];
+            const lesson = newLessons[lessonIndex];
+            if (direction === 'up' && lessonIndex > 0) {
+                newLessons.splice(lessonIndex, 1);
+                newLessons.splice(lessonIndex - 1, 0, lesson);
+            } else if (direction === 'down' && lessonIndex < newLessons.length - 1) {
+                newLessons.splice(lessonIndex, 1);
+                newLessons.splice(lessonIndex + 1, 0, lesson);
             }
-            return mod;
-        }));
-    };
+            return { ...mod, lessons: newLessons.map((l, i) => ({ ...l, order: i })) };
+        }
+        return mod;
+    }));
+  };
 
-
-  // --- Form Submission ---
   const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(clearCreateCourseStatus()); // Clear previous errors/success
-
+    dispatch(clearCreateCourseStatus());
     const courseData = {
-      title: title.trim(),
-      description: description.trim(),
+      title: title.trim(), slug: slug.trim(), description: description.trim(),
       price: parseFloat(price) || 0,
       categoryId: categoryId ? parseInt(categoryId) : null,
       instructorId: instructorId ? parseInt(instructorId) : null,
-      difficulty,
-      language: language.trim(),
-      status,
-      thumbnailUrl: thumbnailUrl.trim() || null,
-      isFeatured,
+      difficulty, language: language.trim(), status,
+      thumbnailUrl: thumbnailUrl.trim() || null, isFeatured,
       modules: modules.map(mod => ({
-        title: mod.title.trim(),
-        order: mod.order,
+        title: mod.title.trim(), order: mod.order,
         lessons: mod.lessons.map(lesson => ({
-          title: lesson.title.trim(),
-          order: lesson.order,
-          type: lesson.type,
-          content: lesson.type === LessonType.TEXT ? lesson.content.trim() : null,
-          videoUrl: lesson.type === LessonType.VIDEO ? lesson.videoUrl.trim() : null,
-          videoDuration: lesson.type === LessonType.VIDEO ? (parseInt(lesson.videoDuration) || 0) : null,
+          title: lesson.title.trim(), order: lesson.order, type: lesson.type,
+          slug: lesson.slug ? lesson.slug.trim() : undefined, // Optional slug from frontend
+          content: lesson.type === 'TEXT' ? lesson.content.trim() : null,
+          videoUrl: lesson.type === 'VIDEO' ? lesson.videoUrl.trim() : null,
+          videoDuration: lesson.type === 'VIDEO' ? (parseInt(lesson.videoDuration) || 0) : null,
           isFreePreview: lesson.isFreePreview,
         })),
       })),
     };
-    console.log("Submitting Course Data:", courseData);
     dispatch(createAdminCourse(courseData));
   };
-
 
   if (isLoadingCategories || isLoadingInstructors) {
     return <div className="admin-page-container page-loading-spinner"><Spinner label="Loading form data..." /></div>;
@@ -229,7 +225,6 @@ const AdminCourseCreate = () => {
   return (
     <div className="admin-page-container admin-course-create-form">
       <h1 className="admin-page-title">Create New Course</h1>
-
       {createStatus === 'failed' && createError && (
         <div className="admin-form-error form-level-error">
           <h4>Failed to Create Course:</h4>
@@ -243,12 +238,11 @@ const AdminCourseCreate = () => {
       {createStatus === 'succeeded' && successMessage && (
         <p className="admin-form-success form-level-success"><FaCheckCircle /> {successMessage}</p>
       )}
-
-
       <form onSubmit={handleSubmit} className="course-creation-form">
         <fieldset className="form-section">
           <legend className="section-title">Basic Information</legend>
           <Input label="Course Title" id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+          <Input label="Custom Slug (Optional)" id="slug" value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="e.g., my-awesome-course" />
           <Textarea label="Course Description" id="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={4} />
           <div className="form-row">
             <Input label="Price (INR)" id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} min="0" step="0.01" />
@@ -264,10 +258,10 @@ const AdminCourseCreate = () => {
           </div>
           <div className="form-row">
             <Select label="Difficulty" id="difficulty" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}
-              options={Object.values(Difficulty).map(d => ({ value: d, label: d.replace('_', ' ') }))}
+              options={DifficultyOptions}
             />
             <Select label="Status" id="status" value={status} onChange={(e) => setStatus(e.target.value)}
-              options={Object.values(ContentStatus).map(s => ({ value: s, label: s.charAt(0) + s.slice(1).toLowerCase() }))}
+              options={ContentStatusOptions}
             />
           </div>
           <Input label="Thumbnail Image URL (optional)" id="thumbnailUrl" type="url" value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)} placeholder="https://example.com/image.jpg"/>
@@ -307,13 +301,19 @@ const AdminCourseCreate = () => {
                       onChange={(e) => handleLessonChange(module.clientId, lesson.clientId, 'title', e.target.value)}
                       required
                     />
+                     <Input
+                      label={`Lesson Slug (Optional)`}
+                      value={lesson.slug || ''}
+                      onChange={(e) => handleLessonChange(module.clientId, lesson.clientId, 'slug', e.target.value)}
+                      placeholder="auto-generated if blank"
+                    />
                     <Select
                       label="Lesson Type"
                       value={lesson.type}
                       onChange={(e) => handleLessonChange(module.clientId, lesson.clientId, 'type', e.target.value)}
-                      options={Object.values(LessonType).map(lt => ({ value: lt, label: lt.replace('_', ' ') }))}
+                      options={LessonTypeOptions}
                     />
-                    {lesson.type === LessonType.TEXT && (
+                    {lesson.type === 'TEXT' && (
                       <Textarea
                         label="Lesson Content (Text)"
                         value={lesson.content}
@@ -321,7 +321,7 @@ const AdminCourseCreate = () => {
                         rows={5}
                       />
                     )}
-                    {lesson.type === LessonType.VIDEO && (
+                    {lesson.type === 'VIDEO' && (
                       <>
                         <Input
                           label="Video URL"
@@ -376,9 +376,3 @@ const AdminCourseCreate = () => {
 };
 
 export default AdminCourseCreate;
-
-// Note: For Tiptap editor in lessons, you would need a more complex state management
-// if each lesson had its own Tiptap instance. This example uses simple textarea for TEXT lessons.
-// If using Tiptap for each lesson:
-// - Each lesson object in state would need its own `editor` instance or content string.
-// - You'd map over lessons and render an <EditorContent editor={lesson.editorInstance} /> for each.

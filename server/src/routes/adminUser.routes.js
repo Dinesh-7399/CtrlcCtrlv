@@ -1,23 +1,23 @@
 // server/src/routes/adminUser.routes.js
 import express from 'express';
 import { body, param, query } from 'express-validator';
+// Import enums directly
+import { Role, UserStatus } from '@prisma/client'; // <<< CORRECT: Direct import
 import {
   getAllUsersForAdmin,
   getUserByIdForAdmin,
   updateUserByAdmin,
   deleteUserByAdmin,
+  // You may need to add createUserByAdmin if that's a feature
 } from '../controllers/adminUserController.js';
 import { authMiddleware, adminMiddleware } from '../middlewares/authMiddleware.js';
 import { handleValidationErrors } from '../middlewares/validationResultHandler.js';
-import { Role, UserStatus } from '@prisma/client'; // Import enums for validation
 
 const router = express.Router();
 
-// All routes in this file are for admins and should be protected
-router.use(authMiddleware, adminMiddleware);
+router.use(authMiddleware(), adminMiddleware); // Ensures only authenticated admins can access these routes
 
 // --- Validation Rules ---
-
 const userIdValidation = [
   param('userId').isInt({ gt: 0 }).withMessage('User ID must be a positive integer.'),
 ];
@@ -33,65 +33,66 @@ const updateUserValidationRules = [
     .isEmail().normalizeEmail().withMessage('Please provide a valid email address if updating.'),
   body('role')
     .optional()
-    .isIn(Object.values(Role))
-    .withMessage(`Invalid role. Must be one of: ${Object.values(Role).join(', ')}`),
+    .custom((value) => {
+      if (value === undefined || value === null || value === '') return true;
+      // Use the directly imported Role enum
+      if (!Role || typeof Role !== 'object') {
+        console.error("VALIDATOR RUNTIME CHECK: Role enum (direct import) is NOT available.");
+        throw new Error('Server configuration error: Role validation unavailable.');
+      }
+      if (!Object.values(Role).includes(value)) {
+        throw new Error(`Invalid role. Must be one of: ${Object.values(Role).join(', ')}`);
+      }
+      return true;
+    }),
   body('status')
     .optional()
-    .isIn(Object.values(UserStatus))
-    .withMessage(`Invalid status. Must be one of: ${Object.values(UserStatus).join(', ')}`),
-  // profileData is an object, specific fields within it can be validated if needed,
-  // but for now, we'll just check if it's an object if provided.
-  body('profileData')
-    .optional()
-    .isObject().withMessage('Profile data must be an object.'),
-  body('profileData.bio').optional({checkFalsy: true}).isString().trim().isLength({max: 1000}).withMessage('Bio cannot exceed 1000 characters.'),
-  body('profileData.avatarUrl').optional({checkFalsy: true}).isURL().withMessage('Invalid avatar URL.'),
-  body('profileData.headline').optional({checkFalsy: true}).isString().trim().isLength({max: 150}).withMessage('Headline cannot exceed 150 characters.'),
-  body('profileData.websiteUrl').optional({checkFalsy: true}).isURL().withMessage('Invalid website URL.'),
-  body('profileData.socialLinks').optional().isObject().withMessage('Social links must be an object.'),
-  body('profileData.experience').optional().isArray().withMessage('Experience must be an array.'),
-  body('profileData.education').optional().isArray().withMessage('Education must be an array.'),
-  body('profileData.projects').optional().isArray().withMessage('Projects must be an array.'),
+    .custom((value) => {
+      if (value === undefined || value === null || value === '') return true;
+      // Use the directly imported UserStatus enum
+      if (!UserStatus || typeof UserStatus !== 'object') {
+        console.error("VALIDATOR RUNTIME CHECK: UserStatus enum (direct import) is NOT available.");
+        throw new Error('Server configuration error: UserStatus validation unavailable.');
+      }
+      if (!Object.values(UserStatus).includes(value)) {
+        throw new Error(`Invalid status. Must be one of: ${Object.values(UserStatus).join(', ')}`);
+      }
+      return true;
+    }),
+  body('profileData').optional().isObject().withMessage('Profile data must be an object.'),
+  body('profileData.bio').optional({ checkFalsy: true }).isString().trim().isLength({ max: 500 }).withMessage('Bio cannot exceed 500 characters.'),
+  body('profileData.website').optional({ checkFalsy: true }).isURL().withMessage('Invalid website URL.'),
+  body('profileData.avatarUrl').optional({ checkFalsy: true }).isURL().withMessage('Invalid avatar URL.'),
+  body('profileData.headline').optional({ checkFalsy: true }).isString().trim().isLength({ max: 150 }).withMessage('Headline cannot exceed 150 characters.'),
 ];
 
 const getAllUsersAdminValidation = [
-    query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer.'),
-    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100.'),
-    query('role').optional().isIn(Object.values(Role)).withMessage('Invalid role filter.'),
-    query('status').optional().isIn(Object.values(UserStatus)).withMessage('Invalid status filter.'),
+    query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer.').toInt(),
+    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100.').toInt(),
+    query('role').optional().toUpperCase().custom((value) => {
+        if (value === undefined || value === null || value === '') return true;
+        if (!Role) throw new Error('Server Error: Role enum not available.');
+        if (!Object.values(Role).includes(value)) throw new Error('Invalid role filter.');
+        return true;
+    }),
+    query('status').optional().toUpperCase().custom((value) => {
+        if (value === undefined || value === null || value === '') return true;
+        if (!UserStatus) throw new Error('Server Error: UserStatus enum not available.');
+        if (!Object.values(UserStatus).includes(value)) throw new Error('Invalid status filter.');
+        return true;
+    }),
     query('searchTerm').optional().isString().trim(),
-    query('sortBy').optional().isString().isIn(['createdAt_desc', 'createdAt_asc', 'name_asc', 'name_desc', 'email_asc', 'email_desc', 'role_asc', 'role_desc']),
+    query('sortBy').optional().isString().isIn(['createdAt_desc', 'createdAt_asc', 'name_asc', 'name_desc', 'email_asc', 'email_desc', 'role_asc', 'role_desc'])
+        .withMessage('Invalid sort option.'),
 ];
 
-
 // --- Route Definitions ---
-
-/**
- * @route   GET /api/admin/users
- * @desc    Admin: Get all users (with filters and pagination)
- * @access  Private (Admin)
- */
 router.get('/', getAllUsersAdminValidation, handleValidationErrors, getAllUsersForAdmin);
-
-/**
- * @route   GET /api/admin/users/:userId
- * @desc    Admin: Get a single user by ID
- * @access  Private (Admin)
- */
 router.get('/:userId', userIdValidation, handleValidationErrors, getUserByIdForAdmin);
-
-/**
- * @route   PUT /api/admin/users/:userId
- * @desc    Admin: Update a user's details (role, status, name, email, profile)
- * @access  Private (Admin)
- */
 router.put('/:userId', userIdValidation, updateUserValidationRules, handleValidationErrors, updateUserByAdmin);
-
-/**
- * @route   DELETE /api/admin/users/:userId
- * @desc    Admin: Delete a user
- * @access  Private (Admin)
- */
 router.delete('/:userId', userIdValidation, handleValidationErrors, deleteUserByAdmin);
+// Consider adding a POST route for creating users if admins can do that, e.g.:
+// router.post('/', createUserValidationRules, handleValidationErrors, createUserByAdmin);
+
 
 export default router;

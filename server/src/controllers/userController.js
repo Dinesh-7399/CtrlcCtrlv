@@ -4,11 +4,6 @@ import ApiError from '../utils/apiError.js';
 import ApiResponse from '../utils/apiResponse.js';
 import { validationResult } from 'express-validator';
 
-/**
- * @desc    Get a user's public profile (especially for instructors)
- * @route   GET /api/users/:userId/profile
- * @access  Public
- */
 export const getUserPublicProfile = async (req, res, next) => {
   try {
     const { userId } = req.params;
@@ -23,8 +18,8 @@ export const getUserPublicProfile = async (req, res, next) => {
       select: {
         id: true,
         name: true,
-        email: false, // Typically don't expose email publicly unless intended
-        role: true,   // To confirm if it's an instructor, etc.
+        email: false, 
+        role: true,   
         profile: {
           select: {
             bio: true,
@@ -37,19 +32,17 @@ export const getUserPublicProfile = async (req, res, next) => {
             projects: true,
           },
         },
-        // Optionally, include courses taught if this is for an instructor profile
         coursesTeaching: {
-          where: { status: 'PUBLISHED' }, // Only show published courses
+          where: { status: 'PUBLISHED' }, 
           select: {
             id: true,
             title: true,
             slug: true,
             thumbnailUrl: true,
             category: { select: { name: true, slug: true } },
-            // _count: { select: { enrollments: true } } // Optional: student count per course
           },
           orderBy: { createdAt: 'desc' },
-          take: 6, // Limit number of courses shown on profile, or paginate
+          take: 6, 
         },
       },
     });
@@ -57,21 +50,14 @@ export const getUserPublicProfile = async (req, res, next) => {
     if (!userWithProfile) {
       return next(new ApiError(404, `User with ID ${numericUserId} not found.`));
     }
-
-    // If this route is specifically for instructors, you might add a role check:
-    // if (userWithProfile.role !== 'INSTRUCTOR') {
-    //   return next(new ApiError(404, `Instructor with ID ${numericUserId} not found.`));
-    // }
     
-    // Flatten the profile data for easier consumption
     const publicProfile = {
         id: userWithProfile.id,
         name: userWithProfile.name,
         role: userWithProfile.role,
-        ...(userWithProfile.profile || {}), // Spread profile fields, or empty object if no profile
+        ...(userWithProfile.profile || {}), 
         coursesTaught: userWithProfile.coursesTeaching || [],
     };
-
 
     return res
       .status(200)
@@ -86,43 +72,32 @@ export const getUserPublicProfile = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Update the current authenticated user's profile information
- * @route   PUT /api/users/me/profile  (or /api/users/me/settings for all user settings)
- * @access  Private (Authenticated Users via authMiddleware)
- * @body    { name?: string, bio?: string, avatarUrl?: string, headline?: string, websiteUrl?: string, socialLinks?: object, experience?: array, education?: array, projects?: array }
- */
 export const updateMyProfile = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return next(new ApiError(400, 'Validation failed', errors.array().map(e => e.msg)));
   }
 
-  const userId = req.user.userId; // From authMiddleware
+  const userId = req.user.id; // CORRECTED
   const {
-    name, // From User model
-    // Fields for UserProfile model
-    bio,
-    avatarUrl, // Assume this is a URL string; actual file upload handled by uploadController
-    headline,
-    websiteUrl,
-    socialLinks, // Expected to be an object e.g., { linkedin: "...", github: "..." }
-    experience,  // Expected to be an array of objects
-    education,   // Expected to be an array of objects
-    projects,    // Expected to be an array of objects
-  } = req.body;
+    name, 
+  } = req.body; // Direct fields for User model
+
+  const { // Fields for UserProfile model, potentially nested under 'profileData' or at root
+    bio, avatarUrl, headline, websiteUrl, socialLinks, 
+    experience, education, projects
+  } = req.body.profileData || req.body;
+
 
   try {
-    // Prepare data for User update (only name for now)
     const userDataToUpdate = {};
-    if (typeof name === 'string') {
+    if (name !== undefined && typeof name === 'string') { 
       userDataToUpdate.name = name.trim();
     }
 
-    // Prepare data for UserProfile update/create
     const userProfileDataToUpdate = {};
     if (typeof bio === 'string') userProfileDataToUpdate.bio = bio;
-    if (typeof avatarUrl === 'string') userProfileDataToUpdate.avatarUrl = avatarUrl; // Store URL
+    if (typeof avatarUrl === 'string') userProfileDataToUpdate.avatarUrl = avatarUrl;
     if (typeof headline === 'string') userProfileDataToUpdate.headline = headline;
     if (typeof websiteUrl === 'string') userProfileDataToUpdate.websiteUrl = websiteUrl;
     if (typeof socialLinks === 'object' && socialLinks !== null) userProfileDataToUpdate.socialLinks = socialLinks;
@@ -130,20 +105,18 @@ export const updateMyProfile = async (req, res, next) => {
     if (Array.isArray(education)) userProfileDataToUpdate.education = education;
     if (Array.isArray(projects)) userProfileDataToUpdate.projects = projects;
 
-    // Use a transaction to update User and UserProfile together
     const updatedUser = await prisma.$transaction(async (tx) => {
       let userResult;
       if (Object.keys(userDataToUpdate).length > 0) {
         userResult = await tx.user.update({
           where: { id: userId },
           data: userDataToUpdate,
-          select: { id: true, name: true, email: true, role: true } // Select basic info
+          select: { id: true, name: true, email: true, role: true, status: true, createdAt: true }
         });
       } else {
-        // If only profile is being updated, fetch the user to return consistent data
         userResult = await tx.user.findUnique({
           where: { id: userId },
-          select: { id: true, name: true, email: true, role: true }
+          select: { id: true, name: true, email: true, role: true, status: true, createdAt: true }
         });
       }
 
@@ -168,11 +141,14 @@ export const updateMyProfile = async (req, res, next) => {
       return { ...userResult, profile: profileResult || {} };
     });
     
+    // Ensure the response structure matches what the frontend (UsersSlice) expects
     const responseUser = {
         id: updatedUser.id,
         name: updatedUser.name,
         email: updatedUser.email,
         role: updatedUser.role,
+        status: updatedUser.status, // Ensure status is part of the response
+        createdAt: updatedUser.createdAt, // Ensure createdAt is part of the response
         bio: updatedUser.profile?.bio,
         avatarUrl: updatedUser.profile?.avatarUrl,
         headline: updatedUser.profile?.headline,
@@ -181,8 +157,9 @@ export const updateMyProfile = async (req, res, next) => {
         experience: updatedUser.profile?.experience,
         education: updatedUser.profile?.education,
         projects: updatedUser.profile?.projects,
+        // Include notificationPreferences if they are part of the User or UserProfile model directly
+        // notificationPreferences: updatedUser.profile?.notificationPreferences || updatedUser.notificationPreferences
     };
-
 
     return res
       .status(200)
@@ -190,11 +167,7 @@ export const updateMyProfile = async (req, res, next) => {
 
   } catch (error) {
     console.error('Error updating user profile:', error);
-    if (error instanceof ApiError) return next(error); // Re-throw ApiError
+    if (error instanceof ApiError) return next(error);
     next(new ApiError(500, 'Failed to update profile.', [error.message]));
   }
 };
-
-// Note: User Deletion is a sensitive operation.
-// It might be handled by an adminController or have more stringent checks.
-// For self-deletion, it might involve password confirmation.

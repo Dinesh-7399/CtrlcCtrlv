@@ -1,6 +1,8 @@
 // server/src/routes/adminCourse.routes.js
 import express from 'express';
 import { body, param, query } from 'express-validator';
+// Import enums directly
+import { Difficulty, ContentStatus, LessonType } from '@prisma/client';
 import {
   createCourse,
   getAllCoursesForAdmin,
@@ -10,21 +12,6 @@ import {
 } from '../controllers/adminCourseController.js';
 import { authMiddleware, adminMiddleware } from '../middlewares/authMiddleware.js';
 import { handleValidationErrors } from '../middlewares/validationResultHandler.js';
-import { Prisma } from '@prisma/client'; // Import Prisma namespace
-
-// --- DEBUGGING PRISMA IMPORT AT MODULE LOAD ---
-// These logs will execute ONCE when your server starts and this file is loaded.
-console.log("\n--- adminCourse.routes.js LOADED BY SERVER ---");
-console.log("1. Type of 'Prisma' imported from '@prisma/client':", typeof Prisma);
-if (typeof Prisma === 'object' && Prisma !== null) {
-    console.log("2. Prisma.Difficulty available at module load:", Prisma.Difficulty ? 'Yes, Object' : 'No/Undefined', "- Value:", Prisma.Difficulty);
-    console.log("3. Prisma.LessonType available at module load:", Prisma.LessonType ? 'Yes, Object' : 'No/Undefined', "- Value:", Prisma.LessonType);
-    console.log("4. Prisma.ContentStatus available at module load:", Prisma.ContentStatus ? 'Yes, Object' : 'No/Undefined', "- Value:", Prisma.ContentStatus);
-} else {
-    console.log("2. 'Prisma' object itself is not available or not an object at module load.");
-}
-console.log("-------------------------------------------\n");
-
 
 const router = express.Router();
 
@@ -56,12 +43,11 @@ const baseCourseBodyValidation = [
     .optional()
     .custom((value) => {
         if (value === undefined || value === null || value === '') return true;
-        // This check happens during request validation
-        if (!Prisma.Difficulty || typeof Prisma.Difficulty !== 'object') {
-            console.error("VALIDATOR RUNTIME CHECK: Prisma.Difficulty enum is not available during validation execution.");
+        if (!Difficulty || typeof Difficulty !== 'object') {
+            console.error("VALIDATOR RUNTIME CHECK (Direct Import): Difficulty enum is NOT available.");
             throw new Error('Server configuration error: Difficulty levels unavailable for validation.');
         }
-        const validDifficulties = Object.values(Prisma.Difficulty);
+        const validDifficulties = Object.values(Difficulty);
         if (!validDifficulties.includes(value)) {
             throw new Error(`Invalid difficulty level. Must be one of: ${validDifficulties.join(', ')}`);
         }
@@ -75,11 +61,11 @@ const baseCourseBodyValidation = [
     .optional()
     .custom((value) => {
         if (value === undefined || value === null || value === '') return true;
-        if (!Prisma.ContentStatus || typeof Prisma.ContentStatus !== 'object') {
-            console.error("VALIDATOR RUNTIME CHECK: Prisma.ContentStatus enum is not available during validation execution.");
+        if (!ContentStatus || typeof ContentStatus !== 'object') {
+            console.error("VALIDATOR RUNTIME CHECK (Direct Import): ContentStatus enum is NOT available.");
             throw new Error('Server configuration error: Content statuses unavailable for validation.');
         }
-        const validStatuses = Object.values(Prisma.ContentStatus);
+        const validStatuses = Object.values(ContentStatus);
         if (!validStatuses.includes(value)) {
             throw new Error(`Invalid course status. Must be one of: ${validStatuses.join(', ')}`);
         }
@@ -98,19 +84,21 @@ const baseCourseBodyValidation = [
     .isLength({ min: 3, max: 200 }).withMessage('Slug must be between 3 and 200 characters.'),
   
   body('modules').optional().isArray().withMessage('Modules must be an array.'),
+  body('modules.*.id').optional().isInt({ gt: 0 }).withMessage('Existing module ID must be a positive integer.').toInt(),
   body('modules.*.title').if(body('modules').exists({checkNull: true})).trim().notEmpty().withMessage('Each module must have a title.'),
   body('modules.*.order').if(body('modules').exists({checkNull: true})).isInt({ min: 0 }).withMessage('Each module order must be a non-negative integer.').toInt(),
   body('modules.*.lessons').if(body('modules').exists({checkNull: true})).optional().isArray().withMessage('Module lessons must be an array.'),
 
+  body('modules.*.lessons.*.id').optional().isInt({ gt: 0 }).withMessage('Existing lesson ID must be a positive integer.').toInt(),
   body('modules.*.lessons.*.title').if(body('modules.*.lessons').exists({checkNull: true})).trim().notEmpty().withMessage('Each lesson must have a title.'),
   body('modules.*.lessons.*.order').if(body('modules.*.lessons').exists({checkNull: true})).isInt({ min: 0 }).withMessage('Each lesson order must be a non-negative integer.').toInt(),
   body('modules.*.lessons.*.type').if(body('modules.*.lessons').exists({checkNull: true})).optional().custom((value) => {
     if (value === undefined || value === null || value === '') return true;
-    if (!Prisma.LessonType || typeof Prisma.LessonType !== 'object') {
-      console.error("VALIDATOR RUNTIME CHECK: Prisma.LessonType enum is not available for nested lesson validation.");
+    if (!LessonType || typeof LessonType !== 'object') {
+      console.error("VALIDATOR RUNTIME CHECK (Direct Import): LessonType enum is NOT available for nested lesson.");
       throw new Error('Server configuration error: Lesson types unavailable for validation.');
     }
-    const validTypes = Object.values(Prisma.LessonType);
+    const validTypes = Object.values(LessonType);
     if (!validTypes.includes(value)) {
       throw new Error(`Invalid lesson type for nested lesson. Must be one of: ${validTypes.join(', ')}`);
     }
@@ -134,7 +122,7 @@ const createCourseValidationRules = [
 const updateCourseValidationRules = [
   ...baseCourseBodyValidation,
   body('instructorId')
-    .optional()
+    .optional() // Instructor ID can be changed, but doesn't have to be provided on every update
     .isInt({ gt: 0 }).withMessage('Instructor ID must be a positive integer if provided.')
     .toInt(),
 ];
@@ -144,11 +132,11 @@ const getAllCoursesAdminQueryValidation = [
     query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100.').toInt(),
     query('status').optional().toUpperCase().custom((value) => {
         if (value === undefined || value === null || value === '') return true;
-        if (!Prisma.ContentStatus || typeof Prisma.ContentStatus !== 'object') {
-            console.error("VALIDATOR RUNTIME CHECK: Prisma.ContentStatus enum is not available for query validation.");
+        if (!ContentStatus || typeof ContentStatus !== 'object') {
+            console.error("VALIDATOR RUNTIME CHECK (Direct Import): ContentStatus enum is NOT available for query validation.");
             throw new Error('Server configuration error: Content statuses unavailable for query validation.');
         }
-        const validStatuses = Object.values(Prisma.ContentStatus);
+        const validStatuses = Object.values(ContentStatus);
         if (!validStatuses.includes(value)) {
             throw new Error(`Invalid status filter. Must be one of: ${validStatuses.join(', ')}`);
         }
@@ -157,17 +145,16 @@ const getAllCoursesAdminQueryValidation = [
     query('categoryId').optional().isInt({ gt: 0 }).withMessage('Category ID filter must be a positive integer.').toInt(),
     query('instructorId').optional().isInt({ gt: 0 }).withMessage('Instructor ID filter must be a positive integer.').toInt(),
     query('searchTerm').optional().isString().trim(),
-    query('sortBy').optional().isString().isIn(['createdAt_desc', 'createdAt_asc', 'title_asc', 'title_desc', 'price_asc', 'price_desc', 'updatedAt_desc'])
-      .withMessage('Invalid sort option. Valid options are: createdAt_desc, createdAt_asc, title_asc, title_desc, price_asc, price_desc, updatedAt_desc'),
+    query('sortBy').optional().isString().trim().isIn(['createdAt_desc', 'createdAt_asc', 'title_asc', 'title_desc', 'price_asc', 'price_desc', 'updatedAt_desc'])
+      .withMessage('Invalid sort option.'),
 ];
 
 
 // --- Route Definitions ---
-
-router.post('/', ...createCourseValidationRules, handleValidationErrors, createCourse);
-router.get('/', ...getAllCoursesAdminQueryValidation, handleValidationErrors, getAllCoursesForAdmin);
-router.get('/:courseId', ...courseIdValidation, handleValidationErrors, getCourseByIdForAdmin);
-router.put('/:courseId', ...courseIdValidation, ...updateCourseValidationRules, handleValidationErrors, updateCourse);
-router.delete('/:courseId', ...courseIdValidation, handleValidationErrors, deleteCourse);
+router.post('/', createCourseValidationRules, handleValidationErrors, createCourse);
+router.get('/', getAllCoursesAdminQueryValidation, handleValidationErrors, getAllCoursesForAdmin);
+router.get('/:courseId', courseIdValidation, handleValidationErrors, getCourseByIdForAdmin);
+router.put('/:courseId', courseIdValidation, updateCourseValidationRules, handleValidationErrors, updateCourse);
+router.delete('/:courseId', courseIdValidation, handleValidationErrors, deleteCourse);
 
 export default router;

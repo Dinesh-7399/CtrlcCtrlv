@@ -1,5 +1,5 @@
 // client/src/pages/admin/AdminArticleEdit/AdminArticleEdit.jsx
-import React, { useState, useEffect, useCallback, useRef } from 'react'; // Added useRef
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -13,8 +13,8 @@ import {
   updateAdminArticle,
   uploadEditorImage,
   selectCurrentEditingArticle,
-  selectAdminArticleEditStatus,    // Corrected
-  selectAdminArticleEditError,     // Corrected
+  selectAdminArticleEditStatus,
+  selectAdminArticleEditError,
   selectAdminArticleSaveSuccessMessage,
   selectIsUploadingEditorImage,
   selectEditorImageUploadError,
@@ -32,7 +32,15 @@ import {
     FaSave, FaTimes, FaBold, FaItalic, FaStrikethrough, FaParagraph,
     FaListUl, FaListOl, FaCode, FaHeading, FaImage, FaLink, FaUnlink, FaCheckCircle
 } from 'react-icons/fa';
-// import { useAuth } from '../../../context/AuthContext.jsx'; // Not explicitly used for authorId if backend handles it
+
+// Frontend equivalent for ContentStatus enum
+const ContentStatusOptions = [
+  { value: 'DRAFT', label: 'Draft' },
+  { value: 'PUBLISHED', label: 'Published' },
+  { value: 'ARCHIVED', label: 'Archived' },
+];
+
+// MenuBar component remains the same as provided
 
 const MenuBar = ({ editor, onImageUpload }) => {
   if (!editor) { return null; }
@@ -108,47 +116,43 @@ const AdminArticleEdit = () => {
   const { articleId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  // const { user: adminUser } = useAuth(); // Needed if you set authorId client-side
 
   const articleForEdit = useSelector(selectCurrentEditingArticle);
-  const editStatus = useSelector(selectAdminArticleEditStatus); // Corrected
-  const saveError = useSelector(selectAdminArticleEditError);     // Corrected
+  const editStatus = useSelector(selectAdminArticleEditStatus);
+  const saveError = useSelector(selectAdminArticleEditError);
   const saveSuccessMessage = useSelector(selectAdminArticleSaveSuccessMessage);
   const isUploadingImage = useSelector(selectIsUploadingEditorImage);
   const imageUploadError = useSelector(selectEditorImageUploadError);
 
-  // Derive boolean states
-  const isLoading = editStatus === 'loading' || (articleId && editStatus === 'idle' && !articleForEdit); // isLoading true if fetching existing
+  const isLoading = editStatus === 'loading' || (articleId && editStatus === 'idle' && !articleForEdit);
   const isSaving = editStatus === 'saving';
-
 
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
-  const [content, setContentState] = useState('');
+  // content state for Tiptap is handled by editor.getHTML() on submit
   const [excerpt, setExcerpt] = useState('');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [tags, setTags] = useState('');
-  const [status, setStatus] = useState('DRAFT');
+  const [categoryId, setCategoryId] = useState(''); // Assuming categories will be fetched for a dropdown
+  const [tags, setTags] = useState(''); // Comma-separated string
+  const [status, setStatus] = useState('DRAFT'); // Default to DRAFT
   const [isFeatured, setIsFeatured] = useState(false);
   const [publishedAt, setPublishedAt] = useState('');
 
-  const [categories, setCategories] = useState([{ value: '', label: 'Select Category' }]);
+  // Placeholder for categories - fetch them similar to AdminCourseCreate
+  const [categoriesOptions, setCategoriesOptions] = useState([{ value: '', label: 'Select Category' }]);
+  // useEffect(() => { dispatch(fetchAdminCategoriesForArticleForm()); ... setCategoriesOptions }, [dispatch]);
+
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
-      Image.configure({ inline: false, allowBase64: false }),
+      StarterKit, Image.configure({ inline: false, allowBase64: false }),
       LinkExtension.configure({ openOnClick: false, autolink: true }),
       Placeholder.configure({ placeholder: 'Start writing your amazing article...' }),
     ],
-    content: '',
-    onUpdate: ({ editor }) => {
-      setContentState(editor.getHTML());
-    },
+    content: '', // Will be set by useEffect when articleForEdit loads
     editorProps: {
       attributes: { class: 'tiptap-editor-content' },
-      handleDOMEvents: {
+      handleDOMEvents: { /* ... (drop and paste handlers remain the same) ... */ 
         drop(view, event) {
           event.preventDefault();
           const files = event.dataTransfer?.files;
@@ -156,7 +160,7 @@ const AdminArticleEdit = () => {
           const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
           if (imageFiles.length === 0) return false;
 
-          imageFiles.forEach(file => handleImageUpload(file, view));
+          imageFiles.forEach(file => handleImageUpload(file, view)); // Assuming handleImageUpload is defined
           return true;
         },
         paste(view, event) {
@@ -166,7 +170,7 @@ const AdminArticleEdit = () => {
                 if (items[i].type.indexOf("image") === 0) {
                     event.preventDefault();
                     const file = items[i].getAsFile();
-                    if (file) handleImageUpload(file, view);
+                    if (file) handleImageUpload(file, view); // Assuming handleImageUpload is defined
                     return true;
                 }
             }
@@ -175,9 +179,19 @@ const AdminArticleEdit = () => {
       },
     },
   });
+  
+  // Separated onUpdate for editor to avoid re-creating editor instance on content change
+  useEffect(() => {
+    if (editor && !editor.isDestroyed) {
+      // This effect runs if editor is already initialized
+      // If content needs to be set from state to editor (e.g. loading existing article)
+      // That should be handled in the effect that populates form fields from `articleForEdit`
+    }
+  }, [editor]); // Only re-run if editor instance itself changes
+
 
   const handleImageUpload = useCallback(async (file, tiptapView) => {
-    if (!file) return null;
+    if (!file || !editor) return null; // Ensure editor is also available
     dispatch(clearAdminArticleError());
     try {
       const resultAction = await dispatch(uploadEditorImage(file)).unwrap();
@@ -193,28 +207,33 @@ const AdminArticleEdit = () => {
       console.error("Image upload failed in component:", err);
     }
     return null;
-  }, [dispatch]);
+  }, [dispatch, editor]);
 
 
   useEffect(() => {
     if (articleId) {
       dispatch(fetchAdminArticle(articleId));
     } else {
-      dispatch(clearAdminArticleState());
+      dispatch(clearAdminArticleState()); // Clear for new article form
+      if (editor && !editor.isDestroyed) editor.commands.setContent('');
     }
-    // TODO: Fetch categories
-    // Example: dispatch(fetchCategoriesForAdminForm()).then(...)
+    // Fetch categories for dropdown
+    // dispatch(fetchCategoriesForAdminForm()).then(action => {
+    //   if (action.payload) {
+    //     setCategoriesOptions([{ value: '', label: 'Select Category' }, ...action.payload.map(c => ({ value: c.id.toString(), label: c.name }))]);
+    //   }
+    // });
+
     return () => {
       dispatch(clearAdminArticleState());
     };
-  }, [dispatch, articleId]);
+  }, [dispatch, articleId]); // Removed editor from deps for this effect
 
   useEffect(() => {
     if (articleForEdit && editor && !editor.isDestroyed) {
       setTitle(articleForEdit.title || '');
       setSlug(articleForEdit.slug || '');
       const currentEditorContent = articleForEdit.content || '';
-      setContentState(currentEditorContent);
       if (editor.getHTML() !== currentEditorContent) {
          try {
             if(editor.isEditable) editor.commands.setContent(currentEditorContent, false);
@@ -223,12 +242,12 @@ const AdminArticleEdit = () => {
       setExcerpt(articleForEdit.excerpt || '');
       setThumbnailUrl(articleForEdit.thumbnailUrl || '');
       setCategoryId(articleForEdit.categoryId?.toString() || '');
-      setTags((articleForEdit.tags || []).join(', '));
+      setTags((articleForEdit.tags || []).join(', ')); // Assuming tags are stored as an array of strings or objects with 'name'
       setStatus(articleForEdit.status || 'DRAFT');
       setIsFeatured(articleForEdit.isFeatured || false);
       setPublishedAt(articleForEdit.publishedAt ? new Date(articleForEdit.publishedAt).toISOString().split('T')[0] : '');
-    } else if (!articleId) {
-        setTitle(''); setSlug(''); setContentState('');
+    } else if (!articleId) { // Reset form for new article
+        setTitle(''); setSlug('');
         if (editor && !editor.isDestroyed && editor.isEditable) editor.commands.setContent('', false);
         setExcerpt(''); setThumbnailUrl(''); setCategoryId('');
         setTags(''); setStatus('DRAFT'); setIsFeatured(false); setPublishedAt('');
@@ -241,10 +260,10 @@ const AdminArticleEdit = () => {
     if (saveSuccessMessage) {
       const timer = setTimeout(() => {
         dispatch(clearSaveSuccessMessage());
-        if (articleIdAfterSaveRef.current || !articleId) { // If new article was created or was create mode
+        if (articleIdAfterSaveRef.current || !articleId) {
             navigate('/admin/articles');
         }
-      }, 2000); // Shortened delay before redirect
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [saveSuccessMessage, dispatch, navigate, articleId]);
@@ -263,7 +282,7 @@ const AdminArticleEdit = () => {
       excerpt: excerpt.trim(),
       thumbnailUrl: thumbnailUrl.trim() || null,
       categoryId: categoryId ? parseInt(categoryId, 10) : null,
-      tags: tags.split(',').map(tag => tag.trim()).filter(Boolean),
+      tags: tags.split(',').map(tag => tag.trim()).filter(Boolean), // Ensure tags are strings for backend
       status,
       isFeatured,
       publishedAt: publishedAt || null,
@@ -273,11 +292,9 @@ const AdminArticleEdit = () => {
       let resultAction;
       if (articleId) {
         resultAction = await dispatch(updateAdminArticle({ articleId, articleData })).unwrap();
-        // Success message will show, then useEffect for saveSuccessMessage handles navigation
       } else {
         resultAction = await dispatch(createAdminArticle(articleData)).unwrap();
-        articleIdAfterSaveRef.current = resultAction.id; // Set ref for new article
-        // Success message will show, then useEffect for saveSuccessMessage handles navigation
+        articleIdAfterSaveRef.current = resultAction.id;
       }
     } catch (rejectedValueOrSerializedError) {
       console.error('Failed to save article:', rejectedValueOrSerializedError);
@@ -285,15 +302,12 @@ const AdminArticleEdit = () => {
   };
 
   useEffect(() => {
-    return () => { editor?.destroy(); };
+    return () => { if(editor && !editor.isDestroyed) editor.destroy(); };
   }, [editor]);
 
   if (isLoading && articleId && !articleForEdit) {
     return <div className="admin-page-container page-loading-spinner"><Spinner size="large" label="Loading article..." /></div>;
   }
-   // This condition might need adjustment based on how 'idle' state is handled.
-   // If 'idle' means not yet fetched, it's part of isLoading.
-   // If error occurs during fetch:
   if (saveError && editStatus === 'failed' && articleId && !articleForEdit) {
     return (
       <div className="admin-page-container admin-form-error-fullpage">
@@ -309,12 +323,12 @@ const AdminArticleEdit = () => {
         {articleId ? `Edit Article: ${articleForEdit?.title || 'Loading...'}` : 'Create New Article'}
       </h1>
 
-      {editor && <MenuBar editor={editor} onImageUpload={handleImageUpload} />}
+      {editor && <MenuBar editor={editor} onImageUpload={(file) => handleImageUpload(file, editor.view)} />}
       {isUploadingImage && <p className="image-upload-indicator"><Spinner size="small" /> Uploading image...</p>}
       {imageUploadError && <p className="admin-form-error image-upload-error">Image upload failed: {typeof imageUploadError === 'string' ? imageUploadError : JSON.stringify(imageUploadError)}</p>}
 
       <form onSubmit={handleSubmit} className="article-form">
-        {saveError && editStatus === 'failed' && ( // Display save/create error only when a save/create attempt failed
+        {saveError && editStatus === 'failed' && (
           <div className="admin-form-error">
             <h4>Save Failed:</h4>
             {typeof saveError === 'string' ? <p>{saveError}</p> :
@@ -337,8 +351,8 @@ const AdminArticleEdit = () => {
             id="categoryId"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            options={categories}
-            disabled={isSaving}
+            options={categoriesOptions} // Use fetched categories
+            disabled={isSaving /* || isLoadingCategories */}
           />
           <Input label="Tags (comma-separated)" id="tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="e.g., tech,news,updates" disabled={isSaving}/>
         </div>
@@ -350,11 +364,7 @@ const AdminArticleEdit = () => {
             id="status"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            options={[
-              { value: 'DRAFT', label: 'Draft' },
-              { value: 'PUBLISHED', label: 'Published' },
-              { value: 'ARCHIVED', label: 'Archived' },
-            ]}
+            options={ContentStatusOptions} // Use defined options
             disabled={isSaving}
           />
         </div>
@@ -365,11 +375,11 @@ const AdminArticleEdit = () => {
 
         <div className="form-group tiptap-container">
           <label htmlFor="tiptap-content">Content</label>
-          <EditorContent editor={editor} id="tiptap-content" />
+          {editor && <EditorContent editor={editor} id="tiptap-content" />}
         </div>
 
         <div className="form-actions">
-          <Button type="submit" variant="primary" disabled={isSaving || isUploadingImage || !editor ||isLoading}>
+          <Button type="submit" variant="primary" disabled={isSaving || isUploadingImage || !editor || isLoading}>
             {isSaving ? <Spinner size="small"/> : <FaSave />} {articleId ? 'Save Changes' : 'Create Article'}
           </Button>
           <Button type="button" variant="secondary" onClick={() => navigate('/admin/articles')} disabled={isSaving || isUploadingImage}>

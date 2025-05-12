@@ -1,30 +1,22 @@
 // server/src/controllers/authController.js
-import prisma from '../config/db.js'; // Prisma client
+import prisma from '../config/db.js';
 import { hashPassword, comparePassword } from '../utils/passwordHelper.js';
-import { generateToken } from '../utils/jwtHelper.js'; // verifyToken is not used here
+import { generateToken } from '../utils/jwtHelper.js';
 import ApiError from '../utils/apiError.js';
 import ApiResponse from '../utils/apiResponse.js';
 import { validationResult } from 'express-validator';
 
-/**
- * @desc    Register a new user
- * @route   POST /api/auth/register
- * @access  Public
- */
 export const registerUser = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const errorMessages = errors.array().map(err => err.msg);
-    return next(new ApiError(400, 'Validation failed', errorMessages));
+    return next(new ApiError(400, 'Validation failed during registration.', errorMessages));
   }
 
   const { name, email, password, role } = req.body;
 
   try {
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-
+    const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       return next(new ApiError(409, 'User with this email already exists.'));
     }
@@ -36,17 +28,14 @@ export const registerUser = async (req, res, next) => {
         name,
         email,
         password: hashedPassword,
-        role: role || 'STUDENT',
+        role: role || 'STUDENT', // Default role
         profile: {
-          create: {}, // Create an empty profile
+          create: {}, // Automatically create an empty profile
         },
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
+      select: { // Select only necessary fields to return
+        id: true, name: true, email: true, role: true, status: true, createdAt: true,
+        profile: { select: { avatarUrl: true, headline: true } } // Include basic profile info
       }
     });
 
@@ -55,30 +44,37 @@ export const registerUser = async (req, res, next) => {
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Adjust sameSite for production if cross-site
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
 
-    return res
-      .status(201)
-      .json(new ApiResponse(201, { user: newUser }, 'User registered successfully.'));
+    // Prepare user object for response, similar to getMe
+    const userResponse = {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        status: newUser.status,
+        createdAt: newUser.createdAt,
+        avatarUrl: newUser.profile?.avatarUrl || null,
+        headline: newUser.profile?.headline || null,
+    };
 
+    return res.status(201).json(new ApiResponse(201, { user: userResponse }, 'User registered successfully.'));
   } catch (error) {
-    console.error("[ERROR /api/auth/register]:", error);
-    next(new ApiError(500, `User registration failed. ${error.message}`, [error.message]));
+    console.error("[ERROR /api/auth/register]:", error.name, error.message, error.stack);
+    if (error.code === 'P2002') { // Prisma unique constraint error
+        return next(new ApiError(409, `Registration failed: A user with that ${error.meta?.target?.join(', ')} already exists.`));
+    }
+    next(new ApiError(500, `User registration failed due to a server error. ${error.message}`));
   }
 };
 
-/**
- * @desc    Authenticate user & get token (Login)
- * @route   POST /api/auth/login
- * @access  Public
- */
 export const loginUser = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const errorMessages = errors.array().map(err => err.msg);
-    return next(new ApiError(400, 'Validation failed', errorMessages));
+    return next(new ApiError(400, 'Validation failed during login.', errorMessages));
   }
 
   const { email, password } = req.body;
@@ -86,14 +82,14 @@ export const loginUser = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({
       where: { email },
+      include: { profile: { select: { avatarUrl: true, headline: true } } } // Include profile for response
     });
 
     if (!user) {
       return next(new ApiError(401, 'Invalid credentials. User not found.'));
     }
-
     if (user.status !== 'ACTIVE') {
-      return next(new ApiError(403, 'Account is suspended. Please contact support.'));
+      return next(new ApiError(403, 'Your account is currently suspended. Please contact support.'));
     }
 
     const isMatch = await comparePassword(password, user.password);
@@ -106,73 +102,60 @@ export const loginUser = async (req, res, next) => {
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
     const userResponse = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
+      id: user.id, name: user.name, email: user.email, role: user.role, status: user.status, createdAt: user.createdAt,
+      avatarUrl: user.profile?.avatarUrl || null,
+      headline: user.profile?.headline || null,
     };
 
-    return res
-      .status(200)
-      .json(new ApiResponse(200, { user: userResponse }, 'Login successful.'));
-
+    return res.status(200).json(new ApiResponse(200, { user: userResponse }, 'Login successful.'));
   } catch (error) {
-    console.error("[ERROR /api/auth/login]:", error);
-    next(new ApiError(500, `Login failed. ${error.message}`, [error.message]));
+    console.error("[ERROR /api/auth/login]:", error.name, error.message, error.stack);
+    next(new ApiError(500, `Login failed due to a server error. ${error.message}`));
   }
 };
 
-/**
- * @desc    Get current logged-in user details
- * @route   GET /api/auth/me
- * @access  Private (requires authMiddleware)
- */
 export const getMe = async (req, res, next) => {
-  // authMiddleware should have attached req.user
+  // req.user should be populated by authMiddleware if token is valid
   if (!req.user || !req.user.userId) {
-    // This case should ideally be caught by authMiddleware if token is truly missing or invalid early on.
-    // If authMiddleware lets it through but req.user is still not populated, it's an issue.
-    return next(new ApiError(401, 'Not authorized, user session is invalid or token data missing.'));
+    // This path indicates an issue with authMiddleware or token was cleared but endpoint accessed
+    return next(new ApiError(401, 'Not authorized. No valid user session found.'));
   }
 
   try {
-    // Fetch user and their profile information
     const userWithProfile = await prisma.user.findUnique({
       where: { id: req.user.userId },
       select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        status: true,
-        // DO NOT select 'avatarUrl' directly from User model IF it's not defined there in schema.prisma
-        profile: { // Select from the related UserProfile model
-          select: {
-            avatarUrl: true,
-            headline: true,
-            // Add other UserProfile fields you want to return here
-            // bio: true,
-            // websiteUrl: true,
-            // socialLinks: true,
-          }
-        },
-        // Include any other fields directly on the User model you need
-        // e.g., createdAt, emailVerified, etc.
-        createdAt: true,
+        id: true, name: true, email: true, role: true, status: true, createdAt: true,
+        profile: {
+          select: { avatarUrl: true, headline: true, bio: true, websiteUrl: true, socialLinks: true }
+        }
       },
     });
 
     if (!userWithProfile) {
-      // This can happen if the user was deleted after the token was issued
-      res.clearCookie('token'); // Clear potentially invalid token
-      return next(new ApiError(404, 'User not found.'));
+      // User existed when token was issued, but not anymore. Clear cookie.
+      res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      });
+      return next(new ApiError(404, 'User associated with this session not found. Please log in again.'));
     }
-    
+     if (userWithProfile.status !== 'ACTIVE') {
+      res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      });
+      return next(new ApiError(403, `Your account is ${userWithProfile.status.toLowerCase()}. Please contact support.`));
+    }
+
+
     // Construct a clean response object
     const responseUser = {
       id: userWithProfile.id,
@@ -181,49 +164,39 @@ export const getMe = async (req, res, next) => {
       role: userWithProfile.role,
       status: userWithProfile.status,
       createdAt: userWithProfile.createdAt,
-      avatarUrl: userWithProfile.profile?.avatarUrl || null, // Get avatarUrl from profile, fallback to null
+      avatarUrl: userWithProfile.profile?.avatarUrl || null,
       headline: userWithProfile.profile?.headline || null,
-      // bio: userWithProfile.profile?.bio || null,
-      // websiteUrl: userWithProfile.profile?.websiteUrl || null,
-      // socialLinks: userWithProfile.profile?.socialLinks || null,
+      bio: userWithProfile.profile?.bio || null,
+      websiteUrl: userWithProfile.profile?.websiteUrl || null,
+      socialLinks: userWithProfile.profile?.socialLinks || null,
     };
 
-    return res
-      .status(200)
-      .json(new ApiResponse(200, { user: responseUser }, 'User details fetched successfully.'));
+    return res.status(200).json(new ApiResponse(200, { user: responseUser }, 'User details fetched successfully.'));
   } catch (error) {
-    // Log the detailed error on the server for debugging
-    console.error(`[ERROR /api/auth/me] Critical error fetching user details for userId ${req.user.userId}:`, error.name, error.message, error.stack);
-    // Send a generic 500 error response to the client
-    next(new ApiError(500, `Server error while fetching user details. Please try again later. Original error: ${error.message}`));
+    console.error(`[ERROR /api/auth/me] Error fetching details for userId ${req.user.userId}:`, error.name, error.message, error.stack);
+    if (error.code === 'P2025') { // Prisma specific: Record not found
+        res.clearCookie('token');
+        return next(new ApiError(404, 'User data not found. Session may be invalid.'));
+    }
+    next(new ApiError(500, `Server error fetching user details. ${error.message}`));
   }
 };
 
-/**
- * @desc    Log user out
- * @route   POST /api/auth/logout
- * @access  Private
- */
 export const logoutUser = (req, res, next) => {
   try {
     res.cookie('token', '', {
       httpOnly: true,
-      expires: new Date(0),
+      expires: new Date(0), // Set to past date to expire immediately
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     });
     return res.status(200).json(new ApiResponse(200, null, 'Logged out successfully.'));
   } catch (error) {
-    console.error("[ERROR /api/auth/logout]:", error);
-    next(new ApiError(500, `Logout failed. ${error.message}`, [error.message]));
+    console.error("[ERROR /api/auth/logout]:", error.name, error.message, error.stack);
+    next(new ApiError(500, `Logout failed. ${error.message}`));
   }
 };
 
-/**
- * @desc    Request password reset
- * @route   POST /api/auth/request-password-reset
- * @access  Public
- */
 export const requestPasswordReset = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -233,22 +206,22 @@ export const requestPasswordReset = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
+      // It's good practice not to reveal if an email exists or not for password resets
       return res.status(200).json(new ApiResponse(200, null, 'If an account with this email exists, a password reset link has been sent.'));
     }
-    // TODO: Implement actual token generation and email sending logic
-    console.log(`TODO: Password reset requested for ${email}. Generate token and send email.`);
+    // TODO: Implement actual token generation (e.g., crypto random bytes, store hashed token with expiry in DB)
+    // TODO: Implement email sending logic (e.g., nodemailer with a transactional email service)
+    const resetToken = "dummy-reset-token-" + Date.now(); // Replace with real token logic
+    console.log(`Password reset requested for ${email}. Token: ${resetToken}. (Email sending not implemented)`);
+    // Example: await prisma.passwordResetToken.create({ data: { userId: user.id, token: hashedResetToken, expiresAt: ... } });
+
     return res.status(200).json(new ApiResponse(200, null, 'If an account with this email exists, a password reset link has been sent.'));
   } catch (error) {
-    console.error("[ERROR /api/auth/request-password-reset]:", error);
-    next(new ApiError(500, `Password reset request failed. ${error.message}`, [error.message]));
+    console.error("[ERROR /api/auth/request-password-reset]:", error.name, error.message, error.stack);
+    next(new ApiError(500, `Password reset request failed. ${error.message}`));
   }
 };
 
-/**
- * @desc    Reset password using a token
- * @route   POST /api/auth/reset-password/:token
- * @access  Public
- */
 export const resetPassword = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -257,14 +230,22 @@ export const resetPassword = async (req, res, next) => {
   const { token } = req.params;
   const { password } = req.body;
   try {
-    // TODO: Implement actual token validation and password update logic
-    console.log(`TODO: Password reset attempt with token ${token}. Validate token and update password.`);
+    // TODO: Implement actual token validation (find token in DB, check expiry, ensure it's not used)
+    console.log(`Password reset attempt with token ${token}. (Token validation and password update not fully implemented)`);
     if (!token) return next(new ApiError(400, 'Invalid or missing reset token.'));
+
+    // Example:
+    // const passwordResetRecord = await prisma.passwordResetToken.findUnique({ where: { token: hashedTokenFromParam }});
+    // if (!passwordResetRecord || passwordResetRecord.expiresAt < new Date() || passwordResetRecord.used) {
+    //    return next(new ApiError(400, 'Invalid or expired reset token.'));
+    // }
     // const hashedPassword = await hashPassword(password);
-    // Find user by reset token, update password, invalidate token
+    // await prisma.user.update({ where: { id: passwordResetRecord.userId }, data: { password: hashedPassword }});
+    // await prisma.passwordResetToken.update({ where: { id: passwordResetRecord.id }, data: { used: true }});
+
     return res.status(200).json(new ApiResponse(200, null, 'Password has been reset successfully. You can now log in.'));
   } catch (error) {
-    console.error("[ERROR /api/auth/reset-password/:token]:", error);
-    next(new ApiError(500, `Password reset failed. ${error.message}`, [error.message]));
+    console.error("[ERROR /api/auth/reset-password/:token]:", error.name, error.message, error.stack);
+    next(new ApiError(500, `Password reset failed. ${error.message}`));
   }
 };

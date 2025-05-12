@@ -37,7 +37,7 @@ import adminSettingsRouter from './routes/adminSettings.routes.js';
 import adminCategoryRouter from './routes/adminCategory.routes.js';
 import adminTestimonialRouter from './routes/adminTestimonial.routes.js';
 import adminDoubtRouter from './routes/adminDoubt.routes.js';
-
+import reviewRouter from './routes/review.routes.js';
 import initializeSocketIO from './socket/index.js';
 
 // --- 3. Initial Configuration ---
@@ -111,6 +111,7 @@ app.use(`${API_PREFIX}/notes`, noteRouter);
 app.use(`${API_PREFIX}/doubts`, doubtRouter);
 app.use(`${API_PREFIX}/upload`, uploadRouter);
 app.use(`${API_PREFIX}/platform`, platformRouter);
+app.use(`${API_PREFIX}/reviews`, reviewRouter);
 
 const ADMIN_API_PREFIX = `${API_PREFIX}/admin`;
 app.use(`${ADMIN_API_PREFIX}/dashboard`, adminDashboardRouter);
